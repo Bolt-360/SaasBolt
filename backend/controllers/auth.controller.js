@@ -77,37 +77,52 @@ export const cadastro = async(req, res, next) => {
 }
 
 //Login
-export const login = (req, res, next) => {
+export const login = async (req, res, next) => {
     const { email, password } = req.body
-    if(!email || !password){
+
+    // Verificar se email e senha foram fornecidos
+    if (!email || !password) {
         return next(errorHandler(400, 'Preencha todos os campos'))
     }
-    try{
-        const user = User.findOne({ where: { email } })
-        if(!user){
+
+    try {
+        // Buscar o usuário pelo email (aguardando a resposta do banco)
+        const user = await User.findOne({ where: { email } })
+
+        // Verificar se o usuário existe
+        if (!user) {
             return next(errorHandler(400, 'Email ou senha inválido'))
         }
+
+        // Verificar se a senha fornecida corresponde à senha criptografada
         const match = bcryptjs.compareSync(password, user.password)
-        if(!match){
+
+        if (!match) {
             return next(errorHandler(400, 'Email ou senha inválido'))
         }
-        const token = jwt.sign({
-            id: user._id,
-        }, process.env.JWT_SECRET, {
-            expiresIn: '7d',
-        })
-        res.cookie('access_token', token, {httpOnly: true}).status(200).json({
-            _id: user._id,
+
+        // Gerar token JWT
+        const token = jwt.sign(
+            { id: user.id },  // Corrigido para usar `user.id`
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        )
+
+        // Definir cookie e enviar resposta
+        res.cookie('access_token', token, { httpOnly: true }).status(200).json({
+            _id: user.id,  // Corrigido para usar `user.id`
             username: user.username,
             email: user.email,
             token,
             profilePicture: user.profilePicture,
         })
-    }catch(error){
+
+    } catch (error) {
         console.log("Erro ao logar", error)
         return next(errorHandler(500, 'Internal Server Error'))
     }
 }
+
 
 export const logout = (req, res) => {
 
