@@ -125,5 +125,12 @@ export const login = async (req, res, next) => {
 
 
 export const logout = (req, res) => {
-
+    try{
+        res.clearCookie('access_token').status(200).json({
+            success: true,
+            message: 'Logout realizado com sucesso'
+        })
+    }catch(error){
+        next(errorHandler(500, 'Internal Server Error'))
+    }
 }
