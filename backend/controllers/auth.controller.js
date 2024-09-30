@@ -73,7 +73,7 @@ export const cadastro = async(req, res) => {
         })
         // Salvar o usuário no banco de dados
         await newUser.save()
-        res.status(201).json({
+        res.cookie('access_token', token, {httpOnly: true}).status(201).json({
             _id: newUser._id,
             username: newUser.username,
             email: newUser.email,

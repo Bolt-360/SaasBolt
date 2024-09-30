@@ -1,6 +1,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import pkg from 'pg'
+import cookieParse from 'cookie-parser'
 
 dotenv.config()
 
@@ -49,6 +50,9 @@ import authRouters from "./routes/auth.routes.js"
 
 //JSON para enviar os dados para o frontend
 app.use(express.json())
+
+//cookie para autenticar o usuario
+app.use(cookieParse())
 app.use("/api/auth", authRouters)
 
 app.listen(PORT, () => {
