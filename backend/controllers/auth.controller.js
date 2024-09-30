@@ -3,20 +3,18 @@ import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import { validateCPF } from "../utils/validarCPF.js"
+import { errorHandler } from "../utils/error.js"
 
 // Corrigir __dirname para módulos ES
 dotenv.config();
 
-export const cadastro = async(req, res) => {
+export const cadastro = async(req, res, next) => {
     const { username, email, password, confirmPassword, cpf, gender } = req.body
     //Limpar os CPF
     const cleanedCPF = cpf.replace(/\D/g, '');
     //Validações Iniciais
     if(!username || !email || !password || !confirmPassword || !cleanedCPF || !gender){
-        return res.status(400).json({
-            sucess: false,
-            message: 'Por favor, preencha todos os campos',
-        })
+        return next(errorHandler(400, 'Este CPF ja existe'))
     }
     if(!validateCPF(cleanedCPF)){
         return res.status(400).json({
@@ -28,25 +26,17 @@ export const cadastro = async(req, res) => {
     //Verifica se o email já está em uso
     let validUser = await User.findOne({ where: { email } });
     if(validUser){
-        return res.status(400).json({
-            sucess: false,
-            message: 'Este usuário ja existe'
-        })
+        return next(errorHandler(400, 'Este email ja existe'))
     }
 
     //Verifica se o CPF já está em uso
     let validUserCPF = await User.findOne({ where: { cpf: cleanedCPF } });
     if(validUserCPF){
-        return res.status(400).json({
-            sucess: false,
-            message: 'Este CPF ja existe'
-        })
+        return next(errorHandler(400, 'Este CPF ja existe'))
     }
     //Verificar se as senhas conferem
     if(password !== confirmPassword){
-        return res.status(400).json({
-            error: 'Senhas não conferem',
-        })
+        return next(errorHandler(400, 'As senhas não conferem'))
     }
     //Criptografar a senha
     const hashedPassword = bcryptjs.hashSync(password, 10)
@@ -82,9 +72,7 @@ export const cadastro = async(req, res) => {
         })
     }catch(error){
         console.log("Erro ao cadastrar", error)
-        res.status(500).json({
-            error: 'Erro interno do servidor',
-        })
+        return next(errorHandler(500, 'Internal Server Error'))
     }
 }
 
