@@ -27,8 +27,13 @@ const User = sequelize.define('User', {
     },
     profilePicture: {
         type: DataTypes.STRING,
-        defaultValue: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
-    }
+        defaultValue: '',
+    },
+    gender: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        enum: ['Masculino', 'Feminino'],
+    },
 }, {
     tableName: 'users',
     timestamps: true,

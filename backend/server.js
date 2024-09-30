@@ -7,7 +7,6 @@ dotenv.config()
 const { Pool } = pkg
 
 const PORT = process.env.PORT || 3000
-
 // Conexão do Postgres
 const pool = new Pool({
     user: process.env.POSTGRES_USER,
@@ -48,6 +47,8 @@ app.get("/", async (req, res) => {
 //importação de rotas
 import authRouters from "./routes/auth.routes.js"
 
+//JSON para enviar os dados para o frontend
+app.use(express.json())
 app.use("/api/auth", authRouters)
 
 app.listen(PORT, () => {
