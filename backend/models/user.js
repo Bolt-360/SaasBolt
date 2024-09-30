@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js'; // ajuste o caminho conforme necessário
+import sequelize from '../config/database.js'; 
+import Workspace from './workspace.js';
 
 const User = sequelize.define('User', {
     id: {
@@ -37,6 +38,12 @@ const User = sequelize.define('User', {
 }, {
     tableName: 'users',
     timestamps: true,
+});
+
+User.belongsToMany(Workspace, {
+    through: 'UserWorkspaces', // Tabela intermediária
+    foreignKey: 'userId',
+    otherKey: 'workspaceId',
 });
 
 export default User;

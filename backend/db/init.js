@@ -1,11 +1,12 @@
 import sequelize from '../config/database.js';
+import models from '../models/index.js'; // Importe todos os modelos
 
 const initDatabase = async () => {
     try {
         await sequelize.authenticate();
         console.log('Conexão com o PostgreSQL estabelecida com sucesso.');
 
-        // Sincroniza o modelo com o banco de dados
+        // Sincroniza todos os modelos com o banco de dados
         await sequelize.sync({ alter: true }); // 'alter' atualiza a tabela, mantendo os dados
         console.log('Tabelas sincronizadas com sucesso.');
     } catch (error) {
