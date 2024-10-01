@@ -8,6 +8,11 @@ export default (sequelize) => {
                 foreignKey: 'workspaceId',
                 otherKey: 'userId'
             });
+
+            Workspace.hasMany(models.Conversation, {
+                foreignKey: 'workspaceId',
+                as: 'conversations'
+            });
         }
     }
 

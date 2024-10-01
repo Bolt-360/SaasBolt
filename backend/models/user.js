@@ -19,6 +19,13 @@ export default (sequelize) => {
                 otherKey: 'conversationId',
                 as: 'participatedConversations'
             });
+
+            User.belongsToMany(models.Workspace, {
+                through: models.UserWorkspace,
+                foreignKey: 'userId',
+                otherKey: 'workspaceId',
+                as: 'participatedWorkspaces'
+            })
         }
     }
 
