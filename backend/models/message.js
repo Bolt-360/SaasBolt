@@ -34,10 +34,22 @@ const Message = sequelize.define('Message', {
         allowNull: false,
         defaultValue: DataTypes.NOW,
     },
+    conversationId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'Conversations',
+            key: 'id',
+        },
+    }
+}, {
+    tableName: 'Messages',
+    timestamps: true, // Isso irá adicionar 'updatedAt' automaticamente
 });
 
-// Relacionamento com o usuário remetente
+// Relacionamentos
 Message.associate = (models) => {
+    // Relacionamento com o usuário remetente
     Message.belongsTo(models.User, {
         foreignKey: 'senderId',
         as: 'sender', // Alias para fácil acesso

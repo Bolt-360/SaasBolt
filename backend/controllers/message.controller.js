@@ -8,9 +8,11 @@ export const sendMessage = async (req, res, next) => {
         const { id: receiverId } = req.params;
         const senderId = req.user.id;
 
-        // Ter certeza que os IDs são Inteiros
+        // Converter IDs para Inteiros
         const senderIdInt = parseInt(senderId);
         const receiverIdInt = parseInt(receiverId);
+        
+        // Verificar se os IDs são válidos
         if (isNaN(senderIdInt) || isNaN(receiverIdInt)) {
             return res.status(400).json({ message: "IDs inválidos" });
         }
@@ -27,7 +29,8 @@ export const sendMessage = async (req, res, next) => {
         // Criar nova conversa se não existir
         if (!conversation) {
             conversation = await Conversation.create({
-                participants: [senderIdInt, receiverIdInt]
+                participants: [senderIdInt, receiverIdInt],
+                messages: []
             });
         }
 
@@ -35,19 +38,26 @@ export const sendMessage = async (req, res, next) => {
         const newMessage = await Message.create({
             senderId: senderIdInt,
             recipientId: receiverIdInt,
-            text: message
+            text: message,
+            conversationId: conversation.id
         });
 
-        // Adicionar a nova mensagem à conversa
-        conversation.messages.push(newMessage.id); // Use "id" em vez de "_id"
+        // Verifica se o array de mensagens existe e adiciona a nova mensagem
+        if (!conversation.messages) {
+            conversation.messages = []; // Iniciar o array se não existir
+        }
 
-        // Salvar a conversa
+        // Atualizar o array de mensagens
+        const updatedMessages = [...conversation.messages, newMessage.id];
+        conversation.setDataValue('messages', updatedMessages);
+
+        // Salvar a conversa com o novo array de mensagens
         await conversation.save();
 
-        // Implementar a função do Socket.IO para enviar a mensagem
+        // Retornar a nova mensagem criada
         res.status(201).json(newMessage);
     } catch (error) {
-        console.error('Erro ao enviar mensagem:', error); // Log detalhado do erro
+        console.error('Erro ao enviar mensagem:', error); // Log do erro
         next(error);
     }
 };

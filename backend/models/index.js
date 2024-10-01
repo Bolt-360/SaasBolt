@@ -2,6 +2,7 @@ import User from './user.js';
 import Message from './message.js';
 import Conversation from './conversation.js';
 import ConversationParticipants from './conversationParticipants.js';
+import Workspace from './workspace.js';
 // Adicione outros modelos conforme necessário
 
 const models = {
@@ -9,6 +10,8 @@ const models = {
     Message,
     Conversation,
     ConversationParticipants,
+    Message: Message,
+    Workspace: Workspace,
     // Adicione outros modelos aqui
 };
 

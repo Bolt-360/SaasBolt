@@ -1,4 +1,3 @@
-// Substitua 'require' por 'import'
 import 'dotenv/config'; // Carregar variáveis de ambiente do arquivo .env
 import pkg from 'pg'; // Importando o pacote 'pg'
 const { Client } = pkg;
@@ -12,8 +11,8 @@ const client = new Client({
   port: process.env.POSTGRES_PORT || 5432,  // Porta padrão do PostgreSQL
 });
 
-// Função para limpar as tabelas
-const clearTables = async () => {
+// Função para excluir todas as tabelas
+const dropAllTables = async () => {
   try {
     // Conectando ao banco de dados
     await client.connect();
@@ -22,16 +21,18 @@ const clearTables = async () => {
     // Desabilitar temporariamente as restrições de chave estrangeira
     await client.query('SET session_replication_role = replica;');
 
-    // Limpar as tabelas
-    await client.query('TRUNCATE TABLE "Messages" CASCADE;');
-    await client.query('TRUNCATE TABLE "Users" CASCADE;');
+    // Excluir todas as tabelas no esquema 'public'
+    await client.query('DROP SCHEMA public CASCADE;');
+
+    // Recriar o esquema 'public'
+    await client.query('CREATE SCHEMA public;');
 
     // Habilitar novamente as restrições de chave estrangeira
     await client.query('SET session_replication_role = DEFAULT;');
 
-    console.log('Tabelas zeradas com sucesso!');
+    console.log('Todas as tabelas foram excluídas com sucesso!');
   } catch (error) {
-    console.error('Erro ao limpar as tabelas:', error);
+    console.error('Erro ao excluir as tabelas:', error);
   } finally {
     // Fechar a conexão com o banco de dados
     await client.end();
@@ -39,4 +40,4 @@ const clearTables = async () => {
 };
 
 // Executar a função
-clearTables();
+dropAllTables();
