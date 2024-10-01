@@ -50,6 +50,7 @@ app.get("/", async (req, res) => {
 import authRouters from "./routes/auth.routes.js"
 import messageRouters from "./routes/message.routes.js"
 import userRouters from "./routes/user.routes.js"
+import workspacesRouters from "./routes/workspaces.routes.js"
 
 //JSON para enviar os dados para o frontend
 app.use(express.json())
@@ -59,6 +60,7 @@ app.use(cookieParse())
 app.use("/api/auth", authRouters)
 app.use("/api/messages", messageRouters)
 app.use("/api/users", userRouters)
+app.use("/api/workspaces", workspacesRouters)
 
 app.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)
