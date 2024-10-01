@@ -1,23 +1,37 @@
-import sequelize from '../config/database.js'; 
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 
-const ConversationParticipants = sequelize.define('ConversationParticipants', {
-    conversationId: {
-        type: DataTypes.INTEGER,
-        references: {
-            model: 'Conversations',  // Certifique-se de que o nome da tabela está correto
-            key: 'id',
-        },
-        primaryKey: true,
-    },
-    userId: {
-        type: DataTypes.INTEGER,
-        references: {
-            model: 'Users',  // Corrigido para corresponder ao nome da tabela 'users'
-            key: 'id',
-        },
-        primaryKey: true,
-    },
-});
+export default (sequelize) => {
+    class ConversationParticipants extends Model {
+        static associate(models) {
+            // Não são necessárias associações aqui, pois esta é uma tabela de junção
+        }
+    }
 
-export default ConversationParticipants;
+    ConversationParticipants.init({
+        conversationId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            references: {
+                model: 'Conversations',
+                key: 'id'
+            }
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            references: {
+                model: 'Users',
+                key: 'id'
+            }
+        }
+    }, {
+        sequelize,
+        modelName: 'ConversationParticipants',
+        tableName: 'ConversationParticipants',
+        timestamps: true
+    });
+
+    return ConversationParticipants;
+};

@@ -2,6 +2,7 @@ import express from 'express'
 import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
+import models from './models/index.js';
 
 dotenv.config()
 

@@ -1,24 +1,42 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { DataTypes, Model } from 'sequelize';
 
-const Conversation = sequelize.define('Conversation', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    participants: {
-        type: DataTypes.ARRAY(DataTypes.INTEGER), // ou STRING, dependendo do seu uso
-        allowNull: false,
-    },
-    messages: {
-        type: DataTypes.ARRAY(DataTypes.INTEGER), // ou STRING, dependendo do seu uso
-        allowNull: false,
-        defaultValue: [], // Certifique-se de definir um valor padrão
-    },
-}, {
-    tableName: 'Conversations',
-    timestamps: true,
-});
+export default (sequelize) => {
+    class Conversation extends Model {
+        static associate(models) {
+            Conversation.hasMany(models.Message, {
+                foreignKey: 'conversationId',
+                as: 'messages'
+            });
 
-export default Conversation;
+            Conversation.belongsToMany(models.User, {
+                through: models.ConversationParticipants,
+                foreignKey: 'conversationId',
+                otherKey: 'userId',
+                as: 'participantUsers'
+            });
+        }
+    }
+
+    Conversation.init({
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        participants: {
+            type: DataTypes.ARRAY(DataTypes.INTEGER),
+            allowNull: false,
+        },
+        messageIds: {
+            type: DataTypes.ARRAY(DataTypes.INTEGER),
+            defaultValue: [],
+        },
+    }, {
+        sequelize,
+        modelName: 'Conversation',
+        tableName: 'Conversations',
+        timestamps: true,
+    });
+
+    return Conversation;
+};

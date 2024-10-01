@@ -1,65 +1,53 @@
-// models/message.js
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js'; 
-import User from './user.js'; // Importar o modelo User
+import { DataTypes, Model } from 'sequelize';
 
-const Message = sequelize.define('Message', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    text: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    senderId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: User,
-            key: 'id',
-        },
-    },
-    recipientId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: User,
-            key: 'id',
-        },
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-    },
-    conversationId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'Conversations',
-            key: 'id',
-        },
+export default (sequelize) => {
+    class Message extends Model {
+        static associate(models) {
+            Message.belongsTo(models.User, {
+                foreignKey: 'senderId',
+                as: 'sender'
+            });
+            
+            Message.belongsTo(models.User, {
+                foreignKey: 'recipientId',
+                as: 'recipient'
+            });
+
+            Message.belongsTo(models.Conversation, {
+                foreignKey: 'conversationId',
+                as: 'conversation'
+            });
+        }
     }
-}, {
-    tableName: 'Messages',
-    timestamps: true, // Isso irá adicionar 'updatedAt' automaticamente
-});
 
-// Relacionamentos
-Message.associate = (models) => {
-    // Relacionamento com o usuário remetente
-    Message.belongsTo(models.User, {
-        foreignKey: 'senderId',
-        as: 'sender', // Alias para fácil acesso
+    Message.init({
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        text: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        senderId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        recipientId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        conversationId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        }
+    }, {
+        sequelize,
+        modelName: 'Message',
+        tableName: 'Messages',
+        timestamps: true,
     });
-    
-    // Relacionamento com o usuário destinatário
-    Message.belongsTo(models.User, {
-        foreignKey: 'recipientId',
-        as: 'recipient', // Alias para fácil acesso
-    });
+
+    return Message;
 };
-
-export default Message;
