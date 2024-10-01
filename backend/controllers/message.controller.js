@@ -61,3 +61,21 @@ export const sendMessage = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getMessage = async (req, res, next) => {
+    try {
+        const { id: messageId } = req.params; // Alterado para receber o ID da mensagem
+        const message = await Message.findOne({
+            where: { id: messageId } // Buscar a mensagem pelo ID
+        });
+        
+        if (!message) {
+            return res.status(404).json({ message: "Mensagem não encontrada" }); // Retornar 404 se não encontrar
+        }
+
+        res.status(200).json(message); // Retornar a mensagem encontrada
+    } catch (error) {
+        console.error('Erro ao obter mensagem:', error); // Log do erro
+        next(error);
+    }
+};
