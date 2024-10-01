@@ -47,6 +47,7 @@ app.get("/", async (req, res) => {
 
 //importação de rotas
 import authRouters from "./routes/auth.routes.js"
+import messageRouters from "./routes/message.routes.js"
 
 //JSON para enviar os dados para o frontend
 app.use(express.json())
@@ -54,6 +55,7 @@ app.use(express.json())
 //cookie para autenticar o usuario
 app.use(cookieParse())
 app.use("/api/auth", authRouters)
+app.use("/api/messages", messageRouters)
 
 app.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)
