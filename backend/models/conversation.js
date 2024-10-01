@@ -17,7 +17,7 @@ const Conversation = sequelize.define('Conversation', {
         defaultValue: [], // Certifique-se de definir um valor padrão
     },
 }, {
-    tableName: 'conversations',
+    tableName: 'Conversations',
     timestamps: true,
 });
 

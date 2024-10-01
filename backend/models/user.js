@@ -36,7 +36,7 @@ const User = sequelize.define('User', {
         enum: ['Masculino', 'Feminino'],
     },
 }, {
-    tableName: 'users',
+    tableName: 'Users',
     timestamps: true,
 });
 

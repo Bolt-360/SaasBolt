@@ -13,7 +13,7 @@ const ConversationParticipants = sequelize.define('ConversationParticipants', {
     userId: {
         type: DataTypes.INTEGER,
         references: {
-            model: 'users',  // Corrigido para corresponder ao nome da tabela 'users'
+            model: 'Users',  // Corrigido para corresponder ao nome da tabela 'users'
             key: 'id',
         },
         primaryKey: true,
