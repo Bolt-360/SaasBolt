@@ -9,7 +9,6 @@ export default function Main() {
           <Link
             to="/app/chat"
             className="group relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-muted p-8 hover:bg-accent hover:text-accent-foreground shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105"
-            prefetch={false}
           >
             <div className="flex items-center justify-center">
               <MessageCircle className="h-12 w-12" />
@@ -19,7 +18,6 @@ export default function Main() {
           <Link
             to="/app/pipefull"
             className="group relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-muted p-8 hover:bg-accent hover:text-accent-foreground shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105"
-            prefetch={false}
           >
             <div className="flex items-center justify-center">
               <SquareKanban className="h-12 w-12" />

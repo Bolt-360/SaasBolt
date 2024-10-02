@@ -3,14 +3,18 @@ import { LayoutDashboardIcon, AppWindowIcon, FileIcon, SettingsIcon, BellIcon, B
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import useLogout from "@/hooks/useLogout";
+import { Loader2 } from "lucide-react";
 
 
 export default function Header() {
+    const { loading, logout } = useLogout();
+    
     return (
     <header className="sticky top-0 z-30 w-full border-b bg-background">
         <div className="flex h-16 items-center justify-between sm:px-6 lg:px-8 w-full">
           <div className="flex items-center gap-4 sm:gap-6 md:gap-8">
-            <Link href="#" className="flex shrink-0 items-center gap-3" prefetch={false}>
+            <Link to="#" className="flex shrink-0 items-center gap-3">
               <LayoutDashboardIcon className="h-6 w-6" />
               <span className="text-lg font-bold tracking-tight">Bolt 360</span>
             </Link>
@@ -20,7 +24,6 @@ export default function Header() {
                   <Link
                     to="/app"
                     className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
-                    prefetch={false}
                   >
                     <AppWindowIcon className="mr-2 h-4 w-4" />
                     Apps
@@ -30,7 +33,6 @@ export default function Header() {
                   <Link
                     to="/app/chat"
                     className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
-                    prefetch={false}
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Chat
@@ -40,7 +42,6 @@ export default function Header() {
                   <Link
                     to="/app/settings"
                     className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
-                    prefetch={false}
                   >
                     <SettingsIcon className="mr-2 h-4 w-4" />
                     Configurações
@@ -134,9 +135,9 @@ export default function Header() {
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOutIcon className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                <DropdownMenuItem onClick={logout}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOutIcon className="mr-2 h-4 w-4" />}
+                  <span>{loading ? "Saindo..." : "Sair"}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

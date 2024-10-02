@@ -68,7 +68,7 @@ export const SignInCard = ({setState}) => {
                   Senha
                 </Label>
                 <div className="text-sm">
-                  <Link href="#" className="font-medium text-primary hover:text-primary/90" prefetch={false}>
+                  <Link to="#" className="font-medium text-primary hover:text-primary/90">
                     Esqueceu sua senha?
                   </Link>
                 </div>

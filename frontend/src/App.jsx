@@ -6,6 +6,7 @@ import ChatPage from './pages/chat'
 import AppLayout from './layouts/AppLayout'
 import NotFoundPage from './pages/404'
 import { useAuthContext } from './context/AuthContext'
+import AuthRoute from './utils/authRoute'; 
 
 function App() {
   const { authUser } = useAuthContext();
@@ -20,7 +21,7 @@ function App() {
         />
         <Route 
           path='/app'
-          element={<authRoute><AppLayout /></authRoute>} >
+          element={<AuthRoute><AppLayout /></AuthRoute>} >
             <Route index element={<WebAppPage />} />
             <Route path='chat' element={<ChatPage />} />
         </Route>
