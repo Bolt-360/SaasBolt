@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SignInFlow } from "../types";
 import { CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSignup } from "@/hooks/useSignup";
+import { Eye, EyeOff } from "lucide-react"; // Importe os ícones
 
 /**
  * @typedef {Object} SignInCardProps
@@ -31,26 +32,22 @@ const formatCPF = (value) => {
   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
-const validateCPF = (cpf) => {
-  const strippedCPF = cpf.replace(/\D/g, '');
-  return strippedCPF.length === 11;
-};
-
 /**
  * @param {SignInCardProps} props
  * @returns {JSX.Element}
  */
 export const SignUpCard = ({ setState }) => {
-  const { toast } = useToast();
+  const { signup, loading } = useSignup();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [pending, setPending] = useState(false);
   const [passwordStrengthValue, setPasswordStrengthValue] = useState(0);
   const [cpf, setCpf] = useState("");
-  const [gender, setGender] = useState("");
+  const [gender, setGender] = useState("M");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     setPasswordStrengthValue(passwordStrength(password));
@@ -59,77 +56,14 @@ export const SignUpCard = ({ setState }) => {
   const onPasswordSignUp = async (e) => {
     e.preventDefault();
 
-    if (!validateCPF(cpf)) {
-      toast({
-        title: "CPF inválido",
-        description: "Por favor, insira um CPF válido.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (name.trim().length === 0 || name.length > 50) {
-      toast({
-        title: "Nome inválido",
-        description: "O nome não pode estar vazio e deve ter no máximo 50 caracteres.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (email.length > 50) {
-      toast({
-        title: "Email inválido",
-        description: "O email deve ter no máximo 50 caracteres.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Erro ao cadastrar",
-        description: "As senhas precisam ser iguais!",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (passwordStrengthValue < 75) {
-      toast({
-        title: "Senha fraca",
-        description: "Por favor, use uma senha mais forte antes de cadastrar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!gender) {
-      toast({
-        title: "Gênero não selecionado",
-        description: "Por favor, selecione um gênero.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setPending(true);
-    console.log('Signup attempt:', JSON.stringify({
+    await signup({
       username: name,
       email,
       password,
       confirmPassword,
       cpf: cpf.replace(/\D/g, ''),
       gender: gender === "M" ? "Masculino" : "Feminino"
-    }, null, 2));
-    setTimeout(() => {
-      setPending(false);
-      toast({
-        title: "Cadastro simulado",
-        description: "Dados de cadastro registrados no console.",
-        variant: "default",
-      });
-    }, 1000);
+    });
   };
 
   /**
@@ -190,7 +124,7 @@ export const SignUpCard = ({ setState }) => {
                 </Label>
                 <Select onValueChange={setGender} value={gender}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o gênero" />
+                    <SelectValue placeholder="M" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="M">M</SelectItem>
@@ -224,19 +158,30 @@ export const SignUpCard = ({ setState }) => {
                   Senha
                 </Label>
               </div>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <Input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
-                  maxLength={20} // Limita a quantidade de caracteres da senha
+                  maxLength={20}
                   placeholder="********"
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
-                  className="w-full rounded-md border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                  className="w-full rounded-md border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:ring-primary pr-10"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
               </div>
             </div>
             <div>
@@ -245,18 +190,29 @@ export const SignUpCard = ({ setState }) => {
                   Confirme a senha
                 </Label>
               </div>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <Input
                   id="password-confirm"
                   name="password-confirm"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
                   placeholder="********"
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   value={confirmPassword}
-                  className="w-full rounded-md border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                  className="w-full rounded-md border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:ring-primary pr-10"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
               </div>
               <Progress value={passwordStrengthValue} className="mt-2" />
               <p className="text-sm text-muted-foreground mt-1">
@@ -267,9 +223,9 @@ export const SignUpCard = ({ setState }) => {
               <Button
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                disabled={pending}
+                disabled={loading}
               >
-                {pending ? "Cadastrando..." : "Cadastrar"}
+                {loading ? "Cadastrando..." : "Cadastrar"}
               </Button>
             </div>
           </form>

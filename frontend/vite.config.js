@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.BACKEND_URL,
+        target: 'http://localhost:2345',
         secure: false,
       },
     },
