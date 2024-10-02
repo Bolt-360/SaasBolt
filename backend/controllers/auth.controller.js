@@ -1,4 +1,4 @@
-import User from "../models/user.js"
+import models from '../models/index.js';
 import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
@@ -6,7 +6,7 @@ import { validateCPF } from "../utils/validarCPF.js"
 import { errorHandler } from "../utils/error.js"
 
 dotenv.config();
-
+const { User } = models;
 //Cadastro
 export const cadastro = async(req, res, next) => {
     const { username, email, password, confirmPassword, cpf, gender } = req.body

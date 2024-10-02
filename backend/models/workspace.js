@@ -1,22 +1,43 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { DataTypes, Model } from 'sequelize';
 
-const Workspace = sequelize.define('Workspace', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    cnpj:{
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
+export default (sequelize) => {
+    class Workspace extends Model {
+        static associate(models) {
+            Workspace.belongsToMany(models.User, {
+                through: 'UserWorkspaces',
+                foreignKey: 'workspaceId',
+                otherKey: 'userId'
+            });
+
+            Workspace.hasMany(models.Conversation, {
+                foreignKey: 'workspaceId',
+                as: 'conversations'
+            });
+        }
     }
-    // Outros campos relevantes para o Workspace
-});
 
-export default Workspace;
+    Workspace.init({
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        cnpj: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        }
+        // Outros campos relevantes para o Workspace
+    }, {
+        sequelize,
+        modelName: 'Workspace',
+        tableName: 'Workspaces',
+        timestamps: true,
+    });
+
+    return Workspace;
+};
