@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    image: ericocesar/webapp:0.0.1
+    restart: always  
+    ports:
+      - "2345:2345"
+    volumes:
+      - ./backend:/usr/src/app
+    environment:
+      POSTGRES_USER: your_db_user
+      POSTGRES_PASSWORD: your_db_password
+      POSTGRES_DB: your_db_name
+      POSTGRES_HOST: postgres
+      PORT: 2345
+
+  postgres:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: your_db_name
+      POSTGRES_USER: your_db_user
+      POSTGRES_PASSWORD: your_db_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

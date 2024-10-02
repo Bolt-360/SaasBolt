@@ -1,0 +1,1 @@
+#Para atualizar o banco utilize o script: db-init
