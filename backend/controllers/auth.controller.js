@@ -6,6 +6,7 @@ import { validateCPF } from "../utils/validarCPF.js"
 import { errorHandler } from "../utils/error.js"
 import nodemailer from 'nodemailer';
 
+
 dotenv.config();
 const { User } = models;
 const { PwdReset } = models;
@@ -136,11 +137,6 @@ export const logout = (req, res) => {
         next(errorHandler(500, 'Internal Server Error'))
     }
 }
-
-import nodemailer from 'nodemailer'; // Certifique-se de que você importou o nodemailer
-import { errorHandler } from './errorHandler'; // Importando seu manipulador de erros, se necessário
-import User from './models/User'; // Importe seu modelo User
-import PwdReset from './models/PwdReset'; // Importe seu modelo PwdReset
 
 export const forgotPassword = async (req, res, next) => {
     const { email } = req.body; // Obter o email do corpo da requisição

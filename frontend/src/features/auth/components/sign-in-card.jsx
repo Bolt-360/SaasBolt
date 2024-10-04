@@ -33,24 +33,33 @@ export const SignInCard = ({setState}) => {
     
     //ADIÇÃO DA API DE LOGIN NO BOTÃO DE ENTRAR
     const response = await signincall.login(email, password);
-    if(response && response.data.token){
-      toast({
-        title: "Login bem-sucedido",
-        description: response.token,
-        variant: "default",
-        
-      })
-      navigate('/');
-    } else{
+    try {
+      const response = await api.login(credentials); // Exemplo de requisição à API
+    
+      if (response && response.data.token) {
+        toast({
+          title: "Login bem-sucedido",
+          description: response.data.token, // Corrigi para response.data.token
+          variant: "default",
+        });
+        navigate('/');
+      } else {
         toast({
           title: "Erro no login",
-          description: response.data.message,
+          description: response.data.message || "Erro desconhecido", // Prevenção de erro caso message não exista
           variant: "destructive",
-        })
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: error.response?.data?.message || "Erro inesperado. Tente novamente.", // Tratamento de erro com fallback
+        variant: "destructive",
+      });
     }
+    
 
     setIsLoading(false);
-    //FIM DA ADIÇÃO
 
   };
 

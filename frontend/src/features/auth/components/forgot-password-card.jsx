@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { resetPwdcall, verPwdresetcall, chgPwdcall } from "@/API/apicall-func";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * @typedef {Object} ForgotPasswordCardProps
@@ -17,6 +18,7 @@ import { resetPwdcall, verPwdresetcall, chgPwdcall } from "@/API/apicall-func";
  * @returns {JSX.Element}
  */
 export const ForgotPasswordCard = ({ setState }) => {
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isCodeSent, setIsCodeSent] = useState(false); // Etapa 1: código enviado
   const [isCodeVerified, setIsCodeVerified] = useState(false); // Etapa 2: código verificado

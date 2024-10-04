@@ -5,7 +5,7 @@ export default (sequelize) => {
         static associate(models) {
             PasswordResetToken.belongsTo(models.User, {
                 foreignKey: 'userId',
-                as: 'user',
+                as: 'user'
             });
         }
     }
@@ -22,6 +22,10 @@ export default (sequelize) => {
         },
         expiresAt: {
             type: DataTypes.DATE,
+            allowNull: false,
+        },
+        userId: {
+            type: DataTypes.INTEGER,
             allowNull: false,
         },
     }, {

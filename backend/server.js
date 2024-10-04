@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
 import models from './models/index.js';
+import cors from 'cors';
 
 dotenv.config()
 
@@ -29,6 +30,8 @@ pool.connect()
     })
 
 const app = express()
+app.use(cors());
+
 app.get("/", async (req, res) => {
     let client;
 

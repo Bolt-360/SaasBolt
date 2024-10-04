@@ -13,6 +13,6 @@ router.get("/forgotpassword", forgotPassword)
 
 router.get("/verpwdtoken", verPwdToken)
 
-rouget.get("/changepwd", changePassword)
+router.get("/changepwd", changePassword)
 
 export default router

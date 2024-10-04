@@ -3,10 +3,9 @@ import { DataTypes, Model } from 'sequelize';
 export default (sequelize) => {
     class User extends Model {
         static associate(models) {
-
-            User.hasMany(models.PasswordResetToken, {
+            User.hasMany(models.PwdReset, {
                 foreignKey: 'userId',
-                as: 'passwordResetTokens',
+                as: 'pwdResetToken'
             });
 
             User.hasMany(models.Message, {
