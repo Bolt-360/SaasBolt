@@ -1,207 +1,226 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { SendIcon, MicIcon, SmileIcon, PaperclipIcon, BoldIcon, ItalicIcon, StrikethroughIcon } from "lucide-react";
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
+import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import EmojiPicker from 'emoji-picker-react'
+import { Button } from "@/components/ui/button"
+import { Smile, Paperclip, Bold, Italic, Strikethrough, Send, Mic, Check, X } from 'lucide-react'
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
+import * as Tooltip from '@radix-ui/react-tooltip'
+import useSendMessage from '@/hooks/useSendMessage'
+import useConversation from "@/zustand/useConversation";
+import { cn } from "@/lib/utils";
 
-const MAX_LINES = 7;
+const TooltipButton = ({ onClick, icon, tooltip, isActive = false }) => (
+  <Tooltip.Provider>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <button 
+          onClick={onClick ? () => onClick() : undefined} 
+          className={`p-1 rounded hover:bg-gray-100 ${isActive ? 'bg-gray-200' : ''}`}
+        >
+          {icon}
+        </button>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          className="bg-gray-800 text-white text-sm px-2 py-1 rounded shadow-lg"
+          sideOffset={5}
+        >
+          {tooltip}
+          <Tooltip.Arrow className="fill-gray-800" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+)
 
-export default function ChatInput() {
-    const [message, setMessage] = useState("");
-    const [activeFormats, setActiveFormats] = useState({
-        bold: false,
-        italic: false,
-        strikethrough: false
-    });
-    const inputRef = useRef(null);
+const ChatInput = () => {
+  const { selectedConversation } = useConversation();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const { sendMessage, loading, status } = useSendMessage();
+  const emojiPickerRef = useRef(null);
+  const editorRef = useRef(null);
+  
 
-    useEffect(() => {
-        adjustTextareaHeight();
-    }, [message]);
+  const convertToWhatsAppFormat = (html) => {
+    let whatsappText = html
+      .replace(/<strong>(.*?)<\/strong>/g, '*$1*')
+      .replace(/<em>(.*?)<\/em>/g, '_$1_')
+      .replace(/ (.*?)<\/s>/g, '~$1~')
+      .replace(/<p>/g, '')
+      .replace(/<\/p>/g, '\n')
+      .trim();
+    return whatsappText;
+  };
 
-    const adjustTextareaHeight = () => {
-        const textarea = inputRef.current;
-        if (!textarea) return;
-
-        textarea.style.height = 'auto';
-        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
-        const lines = textarea.scrollHeight / lineHeight;
-
-        if (lines <= MAX_LINES) {
-            textarea.style.height = `${textarea.scrollHeight}px`;
-            textarea.style.overflowY = 'hidden';
-        } else {
-            textarea.style.height = `${lineHeight * MAX_LINES}px`;
-            textarea.style.overflowY = 'auto';
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm focus:outline-none',
+      },
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !(event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          handleSend();
+          return true;
         }
-    };
-
-    const handleEmojiSelect = (emoji) => {
-        insertTextAtCursor(emoji.native);
-    };
-
-    const insertTextAtCursor = (text) => {
-        const textarea = inputRef.current;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const newMessage = message.substring(0, start) + text + message.substring(end);
-        setMessage(newMessage);
-        
-        // Ajusta o cursor após a inserção
-        setTimeout(() => {
-            textarea.selectionStart = textarea.selectionEnd = start + text.length;
-            textarea.focus();
-        }, 0);
-    };
-
-    const formatText = (format) => {
-        const textarea = inputRef.current;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const symbol = format === 'bold' ? '*' : format === 'italic' ? '_' : '~';
-
-        if (activeFormats[format]) {
-            const newMessage = message.replace(new RegExp(`\\${symbol}(.*?)\\${symbol}`, 'g'), '$1');
-            setMessage(newMessage);
-            textarea.setSelectionRange(start - symbol.length, end - symbol.length);
-        } else {
-            const selectedText = message.substring(start, end);
-            const formattedText = `${symbol}${selectedText}${symbol}`;
-            const newMessage = message.substring(0, start) + formattedText + message.substring(end);
-            setMessage(newMessage);
-            textarea.setSelectionRange(start + symbol.length, end + symbol.length);
+        if (event.key === 'Enter' && (event.shiftKey || event.metaKey || event.ctrlKey)) {
+          return false;
         }
+        return false;
+      },
+    },
+    onUpdate: ({ editor }) => {
+      if (editorRef.current) {
+        editorRef.current.scrollTop = editorRef.current.scrollHeight;
+      }
+    },
+  });
 
-        setActiveFormats(prev => ({ ...prev, [format]: !prev[format] }));
-        textarea.focus();
+  const handleSend = useCallback(async () => {
+    if (editor && selectedConversation) {
+      const htmlContent = editor.getHTML();
+      const whatsappFormattedMessage = convertToWhatsAppFormat(htmlContent);
+      if (whatsappFormattedMessage && whatsappFormattedMessage.trim() !== '') {
+        await sendMessage(whatsappFormattedMessage);
+        editor.commands.clearContent();
+      }
+    }
+  }, [editor, sendMessage, selectedConversation]);
+
+  const toggleFormat = useCallback((format) => {
+    if (editor && editor.isEditable) {
+      editor.chain().focus()[format]().run();
+    }
+  }, [editor]);
+
+  const addEmoji = useCallback((emoji) => {
+    if (editor && editor.isEditable) {
+      editor.chain().focus().insertContent(emoji.native).run();
+      setShowEmojiPicker(false);
+    }
+  }, [editor]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
 
-    const sendMessage = () => {
-        console.log("Mensagem enviada:", processMessage(message));
-        setMessage('');
-        setActiveFormats({ bold: false, italic: false, strikethrough: false });
-    };
+  const renderSendButton = () => {
+    switch (status) {
+      case 'success':
+        return <Check className="text-green-500" />;
+      case 'error':
+        return <X className="text-red-500" />;
+      default:
+        return <Send />;
+    }
+  };
 
-    const processMessage = (text) => {
-        text = text.replace(/\n/g, '<br>');
-        text = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-        text = text.replace(/_(.*?)_/g, '<em>$1</em>');
-        text = text.replace(/~(.*?)~/g, '<del>$1</del>');
-        return text;
-    };
+  const buttonIcon = () => {
+    switch (status) {
+      case 'success':
+        return <Check className="h-4 w-4" />;
+      case 'error':
+        return <X className="h-4 w-4" />;
+      default:
+        return <Send className="h-4 w-4" />;
+    }
+  };
 
-    return (
-        <TooltipProvider>
-            <div className="p-4 border-t">
-                <div className="flex items-center space-x-2">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <SmileIcon className="w-5 h-5" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <Picker data={data} onEmojiSelect={handleEmojiSelect} />
-                                </PopoverContent>
-                            </Popover>
-                        </TooltipTrigger>
-                        <TooltipContent>Adicionar emoji</TooltipContent>
-                    </Tooltip>
+  const buttonColor = () => {
+    switch (status) {
+      case 'success':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'error':
+        return 'bg-red-500 hover:bg-red-600';
+      default:
+        return 'bg-blue-500 hover:bg-blue-600';
+    }
+  };
 
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <PaperclipIcon className="w-5 h-5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Anexar arquivo</TooltipContent>
-                    </Tooltip>
+  if (!editor) {
+    return <div>Loading editor...</div>
+  }
 
-                    <div className="flex space-x-1">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    variant={activeFormats.bold ? "secondary" : "ghost"} 
-                                    size="icon" 
-                                    onClick={() => formatText('bold')}
-                                >
-                                    <BoldIcon className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Negrito</TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    variant={activeFormats.italic ? "secondary" : "ghost"} 
-                                    size="icon" 
-                                    onClick={() => formatText('italic')}
-                                >
-                                    <ItalicIcon className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Itálico</TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    variant={activeFormats.strikethrough ? "secondary" : "ghost"} 
-                                    size="icon" 
-                                    onClick={() => formatText('strikethrough')}
-                                >
-                                    <StrikethroughIcon className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Tachado</TooltipContent>
-                        </Tooltip>
-                    </div>
-
-                    <textarea
-                        ref={inputRef}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        className="flex-1 border rounded p-2 min-h-[50px] outline-none resize-none"
-                        onKeyDown={handleKeyDown}
-                        placeholder="Digite uma mensagem"
-                        rows={1}
-                    />
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button 
-                                size="icon" 
-                                variant="ghost"
-                                onClick={sendMessage}
-                            >
-                                <SendIcon className="w-5 h-5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Enviar mensagem</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button size="icon" variant="ghost">
-                                <MicIcon className="w-5 h-5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Gravar áudio</TooltipContent>
-                    </Tooltip>
-                </div>
-            </div>
-        </TooltipProvider>
-    );
+  return (
+    <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md relative">
+      {showEmojiPicker && (
+        <div 
+          ref={emojiPickerRef}
+          className="absolute bottom-full left-0 mb-2 z-10"
+        >
+          <Picker data={data} onEmojiSelect={addEmoji} />
+        </div>
+      )}
+      <div className="flex items-center p-2">
+        <div className="flex space-x-2 mr-2">
+          <TooltipButton
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            icon={<Smile size={20} />}
+            tooltip="Emojis"
+          />
+          <TooltipButton
+            icon={<Paperclip size={20} />}
+            tooltip="Anexar arquivo"
+          />
+          <TooltipButton
+            onClick={() => toggleFormat('toggleBold')}
+            icon={<Bold size={20} />}
+            tooltip="Negrito"
+            isActive={editor.isActive('bold')}
+          />
+          <TooltipButton
+            onClick={() => toggleFormat('toggleItalic')}
+            icon={<Italic size={20} />}
+            tooltip="Itálico"
+            isActive={editor.isActive('italic')}
+          />
+          <TooltipButton
+            onClick={() => toggleFormat('toggleStrike')}
+            icon={<Strikethrough size={20} />}
+            tooltip="Tachado"
+            isActive={editor.isActive('strike')}
+          />
+        </div>
+        <div className="flex-grow relative border rounded-lg">
+          <div 
+            ref={editorRef}
+            className="min-h-[24px] max-h-[120px] py-1 px-2 overflow-y-auto"
+          >
+            <EditorContent editor={editor} />
+          </div>
+          {!editor.getText() && (
+            <span className="absolute top-1 left-2 text-gray-400 pointer-events-none">
+              Digite uma mensagem
+            </span>
+          )}
+        </div>
+        <div className="flex space-x-2 ml-2">
+            <TooltipButton
+                onClick={handleSend}  // A função que será chamada ao clicar
+                icon={buttonIcon()}    // Usa o ícone atual gerado pela função buttonIcon()
+                tooltip="Enviar mensagem"  // Texto exibido no Tooltip
+            />
+          <TooltipButton
+            icon={<Mic size={20} />}
+            tooltip="Mensagem de voz"
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
+
+export default ChatInput;

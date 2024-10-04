@@ -1,50 +1,50 @@
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useState, useEffect, useRef } from "react";
+import React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
-export default function ConversationItem({ name, lastMessage, time }) {
-    const [avatarSize, setAvatarSize] = useState(10);
-    const [fontSize, setFontSize] = useState(14);
-    const containerRef = useRef(null);
+const StatusIndicator = ({ status }) => {
+  const statusColors = {
+    online: "bg-green-500",
+    away: "bg-yellow-500",
+    busy: "bg-red-500",
+    offline: "bg-gray-500"
+  };
 
-    useEffect(() => {
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const width = entry.contentRect.width;
-                if (width < 200) {
-                    setAvatarSize(6);
-                    setFontSize(10);
-                } else if (width < 250) {
-                    setAvatarSize(8);
-                    setFontSize(12);
-                } else {
-                    setAvatarSize(10);
-                    setFontSize(16);
-                }
-            }
-        });
+  return (
+    <span className={cn(
+      "absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white",
+      statusColors[status] || statusColors.offline
+    )} />
+  );
+};
 
-        if (containerRef.current) {
-            resizeObserver.observe(containerRef.current);
-        }
+const ConversationItem = ({ name, lastMessage, time, avatarSrc, isSelected, onClick, status = "online" }) => {
+  return (
+    <div 
+      className={cn(
+        "flex items-center space-x-4 p-3 rounded-lg cursor-pointer hover:bg-secondary",
+        isSelected && "bg-secondary"
+      )}
+      onClick={onClick}
+    >
+      <div className="relative">
+        <Avatar>
+          <AvatarImage src={avatarSrc} alt={name} />
+          <AvatarFallback>{name[0]}</AvatarFallback>
+        </Avatar>
+        <StatusIndicator status={status} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+        {lastMessage && (
+          <p className="text-sm text-gray-500 truncate">{lastMessage}</p>
+        )}
+      </div>
+      {time && (
+        <span className="text-xs text-gray-400">{time}</span>
+      )}
+    </div>
+  );
+};
 
-        return () => {
-            if (containerRef.current) {
-                resizeObserver.unobserve(containerRef.current);
-            }
-        };
-    }, []);
-
-    return (
-        <div ref={containerRef} className="pl-2 flex items-center space-x-2 w-full p-1 hover:bg-accent cursor-pointer">
-          <Avatar className={`flex-shrink-0 w-${avatarSize} h-${avatarSize}`}>
-            <AvatarImage src="/placeholder-user.jpg" alt="User" />
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
-          <div className="flex-grow min-w-0 overflow-hidden">
-            <p style={{ fontSize: `${fontSize}px` }} className="font-medium truncate">{name}</p>
-            <p style={{ fontSize: `${fontSize - 2}px` }} className="text-muted-foreground truncate">{lastMessage}</p>
-          </div>
-          <div style={{ fontSize: `${fontSize - 2}px` }} className="flex-shrink-0 text-muted-foreground ml-1 whitespace-nowrap pr-2">{time}</div>
-        </div>
-    );
-}
+export default ConversationItem;

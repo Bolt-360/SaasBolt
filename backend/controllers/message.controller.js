@@ -42,8 +42,6 @@ export const sendMessage = async (req, res, next) => {
             ], { 
                 ignoreDuplicates: true
             });
-        } else {
-            next(errorHandler(404, "Conversa não encontrada"));
         }
 
         // Criar nova mensagem

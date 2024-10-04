@@ -28,3 +28,5 @@ export function Message({ text, timestamp, isUser, hasImage, avatarSrc }) {
     </div>
   );
 }
+
+export default Message;
