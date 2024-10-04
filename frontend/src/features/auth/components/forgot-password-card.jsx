@@ -1,16 +1,15 @@
-import { useState } from 'react';
-//import { Link } from 'react-router-dom';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast"; // Exemplo de onde o hook useToast pode vir
+import { resetPwdcall, verPwdresetcall, chgPwdcall } from "@/API/apicall-func";
 
 /**
  * @typedef {Object} ForgotPasswordCardProps
- * @property {function(SignInFlow): void} setState
+ * @property {function(string): void} setState
  */
 
 /**
@@ -18,82 +17,193 @@ import { useToast } from "@/hooks/use-toast"; // Exemplo de onde o hook useToast
  * @returns {JSX.Element}
  */
 export const ForgotPasswordCard = ({ setState }) => {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null);
-  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [isCodeSent, setIsCodeSent] = useState(false); // Etapa 1: código enviado
+  const [isCodeVerified, setIsCodeVerified] = useState(false); // Etapa 2: código verificado
+  const [isPasswordChanged, setIsPasswordChanged] = useState(false); // Etapa 4: mudança de senha
+  const [error, setError] = useState("");
+  const [code, setCode] = useState(new Array(6).fill(""));
+  const [newPassword, setNewPassword] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSendCode = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus(null);
+    setError("");
+    // Aqui você normalmente chamaria sua API para enviar o código de redefinição
+    const response = await resetPwdcall.resetpwdcall(email);
 
-    // Simulate API call
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
-      
-      console.log('Reset de senha para:', email);
-      setSubmitStatus('success');
-      toast({ description: 'Email de recuperação enviado!' }); 
-    } catch (error) {
-      console.error('Erro ao tentar resetar senha:', error);
-      setSubmitStatus('error');
-      toast({ description: 'Erro ao enviar o email.', variant: 'destructive' });
-    } finally {
-      setIsSubmitting(false);
+    if (response && response.success) {
+      toast({
+        title: "Sucesso!",
+        description: response.message,
+        variant: "default",
+
+      })
+      setIsCodeSent(true); // Avançando para a Etapa 2
+    } else {
+      toast({
+        title: "Erro ao enviar",
+        description: response.message,
+        variant: "destructive",
+      })
     }
   };
 
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const response = await verPwdresetcall.verpwdresetcall(code, email);
+
+    if (response && response.success) {
+      toast({
+        title: "Sucesso!",
+        description: response.message,
+        variant: "default",
+
+      })
+      setIsCodeVerified(true);
+    } else {
+      toast({
+        title: "Erro!",
+        description: response.message,
+        variant: "destructive",
+      })
+    }
+
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const response = await chgPwdcall.chgpwdcall(email, newPassword);
+
+    if (response && response.success) {
+      toast({
+        title: "Sucesso!",
+        description: response.message,
+        variant: "default",
+
+      })
+      setIsPasswordChanged(true);
+    } else {
+      toast({
+        title: "Erro!",
+        description: response.message,
+        variant: "destructive",
+      })
+    }
+  };
+
+  const handleBack = () => {
+    setIsCodeSent(false);
+    setIsCodeVerified(false);
+    setError("");
+  };
+
   return (
-    <div className="bg-card rounded-2xl shadow-lg ring-1 ring-border">
+    <Card className="w-[420px]">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Esqueci minha senha</CardTitle>
+        <CardTitle>
+          {isPasswordChanged ? "Sucesso" : isCodeVerified ? "Mudar Senha" : isCodeSent ? "Verificar Código" : "Esqueceu a Senha"}
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-left block">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="email@bolt360.com.br"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
+      <form onSubmit={isPasswordChanged ? handleBack : isCodeVerified ? handleChangePassword : isCodeSent ? handleVerifyCode : handleSendCode}>
+        <CardContent>
+          <div className="grid w-full items-center gap-4">
+            {!isCodeSent ? (
+              // Etapa 1: Solicitação por Email
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+            ) : !isCodeVerified ? (
+              // Etapa 2: Verificação de Código
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="code">Código de Redefinição</Label>
+                <div className="flex gap-2">
+                  {code.map((digit, index) => (
+                    <Input
+                      key={index}
+                      id={`code-${index}`}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="\d*"
+                      maxLength={1}
+                      className="w-10 text-center"
+                      value={digit}
+                      onChange={(e) => {
+                        const newCode = [...code];
+                        newCode[index] = e.target.value;
+                        setCode(newCode);
+                      }}
+                      required
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : !isPasswordChanged ? (
+              // Etapa 3: Mudança de Senha
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="new-password">Nova Senha</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Digite sua nova senha"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+            ) : (
+              // Etapa 4: Confirmação de Mudança
+              <div className="text-center">
+                <p className="text-green-600">Senha alterada com sucesso!</p>
+              </div>
+            )}
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Enviando...' : 'Enviar Link de Reset'}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
-        {submitStatus === 'success' && (
-          < Alert variant="default">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertTitle>Sucesso</AlertTitle>
-            <AlertDescription>
-              Se uma conta existe para {email}, você receberá instruções de como resetar a senha por esse email.
-            </AlertDescription>
-          </Alert>
-        )}
-        {submitStatus === 'error' && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro</AlertTitle>
-            <AlertDescription>
-              Um erro ocorreu enquanto processava a requisição. Por favor tente novamente.
-            </AlertDescription>
-          </Alert>
-        )}
-        <div className="text-center text-sm">
-          Lembrou da senha?{' '}
-          <span onClick={() => setState('sign-in')} className="text-blue-600 hover:underline font-medium cursor-pointer">
-            Entrar
-          </span>
-        </div>
-      </CardFooter>
-    </div >
+        </CardContent>
+        <CardFooter className="flex flex-col">
+          {!isPasswordChanged ? (
+            <Button className="w-fit" type="submit">
+              {isCodeVerified ? "Mudar Senha" : isCodeSent ? "Verificar Código" : "Enviar Código de Redefinição"}
+            </Button>
+          ) : (
+            <Button className="w-full" variant="outline" onClick={handleBack}>
+              Voltar
+            </Button>
+          )}
+
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {!isPasswordChanged && isCodeSent && (
+            <Button className="w-full mt-2" variant="outline" onClick={handleBack}>
+              Voltar
+            </Button>
+          )}
+
+          <div className="text-center text-sm mt-2">
+            Lembrou da senha?{" "}
+            <span onClick={() => setState("sign-in")} className="text-blue-600 hover:underline font-medium cursor-pointer">
+              Entrar
+            </span>
+          </div>
+        </CardFooter>
+      </form>
+    </Card>
   );
 };

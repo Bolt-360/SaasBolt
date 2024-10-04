@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, LayoutDashboard, User, Settings, Menu, ChevronRight, LogOut, ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useNavigate } from 'react-router-dom' // Aqui está o hook sendo importado
+import { logoutcall } from '@/API/apicall-func'
+import { toast } from 'sonner'
 
 const initialColumns = {
     todo: {
@@ -30,14 +33,31 @@ const initialColumns = {
     },
 }
 
-const handleLogout = () => {
-    // Implement logout logic here
-    console.log('Logging out...')
-}
-
 export default function DashboardLayout() {
     const [columns, setColumns] = useState(initialColumns)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+    
+    
+    // Hook useNavigate chamado diretamente dentro do componente de função
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        console.log('Logging out...')
+        const response = await signincall.logout();
+        if(response.success){
+            toast({
+                title: "Logout realizado!",
+                variant: "default",
+              })
+            navigate('/auth'); // Navegação após logout
+        } else {
+            toast({
+                title: "Logout falhou!",
+                variant: "destructive",
+              })
+            console.error('Logout failed');
+        }
+    }
 
     const onDragEnd = (result) => {
         const { source, destination } = result

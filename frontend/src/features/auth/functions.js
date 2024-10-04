@@ -1,3 +1,5 @@
+import Cookies from 'js-cookie';
+
 export const cpfMask = value => { //altera valor cpf
     return value
       .replace(/\D/g, '') 

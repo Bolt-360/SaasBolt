@@ -3,6 +3,12 @@ import { DataTypes, Model } from 'sequelize';
 export default (sequelize) => {
     class User extends Model {
         static associate(models) {
+
+            User.hasMany(models.PasswordResetToken, {
+                foreignKey: 'userId',
+                as: 'passwordResetTokens',
+            });
+
             User.hasMany(models.Message, {
                 foreignKey: 'senderId',
                 as: 'sentMessages'

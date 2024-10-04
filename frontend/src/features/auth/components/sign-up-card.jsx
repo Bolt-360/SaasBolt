@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { signupcall } from "@/API/apicall-func";
-import { cpfMask } from "../adjustments";
+import { cpfMask } from "../functions";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from 'lucide-react'
 
