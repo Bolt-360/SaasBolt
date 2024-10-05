@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { resetPwdcall, verPwdresetcall, chgPwdcall } from "@/API/apicall-func";
+import { resetPwdcall, verPwdresetcall, chgPwdcall, verTokenExists } from "@/API/apicall-func";
 import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -30,23 +30,33 @@ export const ForgotPasswordCard = ({ setState }) => {
   const handleSendCode = async (e) => {
     e.preventDefault();
     setError("");
-    // Aqui você normalmente chamaria sua API para enviar o código de redefinição
-    const response = await resetPwdcall.resetpwdcall(email);
-
-    if (response && response.success) {
+    const response1 = await verTokenExists.vertknresetcall(email);
+    if (response1 && !response1.success) {
       toast({
-        title: "Sucesso!",
-        description: response.message,
-        variant: "default",
-
-      })
-      setIsCodeSent(true); // Avançando para a Etapa 2
-    } else {
-      toast({
-        title: "Erro ao enviar",
-        description: response.message,
+        title: "Opa!",
+        description: response1.message,
         variant: "destructive",
+
       })
+    } else {
+
+      const response = await resetPwdcall.resetpwdcall(email);
+
+      if (response && response.success) {
+        toast({
+          title: "Sucesso!",
+          description: response.message,
+          variant: "default",
+
+        })
+        setIsCodeSent(true); // Avançando para a Etapa 2
+      } else {
+        toast({
+          title: "Erro ao enviar",
+          description: response.message,
+          variant: "destructive",
+        })
+      }
     }
   };
 
@@ -54,7 +64,7 @@ export const ForgotPasswordCard = ({ setState }) => {
     e.preventDefault();
     setError("");
 
-    const response = await verPwdresetcall.verpwdresetcall(code, email);
+    const response = await verPwdresetcall.verpwdresetcall(code.join(''), email);
 
     if (response && response.success) {
       toast({
@@ -129,9 +139,9 @@ export const ForgotPasswordCard = ({ setState }) => {
               </div>
             ) : !isCodeVerified ? (
               // Etapa 2: Verificação de Código
-              <div className="flex flex-col space-y-1.5">
+              <div className="flex flex-col space-y-1.5 justify-center items-center">
                 <Label htmlFor="code">Código de Redefinição</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-center items-center">
                   {code.map((digit, index) => (
                     <Input
                       key={index}
@@ -143,15 +153,50 @@ export const ForgotPasswordCard = ({ setState }) => {
                       className="w-10 text-center"
                       value={digit}
                       onChange={(e) => {
-                        const newCode = [...code];
-                        newCode[index] = e.target.value;
-                        setCode(newCode);
+                        const value = e.target.value;
+
+                        // Permite limpar o campo (valor vazio) ou validar se é um dígito numérico
+                        if (value === "" || value.match(/^\d$/)) {
+                          const newCode = [...code];
+                          newCode[index] = value;
+                          setCode(newCode);
+
+                          // Move para o próximo campo se não for o último e o valor for um número válido
+                          if (value.match(/^\d$/) && index < code.length - 1) {
+                            document.getElementById(`code-${index + 1}`).focus();
+                          }
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        // Permite voltar ao campo anterior usando Backspace
+                        if (e.key === "Backspace" && index > 0 && !code[index]) {
+                          document.getElementById(`code-${index - 1}`).focus();
+                        }
+                      }}
+                      onPaste={(e) => {
+                        const pasteData = e.clipboardData.getData("text");
+                        const pasteDigits = pasteData.split("").filter((char) => /^\d$/.test(char)); // Apenas números
+
+                        if (pasteDigits.length > 0) {
+                          const newCode = [...code];
+                          pasteDigits.slice(0, code.length).forEach((digit, idx) => {
+                            newCode[idx] = digit;
+                          });
+                          setCode(newCode);
+
+                          // Move o foco para o último campo preenchido
+                          const lastFilledIndex = Math.min(pasteDigits.length - 1, code.length - 1);
+                          document.getElementById(`code-${lastFilledIndex}`).focus();
+                        }
+                        e.preventDefault(); // Impede o comportamento padrão de colar
                       }}
                       required
                     />
                   ))}
                 </div>
               </div>
+
+
             ) : !isPasswordChanged ? (
               // Etapa 3: Mudança de Senha
               <div className="flex flex-col space-y-1.5">
@@ -175,11 +220,11 @@ export const ForgotPasswordCard = ({ setState }) => {
         </CardContent>
         <CardFooter className="flex flex-col">
           {!isPasswordChanged ? (
-            <Button className="w-fit" type="submit">
+            <Button className="w-[210px]" type="submit">
               {isCodeVerified ? "Mudar Senha" : isCodeSent ? "Verificar Código" : "Enviar Código de Redefinição"}
             </Button>
           ) : (
-            <Button className="w-full" variant="outline" onClick={handleBack}>
+            <Button className="w-[210px]" variant="outline" onClick={handleBack}>
               Voltar
             </Button>
           )}
@@ -193,7 +238,7 @@ export const ForgotPasswordCard = ({ setState }) => {
           )}
 
           {!isPasswordChanged && isCodeSent && (
-            <Button className="w-full mt-2" variant="outline" onClick={handleBack}>
+            <Button className="w-[210px] mt-2" variant="outline" onClick={handleBack}>
               Voltar
             </Button>
           )}

@@ -43,8 +43,8 @@ export default function DashboardLayout() {
 
     const handleLogout = async () => {
         console.log('Logging out...')
-        const response = await signincall.logout();
-        if(response.success){
+        const response = await logoutcall.logout();
+        if(response){
             toast({
                 title: "Logout realizado!",
                 variant: "default",

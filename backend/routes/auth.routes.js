@@ -1,5 +1,5 @@
 import express from "express"
-import { cadastro, login, logout, forgotPassword, verPwdToken, changePassword } from "../controllers/auth.controller.js"
+import { cadastro, login, logout, forgotPassword, verPwdToken, changePassword, verTokenExists } from "../controllers/auth.controller.js"
 
 const router = express.Router()
 
@@ -9,10 +9,12 @@ router.post("/login", login)
 
 router.get("/logout", logout)
 
-router.get("/forgotpassword", forgotPassword)
+router.post("/forgotpassword", forgotPassword)
 
-router.get("/verpwdtoken", verPwdToken)
+router.post("/verpwdtoken", verPwdToken)
 
-router.get("/changepwd", changePassword)
+router.post("/changepwd", changePassword)
+
+router.post("/tokenresetverify", verTokenExists)
 
 export default router

@@ -32,9 +32,9 @@ export const SignInCard = ({setState}) => {
     console.log('Login attempt:', { email, password });
     
     //ADIÇÃO DA API DE LOGIN NO BOTÃO DE ENTRAR
-    const response = await signincall.login(email, password);
+    //const response = await signincall.login(email, password);
     try {
-      const response = await api.login(credentials); // Exemplo de requisição à API
+      const response = await signincall.login(email, password) // Exemplo de requisição à API
     
       if (response && response.data.token) {
         toast({
