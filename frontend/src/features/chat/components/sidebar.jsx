@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ConversationItem from "./conversationItem";
-import useGetConversations from "@/hooks/useGetConversations";
 import useGetContacts from "@/hooks/useGetContacts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useConversation from "@/zustand/useConversation";
+import useGetListConversations from '@/hooks/useGetListConversations';
 
 export default function Sidebar({ activeTab }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const { loading: loadingConversations, conversations = [] } = useGetConversations();
-  const { loading: loadingContacts, contacts = [] } = useGetContacts();
+  const { loading: loadingConversations, conversations } = useGetListConversations();
+  const { loading: loadingContacts, contacts } = useGetContacts();
   const { selectedConversation, setSelectedConversation } = useConversation();
 
   const filteredConversations = conversations.filter(conv => 
-    conv.username.toLowerCase().includes(searchTerm.toLowerCase())
+    conv.otherParticipant?.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredContacts = contacts.filter(contact => 
-    contact.username.toLowerCase().includes(searchTerm.toLowerCase())
+    contact.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSelectConversation = (conversation) => {
@@ -53,17 +53,15 @@ export default function Sidebar({ activeTab }) {
               <div className="space-y-4 p-4">
                 {loadingConversations ? (
                   <div>Carregando conversas...</div>
+                ) : filteredConversations.length === 0 ? (
+                  <div>Nenhuma conversa encontrada.</div>
                 ) : (
                   filteredConversations.map((conversation) => (
                     <ConversationItem
                       key={conversation.id}
-                      name={conversation.username}
-                      lastMessage={conversation.lastMessage}
-                      time={conversation.time}
-                      avatarSrc={conversation.profilePicture}
+                      conversation={conversation}
                       isSelected={selectedConversation?.id === conversation.id}
                       onClick={() => handleSelectConversation(conversation)}
-                      status="online" // Por enquanto, definimos todos como online
                     />
                   ))
                 )}
@@ -83,15 +81,21 @@ export default function Sidebar({ activeTab }) {
           <div className="space-y-4 p-4">
             {loadingContacts ? (
               <div>Carregando contatos...</div>
+            ) : filteredContacts.length === 0 ? (
+              <div>Nenhum contato encontrado.</div>
             ) : (
               filteredContacts.map((contact) => (
                 <ConversationItem
                   key={contact.id}
-                  name={contact.username}
-                  avatarSrc={contact.profilePicture}
+                  conversation={{
+                    otherParticipant: contact,
+                    lastMessage: null
+                  }}
                   isSelected={selectedConversation?.id === contact.id}
-                  onClick={() => handleSelectConversation(contact)}
-                  status="online" // Por enquanto, definimos todos como online
+                  onClick={() => handleSelectConversation({
+                    id: contact.id,
+                    otherParticipant: contact
+                  })}
                 />
               ))
             )}

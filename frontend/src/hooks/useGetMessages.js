@@ -1,43 +1,41 @@
+import { useState, useEffect, useCallback } from 'react';
 import useConversation from '@/zustand/useConversation';
-import React, { useEffect, useState } from 'react'
 import { useToast } from "@/hooks/use-toast";
-
 
 const useGetMessages = () => {
     const [loading, setLoading] = useState(false);
-    const { messages, setMessages, selectConversation } = useConversation();
+    const { messages, setMessages, selectedConversation } = useConversation();
     const { toast } = useToast();
-    useEffect(() => {
-        const getMessages = async () => {
-            try {
-                setLoading(true);
 
-                const res = await fetch(`/api/messages/${selectConversation?.id}`);
+    const getMessages = useCallback(async () => {
+        if (!selectedConversation?.id) return;
 
-                const data = await res.json();
-
-                if(data.error){
-                    throw new Error(data.error);
-                }
-
-                setMessages(data);
-            } catch (error) {
-                toast({
-                    title: "Erro ao obter mensagens",
-                    description: error.message,
-                    variant: "destructive"
-                })
-            }finally {
-                setLoading(false);
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/messages/${selectedConversation.id}`);
+            if (!res.ok) {
+                throw new Error('Falha ao buscar mensagens');
             }
+            const data = await res.json();
+            setMessages(data);
+        } catch (error) {
+            console.error('Erro ao obter mensagens:', error);
+            toast({
+                title: "Erro ao obter mensagens",
+                description: error.message,
+                variant: "destructive"
+            });
+            setMessages([]);
+        } finally {
+            setLoading(false);
         }
+    }, [selectedConversation?.id, setMessages, toast]);
 
-        if(selectConversation?.id){
-            getMessages();
-        }
-    }, [selectConversation?.id, setMessages])
+    useEffect(() => {
+        getMessages();
+    }, [getMessages, selectedConversation]);
 
-    return { loading, messages };
-}
+    return { loading, messages, getMessages };
+};
 
-export default useGetMessages
+export default useGetMessages;

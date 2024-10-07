@@ -1,49 +1,26 @@
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes } from 'sequelize';
 
 export default (sequelize) => {
-    class Conversation extends Model {
-        static associate(models) {
-            Conversation.hasMany(models.Message, {
-                foreignKey: 'conversationId',
-                as: 'messages'
-            });
-
-            Conversation.belongsToMany(models.User, {
-                through: models.ConversationParticipants,
-                foreignKey: 'conversationId',
-                otherKey: 'userId',
-                as: 'participantUsers'
-            });
-
-            Conversation.belongsTo(models.Workspace, {
-                through: models.UserWorkspace,
-                foreignKey: 'conversationId',
-                otherKey: 'workspaceId',
-                as: 'participatedWorkspaces'
-            });
-        }
-    }
-
-    Conversation.init({
-        id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
+    const Conversation = sequelize.define('Conversation', {
         participants: {
             type: DataTypes.ARRAY(DataTypes.INTEGER),
-            allowNull: false,
+            allowNull: false
         },
-        messageIds: {
-            type: DataTypes.ARRAY(DataTypes.INTEGER),
-            defaultValue: [],
-        },
-    }, {
-        sequelize,
-        modelName: 'Conversation',
-        tableName: 'Conversations',
-        timestamps: true,
+        // outros campos...
     });
+
+    Conversation.associate = (models) => {
+        Conversation.belongsToMany(models.User, {
+            through: 'ConversationParticipants',
+            as: 'participantUsers',
+            foreignKey: 'conversationId'
+        });
+
+        Conversation.hasMany(models.Message, {
+            foreignKey: 'conversationId',
+            as: 'messages'
+        });
+    };
 
     return Conversation;
 };

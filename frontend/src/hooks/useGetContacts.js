@@ -2,33 +2,30 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const useGetContacts = () => {
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [contacts, setContacts] = useState([]);
     const { toast } = useToast();
-
+    
     useEffect(() => {
         const getContacts = async () => {
             try {
+                setLoading(true);
+
                 const res = await fetch("/api/users");
                 const data = await res.json();
                 
-                if(data.error) {
-                    toast({
-                        title: data.error,
-                        description: "Ocorreu um erro ao buscar os contatos.",
-                        variant: "destructive",
-                    });
-                    setContacts([]); // Garante que contacts seja um array vazio em caso de erro
-                } else {
-                    setContacts(data);
+                if (!res.ok) {
+                    throw new Error(data.error || "Erro ao buscar contatos");
                 }
+
+                setContacts(data);
             } catch (error) {
+                console.error("Erro ao buscar contatos:", error);
                 toast({
                     title: "Erro ao buscar contatos",
-                    description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
+                    description: error.message || "Ocorreu um erro inesperado. Por favor, tente novamente.",
                     variant: "destructive",
                 });
-                setContacts([]); // Garante que contacts seja um array vazio em caso de erro
             } finally {
                 setLoading(false);
             }

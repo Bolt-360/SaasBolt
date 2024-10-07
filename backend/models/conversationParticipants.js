@@ -3,7 +3,14 @@ import { DataTypes, Model } from 'sequelize';
 export default (sequelize) => {
     class ConversationParticipants extends Model {
         static associate(models) {
-            // Não são necessárias associações aqui, pois esta é uma tabela de junção
+            ConversationParticipants.belongsTo(models.Conversation, {
+                foreignKey: 'conversationId',
+                as: 'conversation'
+            });
+            ConversationParticipants.belongsTo(models.User, {
+                foreignKey: 'userId',
+                as: 'user'
+            });
         }
     }
 

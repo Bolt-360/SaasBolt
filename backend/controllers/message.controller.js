@@ -1,109 +1,96 @@
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import models from '../models/index.js';
 import sequelize from '../config/database.js';
 
 const { User, Message, Conversation, ConversationParticipants } = models;
 
-export const sendMessage = async (req, res, next) => {
+export const sendMessage = async (req, res) => {
     try {
-        const { message } = req.body;
-        const { id: receiverId } = req.params;
-        const senderId = req.user.id;
+      const authUserId = req.user.id;
+      const {id: recipientId} = req.params;
+      const recipientIdInt = parseInt(recipientId);
+      const { message } = req.body;
 
-        // Converter IDs para Inteiros
-        const senderIdInt = parseInt(senderId);
-        const receiverIdInt = parseInt(receiverId);
+      console.log('Mensagem:', message);
+      console.log('RecipientId:', recipientIdInt);
+      console.log('AuthUserId:', authUserId);
 
-        // Verificar se os IDs são válidos
-        if (isNaN(senderIdInt) || isNaN(receiverIdInt)) {
-            return res.status(400).json({ message: "IDs inválidos" });
+      if (!message) {
+        return res.status(400).json({ message: 'O conteúdo da mensagem é obrigatório' });
+      }
+
+      // Verificar se os dois participantes são válidos
+      const authUser = await User.findByPk(authUserId);
+      const recipientUser = await User.findByPk(recipientIdInt);
+
+      if (!authUser || !recipientUser) {
+        return res.status(404).json({ message: 'Um dos usuários não foi encontrado' });
+      }
+
+      // Verificar se já existe uma conversa entre esses dois participantes
+      let conversation = await Conversation.findOne({
+        where: {
+          participants: {
+            [Op.contains]: [authUserId, recipientIdInt]
+          }
         }
+      });
 
-        // Buscar a conversa com ambos os participantes
-        let conversation = await Conversation.findOne({
-            where: {
-                participants: {
-                    [Op.contains]: [senderIdInt, receiverIdInt]
-                }
-            }
+      // Se a conversa não existir, criar uma nova
+      if (!conversation) {
+        conversation = await Conversation.create({
+          participants: [authUserId, recipientIdInt]
         });
 
-        // Criar nova conversa se não existir
-        if (!conversation) {
-            conversation = await Conversation.create({
-                participants: [senderIdInt, receiverIdInt],
-                messageIds: []
-            });
+        // Associar os usuários à conversa
+        await conversation.addParticipantUsers([authUserId, recipientIdInt]);
+      }
 
-            // Adicionar os participantes à conversa
-            await ConversationParticipants.bulkCreate([
-                { conversationId: conversation.id, userId: senderIdInt },
-                { conversationId: conversation.id, userId: receiverIdInt }
-            ], { 
-                ignoreDuplicates: true
-            });
-        }
+      // Enviar a mensagem associada à conversa
+      const newMessage = await Message.create({
+        conversationId: conversation.id,
+        senderId: authUserId,
+        recipientId: recipientIdInt,
+        content: message,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
 
-        // Criar nova mensagem
-        const newMessage = await Message.create({
-            senderId: senderIdInt,
-            recipientId: receiverIdInt,
-            text: message,
-            conversationId: conversation.id
-        });
-
-        // Adicionar o ID da nova mensagem ao array messageIds
-        await conversation.update({
-            messageIds: sequelize.fn('array_append', sequelize.col('messageIds'), newMessage.id)
-        });
-
-        // Retornar a nova mensagem criada
-        res.status(201).json(newMessage);
+      return res.status(200).json({
+        message: 'Mensagem enviada com sucesso',
+        data: newMessage
+      });
     } catch (error) {
-        next(error);
+      console.error('Erro detalhado:', error);
+      return res.status(500).json({ message: 'Erro ao enviar a mensagem', error: error.message });
     }
 };
 
-
 export const getMessage = async (req, res, next) => {
     try {
-        const { id: messageId } = req.params;
+        const { id: userToMessage } = req.params; // ID do usuário com quem o remetente está conversando
+        const senderId = req.user.id; // ID do usuário autenticado
 
-        // Converter ID para Inteiro
-        const messageIdInt = parseInt(messageId);
-
-        // Verificar se o ID é válido
-        if (isNaN(messageIdInt)) {
-            return res.status(400).json({ message: "ID de mensagem inválido" });
-        }
-
-        // Buscar a mensagem pelo ID
-        const message = await Message.findOne({
-            where: { id: messageIdInt },
-            include: [
-                {
-                    model: User,
-                    as: 'sender',
-                    attributes: ['id', 'username', 'profilePicture'] // Retorna dados relevantes do remetente
-                },
-                {
-                    model: User,
-                    as: 'recipient',
-                    attributes: ['id', 'username', 'profilePicture'] // Retorna dados relevantes do destinatário
-                },
-                {
-                    model: Conversation,
-                    as: 'conversation',
-                    attributes: ['id', 'participants'] // Retorna dados da conversa, incluindo participantes
-                }
-            ]
+        // Buscar todas as mensagens entre o senderId (usuário autenticado) e userToMessage (usuário da URL)
+        const messages = await Message.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        senderId: senderId,
+                        recipientId: userToMessage
+                    },
+                    {
+                        senderId: userToMessage,
+                        recipientId: senderId
+                    }
+                ]
+            },
+            order: [['createdAt', 'ASC']] // Ordenar cronologicamente pela data de criação
         });
 
-        if (!message) {
-            return res.status(404).json({ message: "Mensagem não encontrada" });
-        }
-        // Retornar a mensagem encontrada
-        res.status(200).json(message);
+        // Sempre retornar 200 OK com o array de mensagens (vazio se não houver mensagens)
+        return res.status(200).json(messages);
+
     } catch (error) {
         next(error);
     }

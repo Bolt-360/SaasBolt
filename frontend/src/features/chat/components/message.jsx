@@ -6,23 +6,25 @@ import { formatTime } from "@/utils/formatTime";
 export function Message({ message }) {
   const { authUser } = useAuthContext();
   const { selectedConversation } = useConversation();
-  // Verifica se a mensagem foi enviada pelo usuário autenticado
+  
   const messageFromMe = message.senderId === authUser?._id;
+  const chatClassName = messageFromMe ? "chat-end" : "chat-start";
+  const bubbleClassName = messageFromMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground";
 
-  // Define classes para o alinhamento e estilo da bolha de mensagem
-  const chatClassName = messageFromMe ? "chat-end" : "chat-start"; // Alinhamento no lado direito para mensagens do usuário
-  const bubbleClassName = messageFromMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"; // Cor primária para o usuário
+  // Corrigido para usar a foto de perfil do outro usuário quando a mensagem não é do usuário autenticado
+  const profilePicture = messageFromMe
+    ? authUser?.profilePicture
+    : selectedConversation?.otherParticipant?.profilePicture;
 
-  const profilePicture = messageFromMe ? authUser?.profilePicture : selectedConversation?.profilePicture;
+  const getInitials = (user) => {
+    const firstNameInitial = user?.firstName?.charAt(0) || "";
+    const lastNameInitial = user?.lastName?.charAt(0) || "";
+    return `${firstNameInitial}${lastNameInitial}` || "U";
+  };
 
-  // Definir iniciais para fallback do Avatar
-  const authInitials = authUser ? `${authUser.firstName?.charAt(0)}${authUser.lastName?.charAt(0)}` : "A";
-  const conversationInitials = selectedConversation
-    ? `${selectedConversation.firstName?.charAt(0)}${selectedConversation.lastName?.charAt(0)}`
-    : "C";
-
-  // Função para formatar a hora de envio da mensagem
-
+  const authInitials = getInitials(authUser);
+  // Corrigido para usar as iniciais do outro participante
+  const conversationInitials = getInitials(selectedConversation?.otherParticipant);
 
   return (
     <div className={`chat ${chatClassName}`}>

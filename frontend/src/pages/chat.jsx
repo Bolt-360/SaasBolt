@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Sidebar from "@/features/chat/components/sidebar";
-import ConversationContainer from "@/features/chat/components/chat/ConversationContainer"
 import imagemdeFundo from "@/assets/bg.jpg";
 import IconSidebar from "@/features/chat/components/IconSidebar";
 import useConversation from "@/zustand/useConversation";
@@ -8,7 +7,6 @@ import MessageContainer from '@/features/chat/components/chat/MessageContainer';
 
 export default function ChatPage() {
   const [activeTab, setActiveTab] = useState('conversations');
-  const { selectedConversation } = useConversation();
 
   return (
     <div

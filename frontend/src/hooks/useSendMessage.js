@@ -30,25 +30,24 @@ const useSendMessage = () => {
                 body: JSON.stringify({ message })
             });
 
-            if (!response.ok) {
-                throw new Error('Erro ao enviar mensagem');
+            const data = await response.json();
+
+            if (response.ok) {
+                const updatedMessages = [...messages, data];
+                setMessages(updatedMessages);
+                setStatus('success');
+            } else {
+                throw new Error(data.error || 'Erro ao enviar mensagem');
             }
 
-            const data = await response.json();
-            const updatedMessages = [...messages, data];
-            setMessages(updatedMessages);
-            setStatus('success');
-
-            setTimeout(() => setStatus('idle'), 1000);
-
         } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
             toast({
                 title: 'Erro ao enviar mensagem',
                 description: error.message,
                 variant: 'destructive'
             });
             setStatus('error');
-            setTimeout(() => setStatus('idle'), 1000);
         } finally {
             setLoading(false);
         }

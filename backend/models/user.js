@@ -14,10 +14,9 @@ export default (sequelize) => {
             });
 
             User.belongsToMany(models.Conversation, {
-                through: models.ConversationParticipants,
-                foreignKey: 'userId',
-                otherKey: 'conversationId',
-                as: 'participatedConversations'
+                through: 'ConversationParticipants',
+                as: 'conversations',
+                foreignKey: 'userId'
             });
 
             User.belongsToMany(models.Workspace, {

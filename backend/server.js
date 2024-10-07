@@ -51,6 +51,7 @@ import authRouters from "./routes/auth.routes.js"
 import messageRouters from "./routes/message.routes.js"
 import userRouters from "./routes/user.routes.js"
 import workspacesRouters from "./routes/workspaces.routes.js"
+import conversationsRouters from "./routes/conversations.routes.js"
 
 //JSON para enviar os dados para o frontend
 app.use(express.json())
@@ -61,6 +62,7 @@ app.use("/api/auth", authRouters)
 app.use("/api/messages", messageRouters)
 app.use("/api/users", userRouters)
 app.use("/api/workspaces", workspacesRouters)
+app.use("/api/conversations", conversationsRouters)
 
 app.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)

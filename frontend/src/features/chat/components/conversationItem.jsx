@@ -1,47 +1,41 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { formatTime } from '@/utils/formatTime';
 
-const StatusIndicator = ({ status }) => {
-  const statusColors = {
-    online: "bg-green-500",
-    away: "bg-yellow-500",
-    busy: "bg-red-500",
-    offline: "bg-gray-500"
+const ConversationItem = ({ conversation, isSelected, onClick }) => {
+  const { otherParticipant, lastMessage } = conversation;
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   return (
-    <span className={cn(
-      "absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white",
-      statusColors[status] || statusColors.offline
-    )} />
-  );
-};
-
-const ConversationItem = ({ name, lastMessage, time, avatarSrc, isSelected, onClick, status = "online" }) => {
-  return (
     <div 
-      className={cn(
-        "flex items-center space-x-4 p-3 rounded-lg cursor-pointer hover:bg-secondary",
-        isSelected && "bg-secondary"
-      )}
+      className={`flex items-center space-x-4 p-3 hover:bg-gray-100 cursor-pointer ${isSelected ? 'bg-gray-200' : ''}`}
       onClick={onClick}
     >
-      <div className="relative">
-        <Avatar>
-          <AvatarImage src={avatarSrc} alt={name} />
-          <AvatarFallback>{name[0]}</AvatarFallback>
-        </Avatar>
-        <StatusIndicator status={status} />
-      </div>
+      <Avatar>
+        {otherParticipant.profilePicture ? (
+          <AvatarImage src={otherParticipant.profilePicture} alt={otherParticipant.username || 'User'} />
+        ) : (
+          <AvatarFallback>{getInitials(otherParticipant.username)}</AvatarFallback>
+        )}
+      </Avatar>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+        <p className="text-sm font-medium text-gray-900 truncate">
+          {otherParticipant.username || 'Usuário desconhecido'}
+        </p>
         {lastMessage && (
-          <p className="text-sm text-gray-500 truncate">{lastMessage}</p>
+          <p className="text-sm text-gray-500 truncate">
+            {lastMessage.content}
+          </p>
         )}
       </div>
-      {time && (
-        <span className="text-xs text-gray-400">{time}</span>
+      {lastMessage && lastMessage.createdAt && (
+        <span className="text-xs text-gray-400">
+          {formatTime(lastMessage.createdAt)}
+        </span>
       )}
     </div>
   );
