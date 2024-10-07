@@ -7,6 +7,7 @@ import useGetMessages from '@/hooks/useGetMessages';
 const MessageContainer = () => {
     const { messages, loading } = useGetMessages();
     const scrollAreaRef = useRef(null);
+    console.log(messages)
     useEffect(() => {
         if (scrollAreaRef.current) {
             const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');

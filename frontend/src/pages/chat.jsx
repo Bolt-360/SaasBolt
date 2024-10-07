@@ -4,6 +4,7 @@ import ConversationContainer from "@/features/chat/components/chat/ConversationC
 import imagemdeFundo from "@/assets/bg.jpg";
 import IconSidebar from "@/features/chat/components/IconSidebar";
 import useConversation from "@/zustand/useConversation";
+import MessageContainer from '@/features/chat/components/chat/MessageContainer';
 
 export default function ChatPage() {
   const [activeTab, setActiveTab] = useState('conversations');
@@ -22,7 +23,7 @@ export default function ChatPage() {
       <div className="bg-background rounded-lg shadow-xl w-full max-w-[90vw] h-[85vh] flex overflow-hidden">
         <IconSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <Sidebar activeTab={activeTab} />
-        <ConversationContainer selectedConversation={selectedConversation} />
+        <MessageContainer/>
       </div>
     </div>
   );
