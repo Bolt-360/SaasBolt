@@ -8,8 +8,7 @@
     "dev": "nodemon server.js",
     "db-init": "node db/init.js",
     "clear": "node db/clear.js",
-    "db-att": "node db/atualize.js",
-    "remove-console": "eslint . --fix --config eslint.config.js"
+    "db-att": "node db/atualize.js"
   },
   "keywords": [],
   "author": "",
@@ -19,19 +18,11 @@
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
-    "eslint-plugin-no-console-log": "^1.0.0",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.7",
     "pg": "^8.13.0",
     "sequelize": "^6.37.3",
     "socket.io": "^4.8.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.12.0",
-    "eslint": "^9.12.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-node": "^11.1.0",
-    "globals": "^15.10.0"
   }
 }

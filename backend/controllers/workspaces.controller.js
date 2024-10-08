@@ -1,58 +1,56 @@
 import models from '../models/index.js';
 import { errorHandler } from '../utils/error.js';
-
-const { Workspace, UserWorkspace } = models; // Removido User
+const { User, Workspace, UserWorkspace } = models;
 
 export const getUserWorkspaces = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        
+        console.log(req.user)
         if (!userId) {
-            return next(errorHandler(400, "ID do usuário não fornecido"));
+            return next(errorHandler(400, "ID do usuário não fornecido"))
         }
 
         const userWorkspaces = await UserWorkspace.findAll({
-            where: { userId },
+            where: { userId: userId },
             include: [{
                 model: Workspace,
-                as: 'workspace',
-            }],
+                as: 'workspace'
+            }]
         });
 
         if (!userWorkspaces || userWorkspaces.length === 0) {
-            return next(errorHandler(404, "O usuário não tem Workspace cadastrado"));
+            return next(errorHandler(404, "O usuário não tem Workspace cadastrado"))
         }
 
-        return res.status(200).json(userWorkspaces); // Adicionando return para consistência
+        res.status(200).json(userWorkspaces);
     } catch (error) {
         console.error('Erro ao buscar workspaces do usuário:', error);
-        return next(error); // Adicionando return para consistência
+        next(error);
     }
 };
+
 
 export const getUserActiveWorkspaces = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        
         if (!userId) {
-            return next(errorHandler(400, "ID do usuário não fornecido"));
+            return next(errorHandler(400, "ID do usuário não fornecido"))
         }
 
         const userActiveWorkspaces = await UserWorkspace.findAll({
-            where: { userId, isActive: true },
+            where: { userId: userId, isActive: true },
             include: [{
                 model: Workspace,
-                as: 'workspace',
-            }],
+                as: 'workspace'
+            }]
         });
 
         if (!userActiveWorkspaces || userActiveWorkspaces.length === 0) {
-            return next(errorHandler(404, "O usuário não tem Workspace ativo"));
+            return next(errorHandler(404, "O usuário não tem Workspace ativo"))
         }
 
-        return res.status(200).json(userActiveWorkspaces); // Adicionando return para consistência
+        res.status(200).json(userActiveWorkspaces);
     } catch (error) {
-        console.error('Erro ao buscar workspaces ativos do usuário:', error);
-        return next(error); // Adicionando return para consistência
+        next(error);
     }
-};
+}

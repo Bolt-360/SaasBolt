@@ -1,11 +1,15 @@
 import React from 'react';
 import useConversation from "@/zustand/useConversation";
-import ChatHeader from "./ChatHeader";
 import MessageContainer from "./MessageContainer";
 import { MessageSquare } from 'lucide-react';
+import { useSocketContext } from '@/context/SocketContext';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ConversationContainer = () => {
   const { selectedConversation } = useConversation();
+  const { onlineUsers } = useSocketContext();
+
+  const isOnline = onlineUsers.some(user => user.id === selectedConversation?.otherParticipant.id);
 
   if (!selectedConversation) {
     return (
@@ -19,7 +23,19 @@ const ConversationContainer = () => {
 
   return (
     <div className="flex-1 flex flex-col">
-      <ChatHeader />
+      <div className="bg-background border-b border-border p-4 flex items-center">
+        <div className="relative">
+          <Avatar className="h-10 w-10 mr-3">
+            <AvatarImage src={selectedConversation.otherParticipant.profilePicture} alt={selectedConversation.otherParticipant.username} />
+            <AvatarFallback>{selectedConversation.otherParticipant.username.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <span className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
+        </div>
+        <div>
+          <h2 className="font-semibold">{selectedConversation.otherParticipant.username}</h2>
+          <p className="text-sm text-muted-foreground">{isOnline ? 'Online' : 'Offline'}</p>
+        </div>
+      </div>
       <MessageContainer />
     </div>
   );
