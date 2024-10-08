@@ -8,12 +8,12 @@ import useConversation from "@/zustand/useConversation";
 import { MessageSquare } from 'lucide-react';
 
 const MessageContainer = () => {
-    const { messages, loading, getMessages } = useGetMessages();
+    const { messages, getMessages, addMessage } = useGetMessages();
     const { selectedConversation } = useConversation();
     const scrollAreaRef = useRef(null);
     
     useEffect(() => {
-        if (selectedConversation?.id) {
+        if (selectedConversation?.otherParticipant?.id) {
             getMessages();
         }
     }, [selectedConversation, getMessages]);
@@ -42,22 +42,18 @@ const MessageContainer = () => {
             <ChatHeader />
             <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
                 <div className="space-y-4">
-                    {loading && (
-                        <p className='text-center text-muted-foreground font-small'>
-                            Carregando mensagens...
-                        </p>
-                    )}
-                    {!loading && messages.length === 0 && (
+                    {!Array.isArray(messages) || messages.length === 0 ? (
                         <p className='text-center text-muted-foreground font-small'>
                             Inicie uma conversa enviando uma mensagem
                         </p>
+                    ) : (
+                        messages.map((message) => (
+                            <Message key={message.id.toString()} message={message} />
+                        ))
                     )}
-                    {!loading && messages.length > 0 && messages.map((message) => (
-                        <Message key={message.id} message={message} />
-                    ))}
                 </div>
             </ScrollArea>
-            <ChatInput />
+            <ChatInput addMessage={addMessage} />
         </div>
     );
 };

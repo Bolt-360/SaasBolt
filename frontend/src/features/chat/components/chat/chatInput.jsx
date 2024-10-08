@@ -35,10 +35,10 @@ const TooltipButton = ({ onClick, icon, tooltip, isActive = false }) => (
   </Tooltip.Provider>
 )
 
-const ChatInput = () => {
+const ChatInput = ({ addMessage }) => {
   const { selectedConversation } = useConversation();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const { sendMessage, loading, status } = useSendMessage();
+  const { sendMessage, loading } = useSendMessage();
   const emojiPickerRef = useRef(null);
   const editorRef = useRef(null);
   
@@ -85,11 +85,14 @@ const ChatInput = () => {
       const htmlContent = editor.getHTML();
       const whatsappFormattedMessage = convertToWhatsAppFormat(htmlContent);
       if (whatsappFormattedMessage && whatsappFormattedMessage.trim() !== '') {
-        await sendMessage(whatsappFormattedMessage);
-        editor.commands.clearContent();
+        const sentMessage = await sendMessage(whatsappFormattedMessage);
+        if (sentMessage) {
+          addMessage(sentMessage);
+          editor.commands.clearContent();
+        }
       }
     }
-  }, [editor, sendMessage, selectedConversation]);
+  }, [editor, sendMessage, selectedConversation, addMessage]);
 
   const toggleFormat = useCallback((format) => {
     if (editor && editor.isEditable) {

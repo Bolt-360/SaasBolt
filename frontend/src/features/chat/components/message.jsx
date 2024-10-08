@@ -41,7 +41,7 @@ export function Message({ message }) {
 
       {/* Bolha de mensagem com texto e imagem, se houver */}
       <div className={`chat-bubble ${bubbleClassName} ${message.hasImage ? "flex flex-col" : ""}`}>
-        <p className="text-sm">{message.text}</p>
+        <p className="text-sm">{message.content}</p>
         {message.hasImage && (
           <img
             src={message.imageUrl}

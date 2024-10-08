@@ -5,41 +5,34 @@ import { useToast } from "@/hooks/use-toast";
 const useSendMessage = () => {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState('idle'); // 'idle', 'success', 'error'
-    const { messages, setMessages, selectedConversation } = useConversation();
+    const { selectedConversation } = useConversation();
 
-    const sendMessage = async (message) => {
-        if (!selectedConversation) {
+    const sendMessage = async (content) => {
+        if (!selectedConversation?.otherParticipant?.id) {
             toast({
                 title: 'Erro ao enviar mensagem',
                 description: 'Nenhuma conversa selecionada',
                 variant: 'destructive'
             });
-            return;
+            return null;
         }
 
+        setLoading(true);
         try {
-            setLoading(true);
-            setStatus('idle');
-
-            const response = await fetch(`/api/messages/send/${selectedConversation.id}`, {
+            const response = await fetch(`/api/messages/send/${selectedConversation.otherParticipant.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({ message: content })
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                const updatedMessages = [...messages, data];
-                setMessages(updatedMessages);
-                setStatus('success');
-            } else {
-                throw new Error(data.error || 'Erro ao enviar mensagem');
+            if (!response.ok) {
+                throw new Error('Erro ao enviar mensagem');
             }
 
+            const responseData = await response.json();         
+            return responseData.data; // Retorna apenas os dados da mensagem
         } catch (error) {
             console.error('Erro ao enviar mensagem:', error);
             toast({
@@ -47,13 +40,13 @@ const useSendMessage = () => {
                 description: error.message,
                 variant: 'destructive'
             });
-            setStatus('error');
+            return null;
         } finally {
             setLoading(false);
         }
     }
 
-    return { sendMessage, loading, status };    
+    return { sendMessage, loading };    
 }
 
 export default useSendMessage;

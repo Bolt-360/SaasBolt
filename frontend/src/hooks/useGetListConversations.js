@@ -21,7 +21,7 @@ const useGetListConversations = () => {
                 const currentUser = JSON.parse(localStorage.getItem('user'));
 
                 const formattedConversations = data.map(conv => {
-                    const otherParticipant = conv.participantUsers.find(p => p.id !== currentUser.id);
+                    const otherParticipant = conv.participantUsers.find(p => p.id !== currentUser._id);
                     return {
                         id: conv.id,
                         participants: conv.participants,

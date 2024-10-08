@@ -6,12 +6,14 @@ import useGetContacts from "@/hooks/useGetContacts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useConversation from "@/zustand/useConversation";
 import useGetListConversations from '@/hooks/useGetListConversations';
+import { useAuthContext } from "@/context/AuthContext";
 
 export default function Sidebar({ activeTab }) {
   const [searchTerm, setSearchTerm] = useState('');
   const { loading: loadingConversations, conversations } = useGetListConversations();
   const { loading: loadingContacts, contacts } = useGetContacts();
   const { selectedConversation, setSelectedConversation } = useConversation();
+  const { authUser } = useAuthContext();
 
   const filteredConversations = conversations.filter(conv => 
     conv.otherParticipant?.username?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -56,14 +58,16 @@ export default function Sidebar({ activeTab }) {
                 ) : filteredConversations.length === 0 ? (
                   <div>Nenhuma conversa encontrada.</div>
                 ) : (
-                  filteredConversations.map((conversation) => (
-                    <ConversationItem
-                      key={conversation.id}
-                      conversation={conversation}
-                      isSelected={selectedConversation?.id === conversation.id}
-                      onClick={() => handleSelectConversation(conversation)}
-                    />
-                  ))
+                  filteredConversations.map((conversation) => {
+                    return (
+                      <ConversationItem
+                        key={conversation.id}
+                        conversation={conversation}
+                        isSelected={selectedConversation?.id === conversation.id}
+                        onClick={() => handleSelectConversation(conversation)}
+                      />
+                    );
+                  })
                 )}
               </div>
             </ScrollArea>
