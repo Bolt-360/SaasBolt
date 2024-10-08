@@ -1,0 +1,10 @@
+{
+    "plugins": ["node", "import"],
+    "extends": [
+      "plugin:node/recommended",
+      "plugin:import/errors",
+      "plugin:import/warnings",
+      "airbnb-base"
+    ]
+  }
+  
