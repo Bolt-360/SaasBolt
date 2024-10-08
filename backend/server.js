@@ -2,6 +2,7 @@ import express from 'express'
 import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
+import { server, app, io} from './socket/socket.js';
 import models from './models/index.js';
 
 dotenv.config()
@@ -28,7 +29,7 @@ pool.connect()
         console.error('Erro ao conectar ao PostgreSQL:', err)
     })
 
-const app = express()
+ //const app = express()
 app.get("/", async (req, res) => {
     let client;
 
@@ -53,6 +54,7 @@ import userRouters from "./routes/user.routes.js"
 import workspacesRouters from "./routes/workspaces.routes.js"
 import conversationsRouters from "./routes/conversations.routes.js"
 
+
 //JSON para enviar os dados para o frontend
 app.use(express.json())
 
@@ -64,7 +66,7 @@ app.use("/api/users", userRouters)
 app.use("/api/workspaces", workspacesRouters)
 app.use("/api/conversations", conversationsRouters)
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)
 })
 
