@@ -122,17 +122,21 @@ body {
     border-radius: 8px;
     padding: 10px;
     background-color: #fff;
-    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-}
-
-.table tr {
-    border: 1px solid;
-    padding: 5px;
+    box-shadow: rgba(0, 0, 0, 0.20) 0px 1px 4px;
 }
 
 .table td {
-    border: 1px solid;
-    padding: 5px;
+    border-top: 1px solid;
+    border-bottom: 1px solid;
+    padding: 8px;
+}
+
+.semBorda td {
+    border-bottom: none;
+}
+
+.table th {
+    padding: 8px;
 }
 
 .box-table {
