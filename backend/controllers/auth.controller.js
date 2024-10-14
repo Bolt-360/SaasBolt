@@ -168,7 +168,19 @@ export const forgotPassword = async (req, res, next) => {
             from: '"SeuApp" <testesti@bolt360.com.br>',
             to: email,
             subject: 'Recuperação de Senha',
-            text: `Seu código de recuperação de senha é: ${token}. Ele é válido por 30 minutos.`,
+            text: ` `,
+            html: `<div style="font-family: Arial, sans-serif; color: #333;">
+            <h1 style="color: #11ab8a;">Recuperação de Senha</h1>
+            <p>Olá,</p>
+            <p>Você solicitou a recuperação da sua senha. Use o código abaixo para redefinir sua senha:</p>
+            <p style="font-size: 24px; font-weight: bold; color: #FF5722;">${token}</p>
+            <p>Este código é válido por <strong>30 minutos</strong>.</p>
+            <p style="margin-top: 20px;">Caso você não tenha solicitado a recuperação de senha, por favor, ignore este e-mail.</p>
+            <p>Atenciosamente,</p>
+            <p style="color: #11ab8a"><strong>Equipe de TI - Bolt 360 Assessoria</strong></p>
+            <br>
+             <p style ="font-size: 14px; italic; color: gray"> <i>--- Este é um email automático, por favor não responda ---</i></p>
+        </div>`
         });
 
         return res.status(200).json({ success: true, message: 'Código de recuperação enviado para o e-mail' });
@@ -215,6 +227,7 @@ export const changePassword = async (req, res, next) => {
     try {
         const user = await User.findOne({ where: { email } });
 
+        // Verifica se o usuário existe
         if (!user) {
             return res.status(400).json({
                 success: false,
@@ -222,6 +235,7 @@ export const changePassword = async (req, res, next) => {
             });
         }
 
+        // Verifica o comprimento da nova senha
         if (newPassword.length < 8) {
             return res.status(400).json({
                 success: false,
@@ -229,11 +243,16 @@ export const changePassword = async (req, res, next) => {
             });
         }
 
+        // Criptografa a nova senha
         const hashedPassword = bcryptjs.hashSync(newPassword, 10);
         user.password = hashedPassword;
 
+        // Salva o usuário com a nova senha
         await user.save();
-        await PwdReset.destroy({ where: { userId: user.id } }); //deleta o token de reset de senha associado ao usuário
+
+        const idUser = user.id;
+        // Deleta o token de reset de senha associado ao usuário
+        await PwdReset.destroy({ where: { userId: idUser } }); // Certifique-se de que `idUser` está correto
 
         return res.status(200).json({
             success: true,
@@ -242,28 +261,36 @@ export const changePassword = async (req, res, next) => {
         
     } catch (error) {
         console.error("Erro ao atualizar a senha", error);
-        return next(errorHandler(500, 'Erro interno do servidor'));
+
+        return next(errorHandler ? errorHandler(500, 'Erro interno do servidor') : res.status(500).json({ success: false, message: 'Erro interno do servidor' }));
     }
 };
 
 //verifica se já existe um token de reset criado
 export const verTokenExists = async (req, res, next) => {
-    const {email } = req.body;
+    const { email } = req.body;
 
     try {
         const user = await User.findOne({ where: { email } });
 
-        const pwdResetRecord = await PwdReset.findOne({ where: {userId: user.id } });
+        // Verifica se o usuário existe
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Usuário não encontrado!' });
+        }
+
+        const idUser = user.id;
+
+        const pwdResetRecord = await PwdReset.findOne({ where: { userId: idUser } });
 
         if (pwdResetRecord) {
             return res.status(401).json({ success: false, message: 'Já existe um token de reset para esse usuário!' });
         }
 
-
-        return res.status(200).json({ success: true, message: 'Não existe token!' });
+        return res.status(200).json({ success: true});
 
     } catch (error) {
         console.error("Erro ao verificar o token", error);
-        return next(errorHandler(500, 'Internal Server Error'));
+
+        return next(errorHandler ? errorHandler(500, 'Internal Server Error') : res.status(500).json({ success: false, message: 'Erro interno do servidor' }));
     }
 };
