@@ -6,28 +6,33 @@ import ChatPage from './pages/chat'
 import AppLayout from './layouts/AppLayout'
 import NotFoundPage from './pages/404'
 import { useAuthContext } from './context/AuthContext'
-import AuthRoute from './utils/authRoute'; 
+import ProtectedRoute from './components/ProtectedRoute'
+import WorkspaceSetup from './pages/WorkspaceSetup'
 
 function App() {
   const { authUser } = useAuthContext();
   
   return (
-    <div>
+    <ProtectedRoute>
       <Routes>
         <Route path='/' element={<HomePage />} />
         <Route 
           path='/auth' 
           element={authUser ? <Navigate to="/app" /> : <AuthPage />} 
         />
+        <Route path='/login' element={<AuthPage />} />
+        <Route path='/cadastro' element={<AuthPage />} />
+        <Route path='/workspace-setup' element={<WorkspaceSetup />} />
         <Route 
           path='/app'
-          element={<AuthRoute><AppLayout /></AuthRoute>} >
-            <Route index element={<WebAppPage />} />
-            <Route path='chat' element={<ChatPage />} />
+          element={<AppLayout />}
+        >
+          <Route index element={<WebAppPage />} />
+          <Route path='chat' element={<ChatPage />} />
         </Route>
         <Route path='*' element={<NotFoundPage />} />
       </Routes>
-    </div>
+    </ProtectedRoute>
   )
 }
 

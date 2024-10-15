@@ -21,7 +21,7 @@ export default (sequelize) => {
             allowNull: false,
             primaryKey: true,
             references: {
-                model: 'Users', // O nome da tabela referenciada
+                model: 'Users',
                 key: 'id'
             }
         },
@@ -30,7 +30,7 @@ export default (sequelize) => {
             allowNull: false,
             primaryKey: true,
             references: {
-                model: 'Workspaces', // O nome da tabela referenciada
+                model: 'Workspaces',
                 key: 'id'
             }
         },
@@ -50,9 +50,9 @@ export default (sequelize) => {
         }
     }, {
         sequelize,
-        modelName: 'UserWorkspace', // Nome do modelo
-        tableName: 'UserWorkspaces', // Nome da tabela no banco de dados
-        timestamps: true, // Adiciona createdAt e updatedAt
+        modelName: 'UserWorkspace',
+        tableName: 'UserWorkspaces',
+        timestamps: true,
         indexes: [
             {
                 unique: true,

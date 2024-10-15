@@ -5,12 +5,21 @@ const useConversation = create((set) => ({
   setSelectedConversation: (selectedConversation) =>
     set({ selectedConversation }),
 
+  conversations: [],
+  setConversations: (conversations) => set({ conversations }),
+
   messages: [],
-  setMessages: (messages) => {
-    set({ messages: Array.isArray(messages) ? messages : [] });
-  },
+  setMessages: (messages) => set({ messages }),
   addMessage: (message) => set((state) => ({
     messages: [...state.messages, message]
+  })),
+
+  updateConversationWithNewMessage: (newMessage) => set((state) => ({
+    conversations: state.conversations.map(conv => 
+      conv.id === newMessage.conversationId 
+        ? { ...conv, lastMessage: newMessage }
+        : conv
+    )
   })),
 }))
 

@@ -4,10 +4,12 @@ import MessageContainer from "./MessageContainer";
 import { MessageSquare } from 'lucide-react';
 import { useSocketContext } from '@/context/SocketContext';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthContext } from "@/context/AuthContext";
 
 const ConversationContainer = () => {
   const { selectedConversation } = useConversation();
   const { onlineUsers } = useSocketContext();
+  const { authUser } = useAuthContext();
 
   const isOnline = onlineUsers.some(user => user.id === selectedConversation?.otherParticipant.id);
 

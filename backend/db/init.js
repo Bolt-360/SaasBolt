@@ -2,6 +2,27 @@ import sequelize from '../config/database.js';
 import models from '../models/index.js';
 import bcryptjs from 'bcryptjs';
 
+const { User, Workspace, UserWorkspace, Conversation, Message } = models;
+
+// Função para gerar um código de convite único
+const generateUniqueInviteCode = async () => {
+    let inviteCode;
+    let isUnique = false;
+    
+    while (!isUnique) {
+        // Gera um código aleatório de 5 dígitos
+        inviteCode = Math.floor(10000 + Math.random() * 90000).toString();
+        
+        // Verifica se o código já existe
+        const existingWorkspace = await Workspace.findOne({ where: { inviteCode } });
+        if (!existingWorkspace) {
+            isUnique = true;
+        }
+    }
+    
+    return inviteCode;
+};
+
 async function createInitialUsers() {
   const { User } = models;
   const users = [
@@ -31,40 +52,157 @@ async function createInitialUsers() {
   console.log('Usuários iniciais criados com sucesso.');
 }
 
+async function createInitialWorkspaces() {
+  try {
+    const workspaces = [
+      { name: 'Pensar Clube', cnpj: '12345678901234' },
+      { name: 'Bolt Tecnologia', cnpj: '56789012345678' }
+    ];
+
+    for (const workspaceData of workspaces) {
+      const inviteCode = await generateUniqueInviteCode();
+      await Workspace.create({
+        ...workspaceData,
+        inviteCode
+      });
+    }
+
+    console.log('Workspaces iniciais criados com sucesso.');
+  } catch (error) {
+    console.error('Erro ao criar workspaces iniciais:', error);
+  }
+}
+
+async function associateUsersToWorkspaces() {
+  const { User, Workspace, UserWorkspace } = models;
+  const users = await User.findAll();
+  const workspaces = await Workspace.findAll();
+
+  if (users.length === 0 || workspaces.length === 0) {
+    console.log('Não há usuários ou workspaces para associar.');
+    return;
+  }
+
+  for (let i = 0; i < users.length; i++) {
+    if (i === 0) {
+      // User 0 é associado a ambos os workspaces
+      for (const workspace of workspaces) {
+        try {
+          await UserWorkspace.create({
+            userId: users[i].id,
+            workspaceId: workspace.id,
+            role: 'owner'
+          });
+          console.log(`User 0 (${users[i].username}) associado ao workspace ${workspace.name}`);
+        } catch (error) {
+          console.error(`Erro ao associar User 0 (${users[i].username}) ao workspace ${workspace.name}:`, error);
+        }
+      }
+      // Definir o primeiro workspace como ativo para User 0
+      await users[i].update({ activeWorkspaceId: workspaces[0].id });
+    } else {
+      // Para os outros usuários, manter a lógica original
+      const workspaceIndex = i < 5 ? 0 : 1;
+      if (workspaces[workspaceIndex]) {
+        try {
+          await UserWorkspace.create({
+            userId: users[i].id,
+            workspaceId: workspaces[workspaceIndex].id,
+            role: i % 5 === 0 ? 'owner' : 'member'
+          });
+          
+          // Atualizar o activeWorkspaceId do usuário
+          await users[i].update({ activeWorkspaceId: workspaces[workspaceIndex].id });
+          
+          console.log(`Usuário ${users[i].username} associado ao workspace ${workspaces[workspaceIndex].name}`);
+        } catch (error) {
+          console.error(`Erro ao associar usuário ${users[i].username} ao workspace:`, error);
+        }
+      } else {
+        console.log(`Workspace não encontrado para o índice ${workspaceIndex}`);
+      }
+    }
+  }
+
+  console.log('Processo de associação de usuários aos workspaces concluído.');
+}
+
+async function createInitialConversations() {
+  const { User, Conversation, Message, Workspace } = models;
+  const workspaces = await Workspace.findAll();
+
+  for (const workspace of workspaces) {
+    const workspaceUsers = await User.findAll({
+      where: { activeWorkspaceId: workspace.id }
+    });
+    
+    if (workspaceUsers.length < 2) {
+      console.log(`Workspace ${workspace.name} não tem usuários suficientes para criar conversas.`);
+      continue;
+    }
+
+    const user0 = await User.findByPk(1); // User 0 com ID 1
+
+    for (let j = 0; j < 5; j++) {
+      try {
+        // Seleciona 2 a 4 usuários aleatórios para a conversa, sempre incluindo User 0
+        const participantCount = Math.floor(Math.random() * 3) + 2; // 2 a 4 participantes
+        const otherParticipants = workspaceUsers
+          .filter(user => user.id !== 1)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, participantCount - 1);
+        
+        const participants = [user0, ...otherParticipants];
+        
+        const isGroup = participantCount > 2;
+        const conversationName = isGroup 
+          ? `Grupo ${j + 1} - ${workspace.name}`
+          : `Conversa ${j + 1} - ${workspace.name}`;
+
+        const conversation = await Conversation.create({
+          workspaceId: workspace.id,
+          name: conversationName,
+          isGroup: isGroup
+        });
+
+        await conversation.setParticipants(participants);
+
+        // Gera entre 5 e 15 mensagens para a conversa
+        const messageCount = Math.floor(Math.random() * 11) + 5;
+        
+        for (let k = 0; k < messageCount; k++) {
+          const sender = participants[Math.floor(Math.random() * participants.length)];
+          
+          await Message.create({
+            conversationId: conversation.id,
+            senderId: sender.id,
+            content: `Mensagem ${k + 1} de ${sender.username} na ${isGroup ? 'grupo' : 'conversa'} ${conversationName}`
+          });
+        }
+
+        // Atualiza o lastMessageAt da conversa
+        await conversation.update({ lastMessageAt: new Date() });
+
+        console.log(`${isGroup ? 'Grupo' : 'Conversa'} ${j + 1} criado para o workspace ${workspace.name} com ${messageCount} mensagens e ${participantCount} participantes (incluindo User 0)`);
+      } catch (error) {
+        console.error(`Erro ao criar conversa para o workspace ${workspace.name}:`, error);
+      }
+    }
+  }
+
+  console.log('Conversas e mensagens iniciais criadas com sucesso.');
+}
+
 async function initDatabase() {
   try {
-    // Sincroniza todos os modelos
     await sequelize.sync({ alter: true });
     console.log('Banco de dados sincronizado com sucesso.');
 
-    // Verifica especificamente a tabela UserWorkspaces
-    const [results, metadata] = await sequelize.query("SELECT * FROM information_schema.columns WHERE table_name = 'UserWorkspaces'");
-    console.log('Colunas na tabela UserWorkspaces:', results.map(r => r.column_name));
-
-    // Se alguma coluna estiver faltando, você pode adicioná-la manualmente aqui
-    const missingColumns = ['role', 'isActive', 'lastAccessed'].filter(col => !results.find(r => r.column_name === col));
-    for (const column of missingColumns) {
-      switch(column) {
-        case 'role':
-          // Cria o tipo ENUM se não existir
-          await sequelize.query("DO $$ BEGIN CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member'); EXCEPTION WHEN duplicate_object THEN null; END $$;");
-          // Adiciona a coluna usando o tipo ENUM criado
-          await sequelize.query("ALTER TABLE \"UserWorkspaces\" ADD COLUMN IF NOT EXISTS role user_role NOT NULL DEFAULT 'member'");
-          break;
-        case 'isActive':
-          await sequelize.query("ALTER TABLE \"UserWorkspaces\" ADD COLUMN IF NOT EXISTS \"isActive\" BOOLEAN NOT NULL DEFAULT true");
-          break;
-        case 'lastAccessed':
-          await sequelize.query("ALTER TABLE \"UserWorkspaces\" ADD COLUMN IF NOT EXISTS \"lastAccessed\" TIMESTAMP");
-          break;
-      }
-      console.log(`Coluna ${column} adicionada à tabela UserWorkspaces.`);
-    }
-
-    // Verifica se estamos em ambiente de produção
     if (process.env.PRODUCTION === 'false') {
-      // Cria os usuários iniciais
       await createInitialUsers();
+      await createInitialWorkspaces();
+      await associateUsersToWorkspaces();
+      await createInitialConversations();
     }
 
     console.log('Inicialização do banco de dados concluída.');

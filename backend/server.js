@@ -3,7 +3,6 @@ import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
 import { server, app, io} from './socket/socket.js';
-import models from './models/index.js';
 
 dotenv.config()
 
@@ -53,6 +52,7 @@ import messageRouters from "./routes/message.routes.js"
 import userRouters from "./routes/user.routes.js"
 import workspacesRouters from "./routes/workspaces.routes.js"
 import conversationsRouters from "./routes/conversations.routes.js"
+import contactRoutes from './routes/contact.routes.js'
 
 
 //JSON para enviar os dados para o frontend
@@ -65,6 +65,7 @@ app.use("/api/messages", messageRouters)
 app.use("/api/users", userRouters)
 app.use("/api/workspaces", workspacesRouters)
 app.use("/api/conversations", conversationsRouters)
+app.use('/api/contacts', contactRoutes)
 
 server.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)

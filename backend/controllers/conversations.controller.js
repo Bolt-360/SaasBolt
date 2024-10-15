@@ -1,45 +1,257 @@
-import { Op } from 'sequelize';
 import models from '../models/index.js';
-const { User, Conversation, Message } = models;
+const { Conversation, User, Workspace, Message } = models;
 
-export const getUserConversations = async (req, res) => {
+export const getConversations = async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log('Requisição recebida para getUserConversations');
-        console.log('User ID:', userId);
+        const workspaceId = req.user.activeWorkspaceId;
+
+        if (!workspaceId) {
+            return res.status(400).json({ message: "Usuário não tem um workspace ativo" });
+        }
 
         const conversations = await Conversation.findAll({
+            where: { workspaceId },
             include: [
                 {
                     model: User,
-                    as: 'participantUsers', // Usamos o mesmo alias definido no modelo
-                    attributes: ['id', 'username', 'profilePicture'],
-                    through: { attributes: [] }
+                    as: 'participants',
+                    through: { attributes: [] },
+                    where: { id: userId },
+                    required: true
                 },
                 {
                     model: Message,
                     as: 'messages',
                     limit: 1,
                     order: [['createdAt', 'DESC']],
-                    include: [
-                        {
-                            model: User,
-                            as: 'sender',
-                            attributes: ['id', 'username']
-                        }
-                    ]
+                    include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }]
                 }
             ],
-            where: {
-                participants: {
-                    [Op.contains]: [userId]
-                }
-            }
+            order: [[{ model: Message, as: 'messages' }, 'createdAt', 'DESC']]
         });
 
         res.json(conversations);
     } catch (error) {
-        console.error('Erro detalhado:', error);
-        res.status(500).json({ message: 'Erro ao buscar conversas', error: error.message });
+        console.error('Erro ao buscar conversas:', error);
+        res.status(500).json({ message: "Erro ao buscar conversas" });
+    }
+};
+
+export const createConversation = async (req, res) => {
+    try {
+        const { participantIds, workspaceId, name } = req.body;
+        const userId = req.user.id;
+
+        if (!participantIds.includes(userId)) {
+            participantIds.push(userId);
+        }
+
+        const isGroup = participantIds.length > 2;
+        const conversation = await Conversation.create({ 
+            workspaceId, 
+            name, 
+            isGroup 
+        });
+        await conversation.addUsers(participantIds);
+
+        const createdConversation = await Conversation.findByPk(conversation.id, {
+            include: [
+                {
+                    model: User,
+                    as: 'participants',
+                    attributes: ['id', 'username', 'profilePicture'],
+                    through: { attributes: [] }
+                }
+            ]
+        });
+
+        res.status(201).json(createdConversation);
+    } catch (error) {
+        console.error('Erro ao criar conversa:', error);
+        res.status(400).json({ message: "Erro ao criar conversa", error: error.message });
+    }
+};
+
+export const getConversationDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const conversation = await Conversation.findByPk(id, {
+            include: [
+                {
+                    model: User,
+                    as: 'participants',
+                    attributes: ['id', 'username', 'profilePicture'],
+                    through: { attributes: [] }
+                },
+                {
+                    model: Message,
+                    as: 'messages',
+                    include: [{ model: User, as: 'sender', attributes: ['id', 'username', 'profilePicture'] }],
+                    order: [['createdAt', 'ASC']]
+                }
+            ]
+        });
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversa não encontrada" });
+        }
+
+        if (!conversation.participants.some(participant => participant.id === userId)) {
+            return res.status(403).json({ message: "Você não tem permissão para acessar esta conversa" });
+        }
+
+        res.json(conversation);
+    } catch (error) {
+        console.error('Erro ao buscar detalhes da conversa:', error);
+        res.status(500).json({ message: "Erro ao buscar detalhes da conversa" });
+    }
+};
+
+export const updateConversation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, participantIds } = req.body;
+        const userId = req.user.id;
+
+        const conversation = await Conversation.findByPk(id);
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversa não encontrada" });
+        }
+
+        if (name) {
+            await conversation.update({ name });
+        }
+
+        if (participantIds) {
+            const currentParticipants = await conversation.getUsers();
+            const currentParticipantIds = currentParticipants.map(user => user.id);
+
+            const toAdd = participantIds.filter(id => !currentParticipantIds.includes(id));
+            const toRemove = currentParticipantIds.filter(id => !participantIds.includes(id) && id !== userId);
+
+            await conversation.addUsers(toAdd);
+            await conversation.removeUsers(toRemove);
+        }
+
+        const updatedConversation = await Conversation.findByPk(id, {
+            include: [
+                {
+                    model: User,
+                    as: 'participants',
+                    attributes: ['id', 'username', 'profilePicture'],
+                    through: { attributes: [] }
+                }
+            ]
+        });
+
+        res.json(updatedConversation);
+    } catch (error) {
+        console.error('Erro ao atualizar conversa:', error);
+        res.status(500).json({ message: "Erro ao atualizar conversa" });
+    }
+};
+
+export const deleteConversation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const conversation = await Conversation.findByPk(id);
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversa não encontrada" });
+        }
+
+        const participants = await conversation.getUsers();
+        if (!participants.some(participant => participant.id === userId)) {
+            return res.status(403).json({ message: "Você não tem permissão para excluir esta conversa" });
+        }
+
+        await conversation.destroy();
+
+        res.json({ message: "Conversa excluída com sucesso" });
+    } catch (error) {
+        console.error('Erro ao excluir conversa:', error);
+        res.status(500).json({ message: "Erro ao excluir conversa" });
+    }
+};
+
+export const getWorkspaceConversations = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const userId = req.user.id;
+
+        console.log(`Buscando conversas para workspaceId: ${workspaceId}, userId: ${userId}`);
+
+        // Verificar se o usuário pertence ao workspace
+        const userWorkspace = await models.UserWorkspace.findOne({
+            where: { userId, workspaceId }
+        });
+
+        if (!userWorkspace) {
+            console.log(`Usuário ${userId} não pertence ao workspace ${workspaceId}`);
+            return res.status(403).json({ message: "Você não tem acesso a este workspace" });
+        }
+
+        const conversations = await Conversation.findAll({
+            where: { workspaceId },
+            include: [
+                {
+                    model: User,
+                    as: 'participants',
+                    through: { 
+                        model: models.ConversationParticipants,
+                        attributes: []
+                    },
+                    attributes: ['id', 'username', 'profilePicture']
+                },
+                {
+                    model: Message,
+                    as: 'messages',
+                    limit: 1,
+                    separate: true,
+                    order: [['createdAt', 'DESC']],
+                    include: [{ 
+                        model: User, 
+                        as: 'sender', 
+                        attributes: ['id', 'username', 'profilePicture'] 
+                    }]
+                }
+            ],
+            order: [['updatedAt', 'DESC']]
+        });
+
+        console.log(`Número de conversas encontradas: ${conversations.length}`);
+
+        const userConversations = conversations.filter(conv => 
+            conv.participants.some(participant => participant.id === userId)
+        );
+
+        console.log(`Número de conversas do usuário: ${userConversations.length}`);
+
+        const formattedConversations = userConversations.map(conversation => {
+            const { id, name, workspaceId, participants, messages, createdAt, updatedAt, isGroup } = conversation;
+            return {
+                id,
+                name,
+                workspaceId,
+                participants,
+                lastMessage: messages && messages.length > 0 ? messages[0] : null,
+                createdAt,
+                updatedAt,
+                isGroup
+            };
+        });
+
+        console.log('Conversas formatadas:', formattedConversations.length);
+
+        res.json(formattedConversations);
+    } catch (error) {
+        console.error('Erro ao buscar conversas do workspace:', error);
+        res.status(500).json({ message: "Erro ao buscar conversas do workspace" });
     }
 };

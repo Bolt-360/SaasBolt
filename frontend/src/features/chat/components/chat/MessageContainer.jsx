@@ -6,17 +6,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import useGetMessages from '@/hooks/useGetMessages';
 import useConversation from "@/zustand/useConversation";
 import { MessageSquare } from 'lucide-react';
+import useListenMessages from '@/hooks/useListenMessages';
+import { useAuthContext } from "@/context/AuthContext";
 
 const MessageContainer = () => {
     const { messages, getMessages, addMessage } = useGetMessages();
     const { selectedConversation } = useConversation();
     const scrollAreaRef = useRef(null);
+    const { authUser } = useAuthContext();
     
+    useListenMessages();
+
     useEffect(() => {
-        if (selectedConversation?.otherParticipant?.id) {
-            getMessages();
+        if (selectedConversation?.id && authUser?.activeWorkspaceId) {
+            getMessages(authUser.activeWorkspaceId, selectedConversation.id);
         }
-    }, [selectedConversation, getMessages]);
+    }, [selectedConversation, authUser.activeWorkspaceId, getMessages]);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -26,6 +31,10 @@ const MessageContainer = () => {
             }
         }
     }, [messages]);
+
+    const uniqueMessages = messages.filter((message, index, self) =>
+        index === self.findIndex((t) => t.id === message.id)
+    );
 
     if (!selectedConversation) {
         return (
@@ -37,23 +46,29 @@ const MessageContainer = () => {
         );
     }
 
+    const handleSendMessage = (content) => {
+        if (authUser?.activeWorkspaceId && selectedConversation?.id) {
+            addMessage(authUser.activeWorkspaceId, selectedConversation.id, content);
+        }
+    };
+
     return (
         <div className='flex-1 flex flex-col'>
             <ChatHeader />
             <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
                 <div className="space-y-4">
-                    {!Array.isArray(messages) || messages.length === 0 ? (
+                    {uniqueMessages.length === 0 ? (
                         <p className='text-center text-muted-foreground font-small'>
                             Inicie uma conversa enviando uma mensagem
                         </p>
                     ) : (
-                        messages.map((message) => (
+                        uniqueMessages.map((message) => (
                             <Message key={message.id.toString()} message={message} />
                         ))
                     )}
                 </div>
             </ScrollArea>
-            <ChatInput addMessage={addMessage} />
+            <ChatInput onSendMessage={handleSendMessage} />
         </div>
     );
 };

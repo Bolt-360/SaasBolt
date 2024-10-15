@@ -1,11 +1,13 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const useLogout = () => {
   const [loading, setLoading] = useState(false);
   const { setAuthUser } = useContext(AuthContext);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const logout = async () => {
     try {
@@ -34,8 +36,11 @@ const useLogout = () => {
         description: "Você foi desconectado com sucesso!",
         variant: "default",
       });
-      localStorage.removeItem("user");
+      localStorage.removeItem("token");
       setAuthUser(null);
+
+      // Adicione esta linha para redirecionar para a página de login
+      navigate('/login');
 
     } catch (error) {
       console.error("Erro detalhado:", error);

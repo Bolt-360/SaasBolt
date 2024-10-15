@@ -2,6 +2,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/context/AuthContext";
 import useConversation from "@/zustand/useConversation";
 import { formatTime } from "@/utils/formatTime";
+import FormattedMessage from "@/components/FormattedMessage";
 
 export function Message({ message }) {
   const { authUser } = useAuthContext();
@@ -41,7 +42,7 @@ export function Message({ message }) {
 
       {/* Bolha de mensagem com texto e imagem, se houver */}
       <div className={`chat-bubble ${bubbleClassName} ${message.hasImage ? "flex flex-col" : ""}`}>
-        <p className="text-sm">{message.content}</p>
+        <FormattedMessage content={message.content} />
         {message.hasImage && (
           <img
             src={message.imageUrl}

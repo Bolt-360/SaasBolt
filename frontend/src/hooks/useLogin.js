@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuthContext } from "../context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from 'jwt-decode';
 
 const handleInputError = (email, password) => {
     if (!email || !password) {
@@ -17,15 +18,6 @@ const useLogin = () => {
     const navigate = useNavigate();
 
     const login = async (email, password) => {
-        const errorMessage = handleInputError(email, password);
-        if (errorMessage) {
-            toast({
-                title: errorMessage,
-                variant: "destructive",
-            });
-            return;
-        }
-
         try {
             setIsLoading(true);
 
@@ -40,27 +32,45 @@ const useLogin = () => {
             const data = await res.json();
 
             if (!data.token) {
-                toast({
-                    title: data.message || "Erro ao fazer login",
-                    description: "Credenciais inválidas ou usuário não encontrado.",
-                    variant: "destructive",
-                });
-                return;
+                throw new Error(data.message || "Erro ao fazer login");
             }
 
-            // Se chegou aqui, o login foi bem-sucedido (temos um token)
-            localStorage.setItem("user", JSON.stringify(data));
-            setAuthUser(data);
+            // Salva o token no localStorage
+            localStorage.setItem("token", data.token);
+
+            // Decodifica o token
+            const decodedToken = jwtDecode(data.token);
+
+            // Combina os dados do token com os dados do usuário retornados pela API
+            const userData = {
+                ...decodedToken,
+                ...data.user,
+                token: data.token
+            };
+
+            console.log("Dados do usuário após login:", userData);
+
+            // Atualiza o contexto de autenticação com todos os dados do usuário
+            setAuthUser(userData);
+
             toast({
                 title: "Login realizado com sucesso!",
-                description: `Bem-vindo, ${data.username || 'usuário'}!`,
+                description: `Bem-vindo, ${userData.username || 'usuário'}!`,
                 variant: "default",
             });
+
+            // Redireciona o usuário após o login bem-sucedido
+            if (userData.workspaces && userData.workspaces.length > 0) {
+                navigate('/app');
+            } else {
+                navigate('/workspace-setup');
+            }
+
         } catch (error) {
             console.error("Erro durante o login:", error);
             toast({
                 title: "Erro ao fazer login",
-                description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
+                description: error.message || "Ocorreu um erro inesperado. Por favor, tente novamente.",
                 variant: "destructive",
             });
         } finally {

@@ -6,15 +6,16 @@ import MessageModel from './message.js';
 import ConversationModel from './conversation.js';
 import ConversationParticipantsModel from './conversationParticipants.js';
 import WorkspaceModel from './workspace.js';
-import UserWorkspaceModel from './UserWorkspace.js';
+import UserWorkspaceModel from './userWorkspace.js';
+import WorkspaceModuleModel from './workspaceModule.js';
 
-    
-const User = UserModel(sequelize, Sequelize.DataTypes);
-const Message = MessageModel(sequelize, Sequelize.DataTypes);
-const Conversation = ConversationModel(sequelize, Sequelize.DataTypes);
-const ConversationParticipants = ConversationParticipantsModel(sequelize, Sequelize.DataTypes);
-const Workspace = WorkspaceModel(sequelize, Sequelize.DataTypes);
-const UserWorkspace = UserWorkspaceModel(sequelize, Sequelize.DataTypes);
+const User = UserModel(sequelize);
+const Message = MessageModel(sequelize);
+const Conversation = ConversationModel(sequelize);
+const ConversationParticipants = ConversationParticipantsModel(sequelize);
+const Workspace = WorkspaceModel(sequelize);
+const UserWorkspace = UserWorkspaceModel(sequelize);
+const WorkspaceModule = WorkspaceModuleModel(sequelize);
 
 const models = {
     User,
@@ -22,7 +23,8 @@ const models = {
     Conversation,
     ConversationParticipants,
     Workspace,
-    UserWorkspace
+    UserWorkspace,
+    WorkspaceModule
 };
 
 Object.keys(models).forEach(modelName => {

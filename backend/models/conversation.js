@@ -1,26 +1,44 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 
 export default (sequelize) => {
-    const Conversation = sequelize.define('Conversation', {
-        participants: {
-            type: DataTypes.ARRAY(DataTypes.INTEGER),
+    class Conversation extends Model {
+        static associate(models) {
+            Conversation.belongsTo(models.Workspace, { foreignKey: 'workspaceId' });
+            Conversation.belongsToMany(models.User, { 
+                through: models.ConversationParticipants,
+                foreignKey: 'conversationId',
+                otherKey: 'userId',
+                as: 'participants'
+            });
+            Conversation.hasMany(models.Message, { as: 'messages', foreignKey: 'conversationId' });
+        }
+    }
+
+    Conversation.init({
+        workspaceId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Workspaces',
+                key: 'id'
+            }
+        },
+        name: {
+            type: DataTypes.STRING,
             allowNull: false
         },
-        // outros campos...
+        isGroup: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        lastMessageAt: {
+            type: DataTypes.DATE
+        }
+    }, {
+        sequelize,
+        modelName: 'Conversation',
+        tableName: 'Conversations'
     });
-
-    Conversation.associate = (models) => {
-        Conversation.belongsToMany(models.User, {
-            through: 'ConversationParticipants',
-            as: 'participantUsers',
-            foreignKey: 'conversationId'
-        });
-
-        Conversation.hasMany(models.Message, {
-            foreignKey: 'conversationId',
-            as: 'messages'
-        });
-    };
 
     return Conversation;
 };

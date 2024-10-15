@@ -1,97 +1,188 @@
-import { Op, Sequelize } from "sequelize";
 import models from '../models/index.js';
-import sequelize from '../config/database.js';
+import { getReceiverSocketId, io } from "../socket/socket.js";
 
-const { User, Message, Conversation, ConversationParticipants } = models;
+const { Message, Conversation, User, UserWorkspace } = models;
+
+export const getMessages = async (req, res) => {
+    try {
+        const { workspaceId, conversationId } = req.params;
+        const userId = req.user.id;
+
+        // Verificar se o usuário pertence ao workspace
+        const userWorkspace = await UserWorkspace.findOne({ 
+            where: { userId, workspaceId, isActive: true } 
+        });
+        if (!userWorkspace) {
+            return res.status(403).json({ message: "Você não tem acesso a este workspace" });
+        }
+
+        // Verificar se o usuário pertence à conversa
+        const conversation = await Conversation.findOne({
+            where: { id: conversationId, workspaceId },
+            include: [{ 
+                model: User, 
+                as: 'participants', 
+                where: { id: userId },
+                through: { attributes: [] }
+            }]
+        });
+        if (!conversation) {
+            return res.status(403).json({ message: "Você não tem acesso a esta conversa" });
+        }
+
+        // Buscar as mensagens
+        const messages = await Message.findAll({
+            where: { conversationId },
+            include: [{ 
+                model: User, 
+                as: 'sender', 
+                attributes: ['id', 'username', 'profilePicture'] 
+            }],
+            order: [['createdAt', 'ASC']]
+        });
+
+        // Atualizar lastAccessed no UserWorkspace
+        await userWorkspace.update({ lastAccessed: new Date() });
+
+        res.json(messages);
+    } catch (error) {
+        console.error('Erro ao buscar mensagens:', error);
+        res.status(500).json({ message: "Erro ao buscar mensagens" });
+    }
+};
 
 export const sendMessage = async (req, res) => {
     try {
-      const authUserId = req.user.id;
-      const {id: recipientId} = req.params;
-      const recipientIdInt = parseInt(recipientId);
-      const { message } = req.body;
+        const { workspaceId, conversationId } = req.params;
+        const { content } = req.body;
+        const senderId = req.user.id;
 
-      console.log('Mensagem:', message);
-      console.log('RecipientId:', recipientIdInt);
-      console.log('AuthUserId:', authUserId);
-
-      if (!message) {
-        return res.status(400).json({ message: 'O conteúdo da mensagem é obrigatório' });
-      }
-
-      // Verificar se os dois participantes são válidos
-      const authUser = await User.findByPk(authUserId);
-      const recipientUser = await User.findByPk(recipientIdInt);
-
-      if (!authUser || !recipientUser) {
-        return res.status(404).json({ message: 'Um dos usuários não foi encontrado' });
-      }
-
-      // Verificar se já existe uma conversa entre esses dois participantes
-      let conversation = await Conversation.findOne({
-        where: {
-          participants: {
-            [Op.contains]: [authUserId, recipientIdInt]
-          }
+        // Verificar se o usuário pertence ao workspace
+        const userWorkspace = await UserWorkspace.findOne({ 
+            where: { userId: senderId, workspaceId } 
+        });
+        if (!userWorkspace) {
+            return res.status(403).json({ message: "Você não tem acesso a este workspace" });
         }
-      });
 
-      // Se a conversa não existir, criar uma nova
-      if (!conversation) {
-        conversation = await Conversation.create({
-          participants: [authUserId, recipientIdInt]
+        // Verificar se o usuário pertence à conversa
+        const conversation = await Conversation.findOne({
+            where: { id: conversationId, workspaceId },
+            include: [{ 
+                model: User, 
+                as: 'participants', 
+                where: { id: senderId },
+                through: { attributes: [] }
+            }]
+        });
+        if (!conversation) {
+            return res.status(403).json({ message: "Você não tem acesso a esta conversa" });
+        }
+
+        const message = await Message.create({
+            content,
+            senderId,
+            conversationId
         });
 
-        // Associar os usuários à conversa
-        await conversation.addParticipantUsers([authUserId, recipientIdInt]);
-      }
+        // Buscar a mensagem criada com informações do remetente
+        const createdMessage = await Message.findByPk(message.id, {
+            include: [{ 
+                model: User, 
+                as: 'sender', 
+                attributes: ['id', 'username', 'profilePicture'] 
+            }]
+        });
 
-      // Enviar a mensagem associada à conversa
-      const newMessage = await Message.create({
-        conversationId: conversation.id,
-        senderId: authUserId,
-        recipientId: recipientIdInt,
-        content: message,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      return res.status(200).json({
-        message: 'Mensagem enviada com sucesso',
-        data: newMessage
-      });
+        res.status(201).json(createdMessage);
     } catch (error) {
-      console.error('Erro detalhado:', error);
-      return res.status(500).json({ message: 'Erro ao enviar a mensagem', error: error.message });
+        console.error('Erro ao enviar mensagem:', error);
+        res.status(500).json({ message: "Erro ao enviar mensagem" });
     }
 };
 
-export const getMessage = async (req, res, next) => {
+export const updateMessage = async (req, res) => {
     try {
-        const { id: userToMessage } = req.params; // ID do usuário com quem o remetente está conversando
-        const senderId = req.user.id; // ID do usuário autenticado
+        const { content } = req.body;
+        const messageId = req.params.id;
+        const userId = req.user.id;
 
-        // Buscar todas as mensagens entre o senderId (usuário autenticado) e userToMessage (usuário da URL)
-        const messages = await Message.findAll({
-            where: {
-                [Op.or]: [
-                    {
-                        senderId: senderId,
-                        recipientId: userToMessage
-                    },
-                    {
-                        senderId: userToMessage,
-                        recipientId: senderId
-                    }
-                ]
-            },
-            order: [['createdAt', 'ASC']] // Ordenar cronologicamente pela data de criação
+        const message = await Message.findByPk(messageId);
+
+        if (!message) {
+            return res.status(404).json({ message: "Mensagem não encontrada" });
+        }
+
+        if (message.senderId !== userId) {
+            return res.status(403).json({ message: "Você não tem permissão para editar esta mensagem" });
+        }
+
+        await message.update({ content });
+
+        const updatedMessage = await Message.findOne({
+            where: { id: messageId },
+            include: [{ model: User, as: 'sender', attributes: ['id', 'username', 'profilePicture'] }]
         });
 
-        // Sempre retornar 200 OK com o array de mensagens (vazio se não houver mensagens)
-        return res.status(200).json(messages);
+        // Emitir evento de mensagem atualizada via Socket.IO
+        const conversation = await Conversation.findByPk(message.conversationId, {
+            include: [{ model: User, as: 'participants' }]
+        });
 
+        conversation.participants.forEach(participant => {
+            if (participant.id !== userId) {
+                const receiverSocketId = getReceiverSocketId(participant.id);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("messageUpdated", updatedMessage);
+                }
+            }
+        });
+
+        res.json(updatedMessage);
     } catch (error) {
-        next(error);
+        console.error('Erro ao atualizar mensagem:', error);
+        res.status(500).json({ message: "Erro ao atualizar mensagem" });
     }
 };
+
+export const deleteMessage = async (req, res) => {
+    try {
+        const messageId = req.params.id;
+        const userId = req.user.id;
+
+        const message = await Message.findByPk(messageId);
+
+        if (!message) {
+            return res.status(404).json({ message: "Mensagem não encontrada" });
+        }
+
+        if (message.senderId !== userId) {
+            return res.status(403).json({ message: "Você não tem permissão para excluir esta mensagem" });
+        }
+
+        const conversationId = message.conversationId;
+
+        await message.destroy();
+
+        // Emitir evento de mensagem excluída via Socket.IO
+        const conversation = await Conversation.findByPk(conversationId, {
+            include: [{ model: User, as: 'participants' }]
+        });
+
+        conversation.participants.forEach(participant => {
+            if (participant.id !== userId) {
+                const receiverSocketId = getReceiverSocketId(participant.id);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("messageDeleted", { messageId, conversationId });
+                }
+            }
+        });
+
+        res.status(200).json({ message: "Mensagem excluída com sucesso" });
+    } catch (error) {
+        console.error('Erro ao excluir mensagem:', error);
+        res.status(500).json({ message: "Erro ao excluir mensagem" });
+    }
+};
+
+// ... outras funções, se houver
