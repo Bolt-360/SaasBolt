@@ -14,6 +14,8 @@ export const GlobalStyle = createGlobalStyle`
         padding: 0;
         box-sizing: border-box;
         text-decoration: none;
+        font-family: "Public Sans", sans-serif;
+        color: var(--text-color);
     }
 
     html {
@@ -26,7 +28,6 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     body {
-        font-family: "Public Sans", sans-serif;
         background: var(--background);
         -webkit-font-smoothing: antialiased;
     }

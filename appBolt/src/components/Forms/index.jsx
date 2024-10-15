@@ -1,14 +1,12 @@
-import { InputNumber } from '../InputNumber'
-import { Select } from '../Select'
-import { TextArea } from '../TextArea'
-import { Form } from './style'
+import { TextSpan } from '../TextSpan'
+import { BoxForm } from './Box-form'
+import { Container } from './style'
 
 export function Forms() {
     return(
-        <Form> 
-            <Select />
-            <TextArea />
-            <InputNumber /> 
-        </Form>
+        <Container>
+            <TextSpan />
+            <BoxForm />
+        </Container>
     )
 }

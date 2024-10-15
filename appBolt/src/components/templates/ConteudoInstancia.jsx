@@ -1,6 +1,6 @@
 import { List } from "../List";
 import { User } from "../User";
-import { Pagina } from "./Pagina";
+import { Pagina } from "../Pagina";
 
 export function ConteudoInstancia() {
     return (

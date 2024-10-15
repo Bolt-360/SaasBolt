@@ -1,13 +1,7 @@
-import { ConteudoHome } from "../components/templates/ConteudoHome";
-import { Menu } from "../components/Menu";
-import { GlobalStyle } from "../styles/global";
+import { HomeContainer } from "../components/Container/Home";
 
 export function Home() {
     return (
-        <>
-            <Menu />
-            <ConteudoHome /> 
-            <GlobalStyle />
-        </>
+        <HomeContainer />
     )
 }

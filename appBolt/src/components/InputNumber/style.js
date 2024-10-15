@@ -4,9 +4,11 @@ export const Input = styled.div`
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    border: 1px solid;
+    border-radius: 0.375rem;
 
     input {
-        padding: 0;
+        padding: 0.7rem;
         width: 100%;
         border-width: 1px;
         border-radius: 0.375rem;

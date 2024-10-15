@@ -16,7 +16,7 @@ body {
     background-color: rgba(76, 175, 80, 0.1);
 }
 
-.list {
+/* .list {
     display: flex;
     flex-direction: column;
 }
@@ -91,9 +91,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 5px;
-}
+} */
 
-.container-form {
+/* .container-form {
     width: 1200px;
     display: flex;
     flex-direction: column;
@@ -115,7 +115,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
+} */
 
 .table {
     width: 1200px;

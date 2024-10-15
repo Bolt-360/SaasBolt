@@ -1,14 +1,7 @@
-import { Menu } from "../components/Menu";
-import { ConteudoInstancia } from "../components/templates/ConteudoInstancia";
-import { GlobalStyle } from "../styles/global";
+import { InstanciaContainer } from "../components/Container/Instancias";
 
 export function Instancias() {
     return (
-        <div className="flex flex-1">
-            <Menu />
-            <ConteudoInstancia /> 
-            <GlobalStyle />
-        </div>
-        
+        <InstanciaContainer />
     )
 }
