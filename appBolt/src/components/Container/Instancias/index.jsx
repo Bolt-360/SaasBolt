@@ -4,6 +4,7 @@ import { User } from "../../User";
 import { Container } from "./style";
 import { GlobalStyle } from "../../../styles/global";
 import { Table } from "../../Table";
+import { TextSpan } from "../../TextSpan";
 
 export function InstanciaContainer() {
     let dados = [
@@ -50,6 +51,7 @@ export function InstanciaContainer() {
             <Menu />
             <Pagina> 
                 <User />
+                <TextSpan />
                 <Table dados={dados}/>
             </Pagina>
             <GlobalStyle/>
