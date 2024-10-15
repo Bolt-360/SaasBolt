@@ -1,10 +1,9 @@
 import { Container } from "./style";
 
-export function TextSpan() {
+export function TextSpan( {children} ) {
     return(
         <Container>
-            <span>Importar / </span>
-            <span><strong>Enviar em massa</strong></span>
+            {children}
         </Container>
     )
 }

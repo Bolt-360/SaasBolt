@@ -51,7 +51,10 @@ export function InstanciaContainer() {
             <Menu />
             <Pagina> 
                 <User />
-                <TextSpan />
+                <TextSpan>
+                    <span>Listar e Visualizar / </span>
+                    <span><strong>Instâncias</strong></span>
+                </TextSpan>
                 <Table dados={dados}/>
             </Pagina>
             <GlobalStyle/>
