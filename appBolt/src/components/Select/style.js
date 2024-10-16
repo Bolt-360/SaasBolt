@@ -11,14 +11,17 @@ export const InputSelect = styled.div`
     }
 
     select {
-        border-width: 1px; 
+        border-width: 1px;
+        border-color: #ccc;
         border-radius: 0.25rem;
         padding: 0.5rem;
         outline: 2px solid transparent;
         outline-offset: 2px;
+        transition: border-color 0.3s;
 
         &:focus {
             border-color: #22c55e;
+            outline: none;
         }
     }
 `

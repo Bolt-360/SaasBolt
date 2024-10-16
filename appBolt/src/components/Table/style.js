@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export const Container = styled.table`
-    width: 1200px;
+    max-width: 1200px;
     border-radius: 0.5rem;
     background-color: #fff;
     box-shadow: rgba(0, 0, 0, 0.20) 0px 1px 4px;

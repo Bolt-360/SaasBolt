@@ -4,7 +4,7 @@ export function TextArea() {
     return(
         <TArea>
             <label htmlFor="mensagem">Mensagem</label>
-            <textarea type="text" id="mensagem" placeholder="Digite a mensagem..."/>
+            <textarea id="mensagem" placeholder="Digite a mensagem..."></textarea>
         </TArea>
     )
 }

@@ -4,19 +4,25 @@ export const Input = styled.div`
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    border: 1px solid;
+    border: 1px solid #ccc;
     border-radius: 0.375rem;
+
+    label {
+        padding: 0.5rem;
+        min-width: 300px;
+    }
 
     input {
         padding: 0.7rem;
         width: 100%;
-        border-width: 1px;
-        border-radius: 0.375rem;
-        outline: 2px solid transparent;
+        border: none;
+        border-left: 1px solid #ccc;
+        outline: 1px solid transparent;
         outline-offset: 2px;
 
         &:focus {
             border-color: var(--border-color);
+            outline: none;
         }
     }
 `

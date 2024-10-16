@@ -1,10 +1,11 @@
 import styled from 'styled-components'
 
-export const Icon = styled.div`
+export const Container = styled.div`
     margin-top: 20px;
     padding: 8px;
     display: flex;
     justify-content: center;
+    align-items: center;
 
     span {
         color: var(--text-color);
@@ -20,5 +21,12 @@ export const Icon = styled.div`
     span img {
         width: 31px;
         height: 30px;
+    }
+
+    svg {
+        display: none;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
     }
 `

@@ -17,27 +17,33 @@ export const Container = styled.div`
 
         select {
             border-width: 1px;
+            border-color: #ccc;
             border-radius: 0.375rem;
             padding: 0.5rem;
             width: 100%;
             outline: 2px solid transparent;
             outline-offset: 2px;
+            transition: border-color 0.3s;
 
             &:focus {
                 border-color: var(--border-color);
+                outline: none;
             }
         }
 
         input {
             border-width: 1px;
+            border-color: #ccc;
             border-radius: 0.375rem;
             padding: 0.5rem;
             width: 100%;
             outline: 2px solid transparent;
             outline-offset: 2px;
+            transition: border-color 0.3s;
 
             &:focus {
                 border-color: var(--border-color);
+                outline: none;
             }
         }
     }
