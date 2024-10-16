@@ -1,4 +1,4 @@
-import { InstanciaContainer } from "../components/Container/Instancias";
+import { InstanciaContainer } from "../components/Templates/Instancias";
 
 export function Instancias() {
     return (

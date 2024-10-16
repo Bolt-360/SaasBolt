@@ -1,5 +1,5 @@
-import { IconMenu } from '../IconMenu'
-import { MenuList } from '../MenuList'
+import { IconMenu } from './IconMenu'
+import { MenuList } from './MenuList'
 import { Container } from './style'
 import { useState } from 'react'
 

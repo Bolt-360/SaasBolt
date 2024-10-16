@@ -1,4 +1,4 @@
-import { DisparadorContainer } from "../components/Container/Disparador";
+import { DisparadorContainer } from "../components/Templates/Disparador";
 
 export function Disparador() {
     return (

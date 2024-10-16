@@ -1,4 +1,4 @@
-import { HomeContainer } from "../components/Container/Home";
+import { HomeContainer } from "../components/Templates/Home";
 
 export function Home() {
     return (
