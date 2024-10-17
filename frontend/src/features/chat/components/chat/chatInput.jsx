@@ -1,15 +1,16 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import EmojiPicker from 'emoji-picker-react'
 import { Button } from "@/components/ui/button"
-import { Smile, Paperclip, Bold, Italic, Strikethrough, Send, Mic, Check, X } from 'lucide-react'
+import { Smile, Paperclip, Bold, Italic, Strikethrough, Send, Mic, Check, X, MoreHorizontal } from 'lucide-react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import useSendMessage from '@/hooks/useSendMessage'
 import useConversation from "@/zustand/useConversation";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/context/AuthContext";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const TooltipButton = ({ onClick, icon, tooltip, isActive = false }) => (
   <Tooltip.Provider>
@@ -35,13 +36,14 @@ const TooltipButton = ({ onClick, icon, tooltip, isActive = false }) => (
   </Tooltip.Provider>
 )
 
-const ChatInput = ({ addMessage }) => {
+const ChatInput = ({ onSendMessage }) => {
   const { selectedConversation } = useConversation();
+  const { authUser } = useAuthContext();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const { sendMessage, loading } = useSendMessage();
   const emojiPickerRef = useRef(null);
   const editorRef = useRef(null);
-  
+  const [showFormatOptions, setShowFormatOptions] = useState(false);
 
   const convertToWhatsAppFormat = (html) => {
     let whatsappText = html
@@ -81,18 +83,30 @@ const ChatInput = ({ addMessage }) => {
   });
 
   const handleSend = useCallback(async () => {
-    if (editor && selectedConversation) {
+    if (editor && selectedConversation && authUser?.activeWorkspaceId) {
       const htmlContent = editor.getHTML();
       const whatsappFormattedMessage = convertToWhatsAppFormat(htmlContent);
       if (whatsappFormattedMessage && whatsappFormattedMessage.trim() !== '') {
-        const sentMessage = await sendMessage(whatsappFormattedMessage);
-        if (sentMessage) {
-          addMessage(sentMessage);
-          editor.commands.clearContent();
+        try {
+          const sentMessage = await sendMessage(
+            authUser.activeWorkspaceId,
+            selectedConversation.id,
+            whatsappFormattedMessage
+          );
+          if (sentMessage) {
+            onSendMessage(sentMessage); // Use a função passada como prop
+            editor.commands.clearContent();
+          }
+        } catch (error) {
+          console.error('Error sending message:', error);
+          // You might want to show an error toast here
         }
       }
+    } else {
+      console.error('Cannot send message: Missing conversation or workspace');
+      // You might want to show an error toast here
     }
-  }, [editor, sendMessage, selectedConversation, addMessage]);
+  }, [editor, sendMessage, selectedConversation, authUser, onSendMessage]);
 
   const toggleFormat = useCallback((format) => {
     if (editor && editor.isEditable) {
@@ -119,6 +133,29 @@ const ChatInput = ({ addMessage }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const formatOptions = (
+    <div className="flex space-x-2">
+      <TooltipButton
+        onClick={() => toggleFormat('toggleBold')}
+        icon={<Bold size={20} />}
+        tooltip="Negrito"
+        isActive={editor.isActive('bold')}
+      />
+      <TooltipButton
+        onClick={() => toggleFormat('toggleItalic')}
+        icon={<Italic size={20} />}
+        tooltip="Itálico"
+        isActive={editor.isActive('italic')}
+      />
+      <TooltipButton
+        onClick={() => toggleFormat('toggleStrike')}
+        icon={<Strikethrough size={20} />}
+        tooltip="Tachado"
+        isActive={editor.isActive('strike')}
+      />
+    </div>
+  );
 
   const renderSendButton = () => {
     switch (status) {
@@ -178,29 +215,30 @@ const ChatInput = ({ addMessage }) => {
             icon={<Paperclip size={20} />}
             tooltip="Anexar arquivo"
           />
-          <TooltipButton
-            onClick={() => toggleFormat('toggleBold')}
-            icon={<Bold size={20} />}
-            tooltip="Negrito"
-            isActive={editor.isActive('bold')}
-          />
-          <TooltipButton
-            onClick={() => toggleFormat('toggleItalic')}
-            icon={<Italic size={20} />}
-            tooltip="Itálico"
-            isActive={editor.isActive('italic')}
-          />
-          <TooltipButton
-            onClick={() => toggleFormat('toggleStrike')}
-            icon={<Strikethrough size={20} />}
-            tooltip="Tachado"
-            isActive={editor.isActive('strike')}
-          />
+          <div className="hidden sm:block">
+            {formatOptions}
+          </div>
+          <div className="sm:hidden">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal size={20} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-2">
+                {formatOptions}
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         <div className="flex-grow relative border rounded-lg">
           <div 
-            ref={editorRef}
             className="min-h-[24px] max-h-[120px] py-1 px-2 overflow-y-auto"
+            style={{
+              overflowWrap: 'break-word',
+              wordWrap: 'break-word',
+              wordBreak: 'break-word',
+            }}
           >
             <EditorContent editor={editor} />
           </div>
@@ -211,11 +249,11 @@ const ChatInput = ({ addMessage }) => {
           )}
         </div>
         <div className="flex space-x-2 ml-2">
-            <TooltipButton
-                onClick={handleSend}  // A função que será chamada ao clicar
-                icon={buttonIcon()}    // Usa o ícone atual gerado pela função buttonIcon()
-                tooltip="Enviar mensagem"  // Texto exibido no Tooltip
-            />
+          <TooltipButton
+            onClick={handleSend}
+            icon={buttonIcon()}
+            tooltip="Enviar mensagem"
+          />
           <TooltipButton
             icon={<Mic size={20} />}
             tooltip="Mensagem de voz"

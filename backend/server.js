@@ -3,6 +3,12 @@ import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
 import { server, app, io} from './socket/socket.js';
+import instanceRoutes from './routes/instance.routes.js';
+import campaignRoutes from './routes/campaign.js';
+import messageCampaignRoutes from './routes/messageCampaign.js';
+import recipientRoutes from './routes/recipient.js';
+
+app.set('io', io);
 
 dotenv.config()
 
@@ -66,6 +72,10 @@ app.use("/api/users", userRouters)
 app.use("/api/workspaces", workspacesRouters)
 app.use("/api/conversations", conversationsRouters)
 app.use('/api/contacts', contactRoutes)
+app.use('/api/instances', instanceRoutes)
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/message-campaigns', messageCampaignRoutes);
+app.use('/api/recipients', recipientRoutes);
 
 server.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)

@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import React from 'react';
 
 const FormattedMessage = ({ content }) => {
@@ -10,15 +11,17 @@ const FormattedMessage = ({ content }) => {
     
     // Substitui ~texto~ por <s>texto</s> (tachado)
     text = text.replace(/~(.*?)~/g, '<s>$1</s>');
-
+    
     // Substitui quebras de linha por <br>
     text = text.replace(/\n/g, '<br>');
 
     return text;
   };
 
+  const sanitizedHTML = DOMPurify.sanitize(formatText(content));
+
   return (
-    <span dangerouslySetInnerHTML={{ __html: formatText(content) }} />
+    <span dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />
   );
 };
 

@@ -72,7 +72,7 @@ export default function Sidebar({ activeTab }) {
   );
 
   return (
-    <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col border-r h-full bg-background">
+    <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col border-r h-full bg-background min-w-[250px]">
       <div className="p-4">
         <h1 className="text-xl font-bold">{activeTab === 'conversations' ? 'Conversas' : 'Contatos'}</h1>
         <div className="mt-4">
@@ -93,24 +93,24 @@ export default function Sidebar({ activeTab }) {
             <TabsTrigger value="groups">Grupos</TabsTrigger>
           </TabsList>
           <TabsContent value="all">
-            <ScrollArea className="h-[calc(100vh-200px)]">
+            <ScrollArea className="h-[calc(100vh-200px)] min-h-[200px]">
               {renderConversations(filteredConversations)}
             </ScrollArea>
           </TabsContent>
           <TabsContent value="individual">
-            <ScrollArea className="h-[calc(100vh-200px)]">
+            <ScrollArea className="h-[calc(100vh-200px)] min-h-[200px]">
               {renderConversations(individualConversations)}
             </ScrollArea>
           </TabsContent>
           <TabsContent value="groups">
-            <ScrollArea className="h-[calc(100vh-200px)]">
+            <ScrollArea className="h-[calc(100vh-200px)] min-h-[200px]">
               {renderConversations(groupConversations)}
             </ScrollArea>
           </TabsContent>
         </Tabs>
       )}
       {activeTab === 'contacts' && (
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-[200px]">
           <div className="space-y-2 p-2">
             {loadingContacts ? (
               <div className="text-center">Carregando contatos...</div>

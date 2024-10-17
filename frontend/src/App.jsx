@@ -8,6 +8,13 @@ import NotFoundPage from './pages/404'
 import { useAuthContext } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import WorkspaceSetup from './pages/WorkspaceSetup'
+import CampanhasLayout from './features/campanhas/CampanhasLayout'
+import Dashboard from './features/campanhas/page'
+import ListarInstancias from './features/campanhas/ListarInstancias/page'
+import Disparador from './features/campanhas/Disparador/page'
+import Configuracoes from './features/campanhas/Configuracoes/page'
+import CriarInstancia from './features/campanhas/CriarInstancia/page'
+import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
 
 function App() {
   const { authUser } = useAuthContext();
@@ -26,9 +33,17 @@ function App() {
         <Route 
           path='/app'
           element={<AppLayout />}
-        >
+        > 
           <Route index element={<WebAppPage />} />
           <Route path='chat' element={<ChatPage />} />
+          <Route path='campanhas' element={<CampanhasLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path='listar-instancias' element={<ListarInstancias />} />
+            <Route path='disparador' element={<Disparador />} />
+            <Route path='configuracoes' element={<Configuracoes />} />
+            <Route path='criar-instancia' element={<CriarInstancia />} />
+            <Route path='listar-campanhas' element={<ListarCampanhas />} />
+          </Route>
         </Route>
         <Route path='*' element={<NotFoundPage />} />
       </Routes>

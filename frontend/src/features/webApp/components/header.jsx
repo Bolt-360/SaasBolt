@@ -9,11 +9,13 @@ import { Loader2 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { changeActiveWorkspace } from '@/lib/workspaceApi';
 import { useToast } from "@/hooks/use-toast";
+import useConversation from "@/zustand/useConversation";
 
 export default function Header() {
     const { loading, logout } = useLogout();
     const { authUser, setAuthUser } = useAuthContext();
     const { toast } = useToast();
+    const { clearSelectedConversation } = useConversation();
 
     const activeWorkspace = authUser?.workspaces?.find(w => w.id === authUser.activeWorkspaceId);
 
@@ -26,6 +28,7 @@ export default function Header() {
             await changeActiveWorkspace(authUser.token, workspaceId);
             const updatedUser = { ...authUser, activeWorkspaceId: workspaceId };
             setAuthUser(updatedUser);
+            clearSelectedConversation();
             const newActiveWorkspace = authUser.workspaces.find(w => w.id === workspaceId);
             toast({
                 title: "Workspace alterado com sucesso",

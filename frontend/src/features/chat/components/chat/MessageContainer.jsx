@@ -14,7 +14,7 @@ const MessageContainer = () => {
     const { selectedConversation } = useConversation();
     const scrollAreaRef = useRef(null);
     const { authUser } = useAuthContext();
-    
+
     useListenMessages();
 
     useEffect(() => {
@@ -46,17 +46,16 @@ const MessageContainer = () => {
         );
     }
 
-    const handleSendMessage = (content) => {
-        if (authUser?.activeWorkspaceId && selectedConversation?.id) {
-            addMessage(authUser.activeWorkspaceId, selectedConversation.id, content);
-        }
-    };
-
     return (
-        <div className='flex-1 flex flex-col'>
-            <ChatHeader />
-            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-                <div className="space-y-4">
+        <div className='flex-1 flex flex-col h-full'>
+            {/* Define altura fixa para o ChatHeader */}
+            <div className="flex-shrink-0">
+                <ChatHeader />
+            </div>
+
+            {/* ScrollArea ocupa todo o espaço restante */}
+            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 overflow-y-auto">
+                <div className="flex flex-col space-y-4">
                     {uniqueMessages.length === 0 ? (
                         <p className='text-center text-muted-foreground font-small'>
                             Inicie uma conversa enviando uma mensagem
@@ -68,7 +67,11 @@ const MessageContainer = () => {
                     )}
                 </div>
             </ScrollArea>
-            <ChatInput onSendMessage={handleSendMessage} />
+
+            {/* ChatInput na parte inferior */}
+            <div className="flex-shrink-0">
+                <ChatInput onSendMessage={addMessage} />
+            </div>
         </div>
     );
 };

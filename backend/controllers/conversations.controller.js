@@ -40,7 +40,7 @@ export const getConversations = async (req, res) => {
 
 export const createConversation = async (req, res) => {
     try {
-        const { participantIds, workspaceId, name } = req.body;
+        const { participantIds, workspaceId, name, groupProfilePhoto } = req.body;
         const userId = req.user.id;
 
         if (!participantIds.includes(userId)) {
@@ -51,7 +51,8 @@ export const createConversation = async (req, res) => {
         const conversation = await Conversation.create({ 
             workspaceId, 
             name, 
-            isGroup 
+            isGroup,
+            groupProfilePhoto: isGroup ? groupProfilePhoto : null
         });
         await conversation.addUsers(participantIds);
 
@@ -113,7 +114,7 @@ export const getConversationDetails = async (req, res) => {
 export const updateConversation = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, participantIds } = req.body;
+        const { name, participantIds, groupProfilePhoto } = req.body;
         const userId = req.user.id;
 
         const conversation = await Conversation.findByPk(id);
@@ -122,9 +123,11 @@ export const updateConversation = async (req, res) => {
             return res.status(404).json({ message: "Conversa não encontrada" });
         }
 
-        if (name) {
-            await conversation.update({ name });
-        }
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (groupProfilePhoto && conversation.isGroup) updateData.groupProfilePhoto = groupProfilePhoto;
+
+        await conversation.update(updateData);
 
         if (participantIds) {
             const currentParticipants = await conversation.getUsers();
@@ -234,7 +237,7 @@ export const getWorkspaceConversations = async (req, res) => {
         console.log(`Número de conversas do usuário: ${userConversations.length}`);
 
         const formattedConversations = userConversations.map(conversation => {
-            const { id, name, workspaceId, participants, messages, createdAt, updatedAt, isGroup } = conversation;
+            const { id, name, workspaceId, participants, messages, createdAt, updatedAt, isGroup, groupProfilePhoto } = conversation;
             return {
                 id,
                 name,
@@ -243,7 +246,8 @@ export const getWorkspaceConversations = async (req, res) => {
                 lastMessage: messages && messages.length > 0 ? messages[0] : null,
                 createdAt,
                 updatedAt,
-                isGroup
+                isGroup,
+                groupProfilePhoto
             };
         });
 
@@ -255,3 +259,4 @@ export const getWorkspaceConversations = async (req, res) => {
         res.status(500).json({ message: "Erro ao buscar conversas do workspace" });
     }
 };
+

@@ -4,16 +4,22 @@ import { cn } from "@/lib/utils";
 import FormattedMessage from "@/components/FormattedMessage";
 
 const ConversationItem = ({ conversation, isSelected, onClick }) => {
-  // Verifica se conversation e otherParticipant existem
-  if (!conversation || !conversation.otherParticipant) {
-    return null; // ou você pode retornar um componente de fallback
+  if (!conversation) {
+    return null;
   }
 
-  const { otherParticipant, lastMessage, status } = conversation;
-
+  const { isGroup, name, participants, lastMessage, groupProfilePhoto } = conversation;
+  
+  const displayName = isGroup ? name : conversation.otherParticipant?.username;
+  const avatarSrc = isGroup ? groupProfilePhoto : conversation.otherParticipant?.profilePicture;
+  
   const truncate = (str, length) => {
     if (str.length <= length) return str;
     return str.slice(0, length) + '...';
+  };
+
+  const getInitials = (name) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   return (
@@ -24,32 +30,37 @@ const ConversationItem = ({ conversation, isSelected, onClick }) => {
       )}
       onClick={onClick}
     >
-      <div className="relative">
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={otherParticipant.profilePicture} alt={otherParticipant.username} />
-          <AvatarFallback>{otherParticipant.username[0]}</AvatarFallback>
+      <div className="relative flex-shrink-0">
+        <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
+          <AvatarImage src={avatarSrc} alt={displayName} />
+          <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
         </Avatar>
-        {status && (
+        {!isGroup && conversation.status && (
           <span 
             className={cn(
-              "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white",
-              status === 'online' ? 'bg-green-500' : 'bg-gray-300'
+              "absolute bottom-0 right-0 w-2 h-2 sm:w-3 sm:h-3 rounded-full border-2 border-white",
+              conversation.status === 'online' ? 'bg-green-500' : 'bg-gray-300'
             )}
           />
         )}
       </div>
-      <div className="min-w-0 overflow-hidden">
-        <p className="text-sm font-medium text-gray-900 truncate">
-          {conversation.name || otherParticipant.username}
+      <div className="min-w-0 overflow-hidden flex flex-col justify-center">
+        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+          {displayName}
         </p>
         {lastMessage && (
-          <p className="text-xs text-gray-500 truncate">
-            <FormattedMessage content={lastMessage.content} />
+          <p className="text-2xs sm:text-xs text-gray-500 truncate">
+            {isGroup && (
+              <span className="font-medium mr-1">
+                {truncate(lastMessage.sender.username, 10)}:
+              </span>
+            )}
+            <FormattedMessage content={truncate(lastMessage.content, 20)} />
           </p>
         )}
       </div>
       {lastMessage && (
-        <span className="text-xs text-gray-400 whitespace-nowrap">
+        <span className="text-2xs sm:text-xs text-gray-400 whitespace-nowrap">
           {new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       )}

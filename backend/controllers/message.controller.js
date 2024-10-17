@@ -85,13 +85,26 @@ export const sendMessage = async (req, res) => {
             conversationId
         });
 
-        // Buscar a mensagem criada com informações do remetente
         const createdMessage = await Message.findByPk(message.id, {
             include: [{ 
                 model: User, 
                 as: 'sender', 
                 attributes: ['id', 'username', 'profilePicture'] 
             }]
+        });
+
+        // Emitir evento de nova mensagem via Socket.IO
+        const conversationWithParticipants = await Conversation.findByPk(conversationId, {
+            include: [{ model: User, as: 'participants' }]
+        });
+
+        conversationWithParticipants.participants.forEach(participant => {
+            if (participant.id !== senderId) {
+                const receiverSocketId = getReceiverSocketId(participant.id);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("newMessage", createdMessage);
+                }
+            }
         });
 
         res.status(201).json(createdMessage);

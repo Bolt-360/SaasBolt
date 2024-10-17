@@ -33,7 +33,15 @@ export default (sequelize) => {
         },
         lastMessageAt: {
             type: DataTypes.DATE
-        }
+        },
+        groupProfilePhoto: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        type: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     }, {
         sequelize,
         modelName: 'Conversation',
@@ -42,3 +50,4 @@ export default (sequelize) => {
 
     return Conversation;
 };
+

@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { MessageCircle, SquareKanban } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
+
 
 export default function Main() {
   return (
@@ -23,6 +25,15 @@ export default function Main() {
               <SquareKanban className="h-12 w-12" />
             </div>
             <span className="mt-4 text-sm font-semibold">PipeFull</span>
+          </Link>
+          <Link
+            to="/app/campanhas"
+            className="group relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-muted p-8 hover:bg-accent hover:text-accent-foreground shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105"
+          >
+            <div className="flex items-center justify-center">
+              <FaWhatsapp className="h-12 w-12" />
+            </div>
+            <span className="mt-4 text-sm font-semibold">Campanhas</span>
           </Link>
         </div>
       </div>

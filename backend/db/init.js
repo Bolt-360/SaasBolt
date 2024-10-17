@@ -2,7 +2,7 @@ import sequelize from '../config/database.js';
 import models from '../models/index.js';
 import bcryptjs from 'bcryptjs';
 
-const { User, Workspace, UserWorkspace, Conversation, Message } = models;
+const { User, Workspace, UserWorkspace, Conversation, Message, Instance, Campaign, MessageCampaign } = models;
 
 // Função para gerar um código de convite único
 const generateUniqueInviteCode = async () => {
@@ -162,7 +162,8 @@ async function createInitialConversations() {
         const conversation = await Conversation.create({
           workspaceId: workspace.id,
           name: conversationName,
-          isGroup: isGroup
+          isGroup: isGroup,
+          groupProfilePhoto: isGroup ? 'https://cdn.icon-icons.com/icons2/2428/PNG/512/whatsapp_black_logo_icon_147050.png' : null
         });
 
         await conversation.setParticipants(participants);
@@ -193,16 +194,75 @@ async function createInitialConversations() {
   console.log('Conversas e mensagens iniciais criadas com sucesso.');
 }
 
+async function createInitialInstances() {
+  const workspaces = await Workspace.findAll();
+  for (const workspace of workspaces) {
+    const instanceId = `inst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    await Instance.create({
+      id: instanceId,
+      name: `Instância de Teste ${instanceId}`,
+      workspaceId: workspace.id,
+      status: 'DISCONNECTED'
+    });
+  }
+}
+
+async function createInitialCampaigns() {
+  const workspaces = await Workspace.findAll();
+  const instances = await Instance.findAll();
+
+  for (const workspace of workspaces) {
+    const instance = instances.find(i => i.workspaceId === workspace.id);
+    if (instance) {
+      const campaign1 = await Campaign.create({
+        name: `Campanha de Boas-vindas ${workspace.name}`,
+        type: 'MESSAGE',
+        status: 'TO_START',
+        startDate: new Date(),
+        messageInterval: 60, // 60 segundos
+        instanceId: instance.id,
+        workspaceId: workspace.id
+      });
+
+      await MessageCampaign.create({
+        content: 'Olá! Bem-vindo à nossa campanha de boas-vindas.',
+        order: 1,
+        campaignId: campaign1.id
+      });
+
+      const campaign2 = await Campaign.create({
+        name: `Campanha Promocional ${workspace.name}`,
+        type: 'MESSAGE_IMAGE',
+        status: 'TO_START',
+        startDate: new Date(Date.now() + 86400000), // Começa amanhã
+        messageInterval: 120, // 120 segundos
+        instanceId: instance.id,
+        workspaceId: workspace.id
+      });
+
+      await MessageCampaign.create({
+        content: 'Confira nossa promoção especial!',
+        order: 1,
+        campaignId: campaign2.id
+      });
+
+      console.log(`Campanhas de teste criadas para o workspace ${workspace.name}`);
+    }
+  }
+}
+
 async function initDatabase() {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: true }); // Use force: true apenas uma vez para recriar as tabelas
     console.log('Banco de dados sincronizado com sucesso.');
 
     if (process.env.PRODUCTION === 'false') {
       await createInitialUsers();
       await createInitialWorkspaces();
       await associateUsersToWorkspaces();
+      await createInitialInstances();
       await createInitialConversations();
+      await createInitialCampaigns();
     }
 
     console.log('Inicialização do banco de dados concluída.');
