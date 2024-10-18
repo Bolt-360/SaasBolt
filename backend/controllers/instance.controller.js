@@ -8,82 +8,93 @@ const { Instance, Workspace } = models;
 const EVOLUTION_API_URL = process.env.URL_EVOLUTION_API;
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
 
-export const createInstance = async (req, res, io) => {
-    console.log('Iniciando createInstance');
-    console.log('Dados recebidos:', req.body);
+// Função para configurar o webhook após a criação da instância
+const configureWebhook = async (instanceName, workspaceId) => {
+    const webhookUrl = `${process.env.BASE_URL}/webhook/instance-events`;
 
+    return axios.post(`${EVOLUTION_API_URL}/webhook/set/${workspaceId}-${instanceName}`, {
+        webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: true,
+            webhookBase64: true,
+            events: ["QRCODE_UPDATED", "CONNECTION_UPDATE"]
+        }
+    }, {
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+        },
+        timeout: 10000
+    });
+};
+
+// Função para criar uma nova instância
+export const createInstance = async (req, res, io) => {
     try {
-        const { name, phoneNumber, status, workspaceId } = req.body;
+        const { name } = req.body;
+        const workspaceId = req.params.workspaceId;
 
         if (!name || !workspaceId) {
-            console.log('Dados obrigatórios faltando');
             return res.status(400).json({ message: "Nome e ID do workspace são obrigatórios" });
         }
 
+        // Passo 1: Criar a instância
         let evolutionApiResponse;
         try {
-            // Criar instância na Evolution API com timeout de 10 segundos
             evolutionApiResponse = await axios.post(`${EVOLUTION_API_URL}/instance/create`, {
-                instanceName: name,
-                token: name, // Usando o nome como token, ajuste conforme necessário
-                number: phoneNumber,
+                instanceName: workspaceId + "-" + name,
+                frontName: name,
+                token: name,
                 qrcode: true,
-                integration: "WHATSAPP-BAILEYS",
-                // Adicione outros parâmetros conforme necessário
+                integration: "WHATSAPP-BAILEYS"
             }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': EVOLUTION_API_KEY
                 },
-                timeout: 10000 // 10 segundos de timeout
+                timeout: 10000
             });
 
-            console.log('Resposta da Evolution API:', evolutionApiResponse.data);
         } catch (evolutionError) {
-            console.error('Erro ao criar instância na Evolution API:', evolutionError.message);
-            if (evolutionError.response) {
-                console.error('Detalhes do erro:', evolutionError.response.data);
-            }
             throw new Error('Falha ao criar instância na Evolution API');
+        }
+
+        // Passo 2: Configurar o webhook
+        try {
+            const webhookResponse = await configureWebhook(name, workspaceId);
+            console.log("Webhook configurado com sucesso", webhookResponse.data);
+        } catch (webhookError) {
+            console.log("Falha ao configurar webhook", webhookError, configureWebhook);
+            throw new Error('Falha ao configurar webhook'); 
+            
         }
 
         const instanceData = {
             id: evolutionApiResponse.data.instance.instanceId,
             name: evolutionApiResponse.data.instance.instanceName,
             status: evolutionApiResponse.data.instance.status.toUpperCase(),
-            workspaceId,
-            phoneNumber
+            workspaceId
         };
 
         const instance = await Instance.create(instanceData);
 
         const InstanceReturns = {
-            requestData: req.body,
             createdInstance: instance.toJSON(),
-            evolutionApiResponse: evolutionApiResponse ? evolutionApiResponse.data : null
+            evolutionApiResponse: evolutionApiResponse.data
         };
 
         if (io && typeof io.emit === 'function') {
-            console.log('Emitindo evento instanceCreated');
             io.emit('instanceCreated', InstanceReturns);
-        } else {
-            console.warn('Socket.io não está disponível para emitir eventos');
         }
 
         res.status(201).json(InstanceReturns);
     } catch (error) {
-        console.error('Erro ao criar instância:', error);
-        if (error.name === 'SequelizeValidationError') {
-            const validationErrors = error.errors.map(err => ({
-                field: err.path,
-                message: err.message
-            }));
-            return res.status(400).json({ message: "Erro de validação", errors: validationErrors });
-        }
         res.status(500).json({ message: "Erro ao criar instância", error: error.message });
     }
 };
 
+// Função para buscar todas as instâncias
 export const getAllInstances = async (req, res) => {
     try {
         const instances = await Instance.findAll({
@@ -95,6 +106,7 @@ export const getAllInstances = async (req, res) => {
     }
 };
 
+// Função para buscar uma instância por ID
 export const getInstanceById = async (req, res) => {
     try {
         const instance = await Instance.findByPk(req.params.id, {
@@ -110,6 +122,7 @@ export const getInstanceById = async (req, res) => {
     }
 };
 
+// Função para atualizar uma instância
 export const updateInstance = async (req, res, io) => {
     try {
         const instance = await Instance.findByPk(req.params.id);
@@ -117,7 +130,9 @@ export const updateInstance = async (req, res, io) => {
             await instance.update(req.body);
 
             // Após atualizar a instância com sucesso
-            io.emit('instanceUpdated', instance);
+            if (io && typeof io.emit === 'function') {
+                io.emit('instanceUpdated', instance);
+            }
 
             res.status(200).json(instance);
         } else {
@@ -128,6 +143,7 @@ export const updateInstance = async (req, res, io) => {
     }
 };
 
+// Função para deletar uma instância
 export const deleteInstance = async (req, res, io) => {
     try {
         const instance = await Instance.findByPk(req.params.id);
@@ -135,9 +151,11 @@ export const deleteInstance = async (req, res, io) => {
             await instance.destroy();
 
             // Após deletar a instância com sucesso
-            io.emit('instanceDeleted', { id: req.params.id });
+            if (io && typeof io.emit === 'function') {
+                io.emit('instanceDeleted', { id: req.params.id });
+            }
 
-            res.status(200).json({ message: 'Instance deleted successfully' });
+            res.status(200).json({ message: 'Instância deletada com sucesso' });
         } else {
             res.status(404).json({ message: 'Instância não encontrada' });
         }
@@ -146,7 +164,7 @@ export const deleteInstance = async (req, res, io) => {
     }
 };
 
-// Adicionando a função getInstancesByWorkspace
+// Função para buscar instâncias de um workspace específico
 export const getInstancesByWorkspace = async (req, res) => {
     try {
         const { workspaceId } = req.params;
@@ -160,11 +178,12 @@ export const getInstancesByWorkspace = async (req, res) => {
     }
 };
 
+// Função para conectar uma instância usando a Evolution API
 export const connectInstance = async (req, res) => {
     try {
         const { instanceName } = req.params;
 
-        // Primeiro, encontre a instância no nosso banco de dados
+        // Primeiro, encontre a instância no banco de dados
         const instance = await Instance.findOne({ where: { name: instanceName } });
 
         if (!instance) {
@@ -179,13 +198,13 @@ export const connectInstance = async (req, res) => {
             }
         });
 
-        // Verificar o status retornado pela API Evolution e ajustar conforme necessário
-        let newStatus = response.data.status ? response.data.status.toUpperCase() : 'CONNECTING';
+        // Verificar o status retornado pela Evolution API
+        let newStatus = response.data.status ? response.data.status : 'CONNECTING';
         if (!['CONNECTED', 'DISCONNECTED', 'WAITING_QR', 'CONNECTING'].includes(newStatus)) {
             newStatus = 'CONNECTING';
         }
 
-        // Atualizar o status da instância no nosso banco de dados
+        // Atualizar o status da instância no banco de dados
         await instance.update({ status: newStatus });
 
         res.status(200).json({
@@ -198,7 +217,6 @@ export const connectInstance = async (req, res) => {
             evolutionApiResponse: response.data
         });
     } catch (error) {
-        console.error('Erro ao conectar instância:', error);
         res.status(500).json({ message: "Erro ao conectar instância", error: error.message });
     }
 };

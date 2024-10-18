@@ -23,7 +23,6 @@ const ProtectedRoute = ({ children }) => {
 
     try {
       const decodedToken = jwtDecode(token);
-      console.log('Decoded token:', decodedToken);
 
       // Se não temos authUser, tentamos recuperá-lo do token
       if (!authUser) {

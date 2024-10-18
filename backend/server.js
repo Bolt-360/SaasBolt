@@ -7,6 +7,7 @@ import instanceRoutes from './routes/instance.routes.js';
 import campaignRoutes from './routes/campaign.js';
 import messageCampaignRoutes from './routes/messageCampaign.js';
 import recipientRoutes from './routes/recipient.js';
+import webhookRoutes from './routes/webhook.routes.js';
 
 app.set('io', io);
 
@@ -76,6 +77,7 @@ app.use('/api/instances', instanceRoutes)
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/message-campaigns', messageCampaignRoutes);
 app.use('/api/recipients', recipientRoutes);
+app.use('/webhook', webhookRoutes);
 
 server.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)

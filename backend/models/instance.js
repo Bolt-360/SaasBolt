@@ -38,6 +38,14 @@ export default (sequelize) => {
                 model: 'Workspaces',
                 key: 'id'
             }
+        },
+        qrcode: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        frontName: {
+            type: DataTypes.STRING,
+            allowNull: true
         }
     }, {
         sequelize,

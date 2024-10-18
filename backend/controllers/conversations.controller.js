@@ -33,7 +33,6 @@ export const getConversations = async (req, res) => {
 
         res.json(conversations);
     } catch (error) {
-        console.error('Erro ao buscar conversas:', error);
         res.status(500).json({ message: "Erro ao buscar conversas" });
     }
 };
@@ -69,7 +68,6 @@ export const createConversation = async (req, res) => {
 
         res.status(201).json(createdConversation);
     } catch (error) {
-        console.error('Erro ao criar conversa:', error);
         res.status(400).json({ message: "Erro ao criar conversa", error: error.message });
     }
 };
@@ -106,7 +104,6 @@ export const getConversationDetails = async (req, res) => {
 
         res.json(conversation);
     } catch (error) {
-        console.error('Erro ao buscar detalhes da conversa:', error);
         res.status(500).json({ message: "Erro ao buscar detalhes da conversa" });
     }
 };
@@ -153,7 +150,6 @@ export const updateConversation = async (req, res) => {
 
         res.json(updatedConversation);
     } catch (error) {
-        console.error('Erro ao atualizar conversa:', error);
         res.status(500).json({ message: "Erro ao atualizar conversa" });
     }
 };
@@ -178,7 +174,6 @@ export const deleteConversation = async (req, res) => {
 
         res.json({ message: "Conversa excluída com sucesso" });
     } catch (error) {
-        console.error('Erro ao excluir conversa:', error);
         res.status(500).json({ message: "Erro ao excluir conversa" });
     }
 };
@@ -188,15 +183,12 @@ export const getWorkspaceConversations = async (req, res) => {
         const { workspaceId } = req.params;
         const userId = req.user.id;
 
-        console.log(`Buscando conversas para workspaceId: ${workspaceId}, userId: ${userId}`);
-
         // Verificar se o usuário pertence ao workspace
         const userWorkspace = await models.UserWorkspace.findOne({
             where: { userId, workspaceId }
         });
 
         if (!userWorkspace) {
-            console.log(`Usuário ${userId} não pertence ao workspace ${workspaceId}`);
             return res.status(403).json({ message: "Você não tem acesso a este workspace" });
         }
 
@@ -228,13 +220,9 @@ export const getWorkspaceConversations = async (req, res) => {
             order: [['updatedAt', 'DESC']]
         });
 
-        console.log(`Número de conversas encontradas: ${conversations.length}`);
-
         const userConversations = conversations.filter(conv => 
             conv.participants.some(participant => participant.id === userId)
         );
-
-        console.log(`Número de conversas do usuário: ${userConversations.length}`);
 
         const formattedConversations = userConversations.map(conversation => {
             const { id, name, workspaceId, participants, messages, createdAt, updatedAt, isGroup, groupProfilePhoto } = conversation;
@@ -251,11 +239,8 @@ export const getWorkspaceConversations = async (req, res) => {
             };
         });
 
-        console.log('Conversas formatadas:', formattedConversations.length);
-
         res.json(formattedConversations);
     } catch (error) {
-        console.error('Erro ao buscar conversas do workspace:', error);
         res.status(500).json({ message: "Erro ao buscar conversas do workspace" });
     }
 };

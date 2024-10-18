@@ -17,13 +17,14 @@ export function useCreateInstance() {
   const [isLoading, setIsLoading] = useState(false);
   const { authUser } = useAuthContext();
   const { toast } = useToast();
+  const workspaceId  = authUser.activeWorkspaceId;
 
   const createInstance = async (instanceName) => {
     setIsLoading(true);
     const instanceId = generateInstanceId(instanceName);
 
     try {
-      const response = await fetch('/api/instances', {
+      const response = await fetch(`/api/instances/${workspaceId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

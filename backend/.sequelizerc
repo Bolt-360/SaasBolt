@@ -6,3 +6,4 @@
      'seeders-path': path.resolve('seeders'),
   'migrations-path': path.resolve('migrations')
 };
+    

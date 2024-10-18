@@ -110,7 +110,6 @@ export const setActiveWorkspace = async (req, res, next) => {
             activeWorkspace: updatedUser.activeWorkspace
         });
     } catch (error) {
-        console.error('Erro ao atualizar workspace ativo:', error);
         next(error);
     }
 };

@@ -1,14 +1,10 @@
-import { useAuthContext } from '@/context/AuthContext';
-
-export async function connectInstance(instanceName) {
-  const { authUser } = useAuthContext();
-
+export async function connectInstance(instanceName, token, workspaceId) {
   try {
-    const response = await fetch(`/api/instances/connect/${instanceName}`, {
+    const response = await fetch(`/api/instances/connect/${workspaceId}-${instanceName}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authUser.token}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -17,10 +13,9 @@ export async function connectInstance(instanceName) {
     }
 
     const data = await response.json();
-    return data.evolutionApiResponse.qrcode.base64;
+    return data.evolutionApiResponse.base64;
   } catch (error) {
     console.error('Erro ao conectar instância:', error);
     throw error;
   }
 }
-

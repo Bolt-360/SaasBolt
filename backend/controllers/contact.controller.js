@@ -40,7 +40,6 @@ export const getWorkspaceContacts = async (req, res) => {
 
         res.json(contacts);
     } catch (error) {
-        console.error('Erro ao buscar contatos do workspace:', error);
         res.status(500).json({ message: "Erro ao buscar contatos do workspace" });
     }
 };

@@ -46,7 +46,6 @@ export const getMessages = async (req, res) => {
 
         res.json(messages);
     } catch (error) {
-        console.error('Erro ao buscar mensagens:', error);
         res.status(500).json({ message: "Erro ao buscar mensagens" });
     }
 };
@@ -109,7 +108,6 @@ export const sendMessage = async (req, res) => {
 
         res.status(201).json(createdMessage);
     } catch (error) {
-        console.error('Erro ao enviar mensagem:', error);
         res.status(500).json({ message: "Erro ao enviar mensagem" });
     }
 };
@@ -153,7 +151,6 @@ export const updateMessage = async (req, res) => {
 
         res.json(updatedMessage);
     } catch (error) {
-        console.error('Erro ao atualizar mensagem:', error);
         res.status(500).json({ message: "Erro ao atualizar mensagem" });
     }
 };
@@ -193,7 +190,6 @@ export const deleteMessage = async (req, res) => {
 
         res.status(200).json({ message: "Mensagem excluída com sucesso" });
     } catch (error) {
-        console.error('Erro ao excluir mensagem:', error);
         res.status(500).json({ message: "Erro ao excluir mensagem" });
     }
 };

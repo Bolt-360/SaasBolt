@@ -13,9 +13,8 @@ import { isAuthenticate } from '../middleware/verifyToken.js';
 const router = express.Router();
 
 // Modificamos estas rotas para passar o socket
-router.post('/', isAuthenticate, (req, res) => {
+router.post('/:workspaceId', isAuthenticate, (req, res) => {
     const io = req.app.get('io');
-    console.log('IO no router:', io);
     createInstance(req, res, io);
 });
 router.put('/:id', isAuthenticate, (req, res) => {

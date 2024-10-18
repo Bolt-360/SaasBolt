@@ -10,65 +10,62 @@ import {
 } from "@/components/ui/dialog";
 import { useCreateInstance } from '@/hooks/useCreateInstance';
 import { connectInstance } from '@/api/connectInstance';
+import { useAuthContext } from '@/context/AuthContext';
+import { useSocketContext } from '@/context/SocketContext';
 
-const TIMER_DURATION = 40; // 40 segundos
 
 export default function CreateInstanceModal({ isOpen, onClose }) {
   const [instanceName, setInstanceName] = useState('');
   const [qrCode, setQrCode] = useState(null);
-  const [timer, setTimer] = useState(TIMER_DURATION);
   const [progress, setProgress] = useState(100);
   const { createInstance, isLoading } = useCreateInstance();
+  const { authUser } = useAuthContext();
+  const workspaceId  = authUser.activeWorkspaceId;
+  const { socket } = useSocketContext();
 
   useEffect(() => {
-    let intervalId;
-    if (qrCode && timer > 0) {
-      intervalId = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-        setProgress((prevProgress) => (prevProgress - 100 / TIMER_DURATION).toFixed(2));
-      }, 1000);
+    if(socket){
+      socket.on('qrcodeUpdated', (data) => {
+        if (data.instance === instanceName) {
+          setQrCode(data.qrcode);
+          console.log("QR Code atualizado:", data.qrcode);
+        }
+      });
     }
+  }, [socket, instanceName]);
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [qrCode, timer]);
-
-  useEffect(() => {
-    if (timer === 0) {
-      handleRefreshQRCode();
+  const socketRefreshQRCode = async () => {
+    if(socket){
+      socket.emit('refreshQRCode', { instance: instanceName });
     }
-  }, [timer]);
+  }
 
   const handleCreateInstance = async () => {
-    if (instanceName) {
-      try {
-        const response = await createInstance(instanceName);
-        if (response.evolutionApiResponse && response.evolutionApiResponse.qrcode) {
-          setQrCode(response.evolutionApiResponse.qrcode.base64);
-        }
-      } catch (error) {
-        console.error('Erro ao criar instância:', error);
-      }
+    try {
+      await createInstance(instanceName, workspaceId);
+      const qrCodeData = await connectInstance(instanceName, authUser.token, authUser.activeWorkspaceId);
+      setQrCode(qrCodeData);
+    } catch (error) {
+      console.error('Erro ao criar instância:', error);
     }
   };
 
   const handleRefreshQRCode = async () => {
     try {
-      const newQrCode = await connectInstance(instanceName);
-      setQrCode(newQrCode);
-      setTimer(TIMER_DURATION);
-      setProgress(100);
-    } catch (error) {
+      const qrCodeData = await connectInstance(instanceName, authUser.token);
+      setQrCode(qrCodeData);
+      } catch (error) {
       console.error('Erro ao atualizar QR Code:', error);
     }
   };
 
-  const handleClose = () => {
+  const resetValues = () => {
     setInstanceName('');
     setQrCode(null);
-    setTimer(TIMER_DURATION);
-    setProgress(100);
+  };
+
+  const handleClose = () => {
+    resetValues();
     onClose();
   };
 
@@ -76,7 +73,7 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-center">
+          <DialogTitle>
             {qrCode ? 'Escaneie o QR Code' : 'Criar Nova Instância'}
           </DialogTitle>
         </DialogHeader>
@@ -99,10 +96,6 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 dark:bg-gray-700">
-              <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-            </div>
-            <p className="mb-4">Tempo restante: {timer} segundos</p>
             <img src={qrCode} alt="QR Code para conexão" className="w-64 h-64 mb-4" />
             <p className="mt-4 text-sm text-gray-500 mb-4">
               Escaneie este QR Code com o WhatsApp no seu celular para conectar a instância.

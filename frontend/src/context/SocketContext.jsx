@@ -15,14 +15,10 @@ export const SocketContextProvider = ({ children }) => {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const { authUser } = useAuthContext();
 
-    console.log('SocketContextProvider: authUser', authUser);
 
     useEffect(() => {
-        console.log('useEffect: authUser', authUser);
 
         if (authUser && authUser.token && authUser.activeWorkspaceId) {
-            console.log('Condição satisfeita: authUser, token e activeWorkspaceId existem');
-            console.log('Conteúdo do authUser:', authUser);
 
             const socket = io('http://localhost:2345', {
                 query: {
@@ -34,6 +30,10 @@ export const SocketContextProvider = ({ children }) => {
             setSocket(socket);
             socket.on('getOnlineUsers', (users) => {
                 setOnlineUsers(users);
+            });
+
+            socket.on('qrcodeUpdated', (data) => {
+                console.log('QRCode updated:', data);
             });
 
             return () => socket.close();
