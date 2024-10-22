@@ -1,6 +1,6 @@
-export async function connectInstance(instanceName, token, workspaceId) {
+export async function connectInstance(instanceName, token) {
   try {
-    const response = await fetch(`/api/instances/connect/${workspaceId}-${instanceName}`, {
+    const response = await fetch(`/api/instances/connect/${instanceName}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

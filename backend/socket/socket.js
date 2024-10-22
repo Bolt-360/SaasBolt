@@ -25,6 +25,18 @@ io.on("connection", (socket) => {
     userSocketMap[userId] = socket.id;
   }
 
+  // Evento para entrar na sala do QR code
+  socket.on('joinQRCodeRoom', ({ instance }) => {
+    console.log(`Cliente ${socket.id} entrou na sala do QR code para a instância ${instance}`);
+    socket.join(`qrcode-${instance}`);
+  });
+
+  // Evento para sair da sala do QR code
+  socket.on('leaveQRCodeRoom', ({ instance }) => {
+    console.log(`Cliente ${socket.id} saiu da sala do QR code para a instância ${instance}`);
+    socket.leave(`qrcode-${instance}`);
+  });
+
   // Evento para atualizar os usuários online, enviado para todos os clientes conectados
   io.emit("getOnlineUsers", Object.keys(userSocketMap))
 
@@ -32,6 +44,13 @@ io.on("connection", (socket) => {
     console.log("a user disconnected", socket.id);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap))
+  });
+
+  socket.on('joinInstanceRoom', (data) => {
+    const room = `instance-${data.instance}`;
+    socket.join(room);
+    console.log(`Cliente ${socket.id} entrou na sala: ${room}`);
+    socket.emit('joinedRoom', room);
   });
 });
 

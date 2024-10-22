@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,76 +8,136 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { useCreateInstance } from '@/hooks/useCreateInstance';
 import { connectInstance } from '@/api/connectInstance';
 import { useAuthContext } from '@/context/AuthContext';
 import { useSocketContext } from '@/context/SocketContext';
-
+import { CheckCircle, Loader } from 'lucide-react';
 
 export default function CreateInstanceModal({ isOpen, onClose }) {
   const [instanceName, setInstanceName] = useState('');
   const [qrCode, setQrCode] = useState(null);
-  const [progress, setProgress] = useState(100);
   const { createInstance, isLoading } = useCreateInstance();
   const { authUser } = useAuthContext();
-  const workspaceId  = authUser.activeWorkspaceId;
+  const workspaceId = authUser.activeWorkspaceId;
   const { socket } = useSocketContext();
+  const [connectionState, setConnectionState] = useState('disconnected');
+  const [statusReason, setStatusReason] = useState(null);
+  const [fullInstanceName, setFullInstanceName] = useState(null);
+  const [closeProgress, setCloseProgress] = useState(0);
+
+  const setupSocketListeners = useCallback(() => {
+    if (socket && fullInstanceName) {
+      const handleQRCodeUpdate = (data) => {
+        if (data.instance === fullInstanceName) {
+          setQrCode(data.qrcode);
+        }
+      };
+
+      const handleConnectionUpdate = (data) => {
+        if (data.instance === fullInstanceName) {
+          setConnectionState(data.state);
+          setStatusReason(data.statusReason);
+          if (data.state === 'open') {
+            setQrCode(null);
+          }
+        }
+      };
+
+      socket.on('qrcodeUpdated', handleQRCodeUpdate);
+      socket.on('connectionUpdate', handleConnectionUpdate);
+
+      return () => {
+        socket.off('qrcodeUpdated', handleQRCodeUpdate);
+        socket.off('connectionUpdate', handleConnectionUpdate);
+      };
+    }
+  }, [socket, fullInstanceName]);
 
   useEffect(() => {
-    if(socket){
-      socket.on('qrcodeUpdated', (data) => {
-        if (data.instance === instanceName) {
-          setQrCode(data.qrcode);
-          console.log("QR Code atualizado:", data.qrcode);
-        }
-      });
-    }
-  }, [socket, instanceName]);
+    const cleanup = setupSocketListeners();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [setupSocketListeners]);
 
-  const socketRefreshQRCode = async () => {
-    if(socket){
-      socket.emit('refreshQRCode', { instance: instanceName });
+  useEffect(() => {
+    let intervalId;
+    if (connectionState === 'open') {
+      intervalId = setInterval(() => {
+        setCloseProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(intervalId);
+            handleClose();
+            return 100;
+          }
+          return prev + 2; // Aumenta 2% a cada 100ms
+        });
+      }, 100);
     }
-  }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [connectionState]);
 
   const handleCreateInstance = async () => {
     try {
       await createInstance(instanceName, workspaceId);
-      const qrCodeData = await connectInstance(instanceName, authUser.token, authUser.activeWorkspaceId);
+      const newFullInstanceName = `${workspaceId}-${instanceName}`;
+      setFullInstanceName(newFullInstanceName);
+      
+      socket.emit('joinQRCodeRoom', { instance: newFullInstanceName });
+      socket.emit('joinInstanceRoom', { instance: newFullInstanceName });
+
+      const qrCodeData = await connectInstance(newFullInstanceName, authUser.token, workspaceId);
       setQrCode(qrCodeData);
+
+      // Dentro do CreateInstanceModal, após criar a instância com sucesso
+      socket.emit('instanceCreated', newInstanceData);
     } catch (error) {
       console.error('Erro ao criar instância:', error);
     }
   };
 
   const handleRefreshQRCode = async () => {
-    try {
-      const qrCodeData = await connectInstance(instanceName, authUser.token);
-      setQrCode(qrCodeData);
+    if (fullInstanceName) {
+      try {
+        const qrCodeData = await connectInstance(fullInstanceName, authUser.token, workspaceId);
+        setQrCode(qrCodeData);
       } catch (error) {
-      console.error('Erro ao atualizar QR Code:', error);
+        console.error('Erro ao atualizar QR Code:', error);
+      }
     }
   };
 
   const resetValues = () => {
     setInstanceName('');
     setQrCode(null);
+    setConnectionState('disconnected');
+    setStatusReason(null);
+    setFullInstanceName(null);
+    setCloseProgress(0);
   };
 
   const handleClose = () => {
+    if (fullInstanceName) {
+      socket.emit('leaveQRCodeRoom', { instance: fullInstanceName });
+      socket.emit('leaveInstanceRoom', { instance: fullInstanceName });
+    }
     resetValues();
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className={`sm:max-w-[425px] ${connectionState === 'open' ? 'bg-green-100' : ''}`}>
         <DialogHeader>
-          <DialogTitle>
-            {qrCode ? 'Escaneie o QR Code' : 'Criar Nova Instância'}
+          <DialogTitle className={connectionState === 'open' ? 'text-green-700' : ''}>
+            {connectionState === 'open' ? 'Instância Conectada' : 'Conectar Instância'}
           </DialogTitle>
         </DialogHeader>
-        {!qrCode ? (
+        {!qrCode && connectionState !== 'open' ? (
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -94,13 +154,40 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
               {isLoading ? 'Criando...' : 'Criar Instância'}
             </Button>
           </div>
+        ) : connectionState === 'open' ? (
+          <div className="flex flex-col items-center">
+            <CheckCircle className="w-24 h-24 text-green-500 animate-pulse" />
+            <p className="mt-4 text-lg font-semibold text-green-700">Conectado com sucesso!</p>
+            <p className="mt-2 text-sm text-green-600">
+              Sua instância do WhatsApp está pronta para uso.
+            </p>
+            <Progress value={closeProgress} className="w-full mt-4 bg-green-200" />
+            <p className="mt-2 text-sm text-green-600">
+              O modal será fechado em {((100 - closeProgress) / 50).toFixed(1)} segundos
+            </p>
+          </div>
+        ) : connectionState === 'connecting' ? (
+          <div className="flex flex-col items-center">
+            <Loader className="w-24 h-24 text-blue-500 animate-spin" />
+            <p className="mt-4 text-lg font-semibold text-blue-600">Conectando...</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Aguarde enquanto estabelecemos a conexão.
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col items-center">
-            <img src={qrCode} alt="QR Code para conexão" className="w-64 h-64 mb-4" />
+            <img src={qrCode} alt="QR Code para conexão" className="w-64 h-64 mb-4" key={qrCode} />
             <p className="mt-4 text-sm text-gray-500 mb-4">
               Escaneie este QR Code com o WhatsApp no seu celular para conectar a instância.
             </p>
-            <Button onClick={handleRefreshQRCode}>Atualizar QR Code</Button>
+            <p className="text-sm font-semibold mb-2">
+              Estado da conexão: {connectionState}
+            </p>
+            {statusReason && (
+              <p className="text-sm text-gray-500 mb-4">
+                Código de status: {statusReason}
+              </p>
+            )}
           </div>
         )}
       </DialogContent>

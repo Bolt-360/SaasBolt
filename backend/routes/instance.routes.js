@@ -6,7 +6,8 @@ import {
     updateInstance, 
     deleteInstance,
     getInstancesByWorkspace,
-    connectInstance
+    connectInstance,
+    listInstances
 } from '../controllers/instance.controller.js';
 import { isAuthenticate } from '../middleware/verifyToken.js';
 
@@ -31,5 +32,6 @@ router.get('/', isAuthenticate, getAllInstances);
 router.get('/:id', isAuthenticate, getInstanceById);
 router.get('/workspace/:workspaceId', isAuthenticate, getInstancesByWorkspace);
 router.get('/connect/:instanceName', isAuthenticate, connectInstance);
+router.get('/list/:workspaceId', isAuthenticate, listInstances);
 
 export default router;

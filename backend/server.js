@@ -93,3 +93,11 @@ app.use((err, req, res, next) => {
         message,
     })
 })
+
+io.on('connection', (socket) => {
+    socket.on('joinWorkspace', (workspaceId) => {
+        socket.join(`workspace_${workspaceId}`);
+    });
+
+    // ... outros handlers de socket
+});

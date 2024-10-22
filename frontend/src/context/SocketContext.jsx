@@ -17,26 +17,29 @@ export const SocketContextProvider = ({ children }) => {
 
 
     useEffect(() => {
-
         if (authUser && authUser.token && authUser.activeWorkspaceId) {
-
-            const socket = io('http://localhost:2345', {
+            const newSocket = io('http://localhost:2345', {
                 query: {
                     userId: authUser.id,
                     workspaceId: authUser.activeWorkspaceId
                 }
             });
 
-            setSocket(socket);
-            socket.on('getOnlineUsers', (users) => {
+            newSocket.on('connect', () => {
+                console.log('Socket conectado');
+                newSocket.emit('joinWorkspace', authUser.activeWorkspaceId);
+                setSocket(newSocket);
+            });
+
+            newSocket.on('getOnlineUsers', (users) => {
                 setOnlineUsers(users);
             });
 
-            socket.on('qrcodeUpdated', (data) => {
+            newSocket.on('qrcodeUpdated', (data) => {
                 console.log('QRCode updated:', data);
             });
 
-            return () => socket.close();
+            return () => newSocket.close();
         } else {
             console.log('Condição não satisfeita: authUser, token ou activeWorkspaceId não existem');
             if (socket) {

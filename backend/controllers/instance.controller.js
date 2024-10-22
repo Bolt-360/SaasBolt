@@ -39,7 +39,19 @@ export const createInstance = async (req, res, io) => {
             return res.status(400).json({ message: "Nome e ID do workspace são obrigatórios" });
         }
 
-        // Passo 1: Criar a instância
+        // Verificar se já existe uma instância com o mesmo nome no workspace
+        const existingInstance = await Instance.findOne({
+            where: {
+                name: name,
+                workspaceId: workspaceId
+            }
+        });
+
+        if (existingInstance) {
+            return res.status(409).json({ message: "Já existe uma instância com esse nome neste workspace" });
+        }
+
+        // Passo 1: Criar a instância na Evolution API
         let evolutionApiResponse;
         try {
             evolutionApiResponse = await axios.post(`${EVOLUTION_API_URL}/instance/create`, {
@@ -55,7 +67,6 @@ export const createInstance = async (req, res, io) => {
                 },
                 timeout: 10000
             });
-
         } catch (evolutionError) {
             throw new Error('Falha ao criar instância na Evolution API');
         }
@@ -65,9 +76,8 @@ export const createInstance = async (req, res, io) => {
             const webhookResponse = await configureWebhook(name, workspaceId);
             console.log("Webhook configurado com sucesso", webhookResponse.data);
         } catch (webhookError) {
-            console.log("Falha ao configurar webhook", webhookError, configureWebhook);
-            throw new Error('Falha ao configurar webhook'); 
-            
+            console.log("Falha ao configurar webhook", webhookError);
+            throw new Error('Falha ao configurar webhook');
         }
 
         const instanceData = {
@@ -77,7 +87,13 @@ export const createInstance = async (req, res, io) => {
             workspaceId
         };
 
-        const instance = await Instance.create(instanceData);
+        let instance;
+        try {
+            instance = await Instance.create(instanceData);
+        } catch (dbError) {
+            console.error("Erro ao criar instância no banco de dados:", dbError);
+            throw new Error(`Falha ao criar instância no banco de dados: ${dbError.message}`);
+        }
 
         const InstanceReturns = {
             createdInstance: instance.toJSON(),
@@ -85,12 +101,13 @@ export const createInstance = async (req, res, io) => {
         };
 
         if (io && typeof io.emit === 'function') {
-            io.emit('instanceCreated', InstanceReturns);
+            io.to(`workspace_${workspaceId}`).emit('instanceCreated', instance.toJSON());
         }
 
         res.status(201).json(InstanceReturns);
     } catch (error) {
-        res.status(500).json({ message: "Erro ao criar instância", error: error.message });
+        console.error("Erro detalhado:", error);
+        res.status(500).json({ message: "Erro ao criar instância", error: error.message, stack: error.stack });
     }
 };
 
@@ -219,4 +236,48 @@ export const connectInstance = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Erro ao conectar instância", error: error.message });
     }
+};
+
+export const listInstances = async (req, res) => {
+  try {
+    const workspaceId = req.params.workspaceId;
+    
+    if (!workspaceId) {
+      return res.status(400).json({ error: 'WorkspaceId não fornecido' });
+    }
+
+    // Buscar instâncias do banco de dados local
+    const localInstances = await Instance.findAll({
+      where: { workspaceId: workspaceId },
+      attributes: ['name']
+    });
+
+    // Corrigido: não adicionamos o workspaceId novamente, pois já está incluído no nome
+    const localInstanceNames = localInstances.map(instance => instance.name);
+
+    const response = await axios.get(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
+      headers: {
+        'apikey': EVOLUTION_API_KEY
+      }
+    });
+
+    const allInstances = response.data;
+    console.log(`Total de instâncias na Evolution API: ${allInstances.length}`);
+
+    const filteredInstances = allInstances.filter(instance => 
+      localInstanceNames.includes(instance.name)
+    );
+
+    console.log(`Instâncias filtradas: ${filteredInstances.length}`);
+
+    const formattedInstances = filteredInstances.map(instance => ({
+      ...instance,
+      name: instance.name.replace(`${workspaceId}-`, '')
+    }));
+
+    res.json(formattedInstances);
+  } catch (error) {
+    console.error('Erro ao listar instâncias:', error);
+    res.status(500).json({ error: 'Erro ao listar instâncias' });
+  }
 };
