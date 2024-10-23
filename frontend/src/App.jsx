@@ -15,6 +15,9 @@ import Disparador from './features/campanhas/Disparador/page'
 import Configuracoes from './features/campanhas/Configuracoes/page'
 import CriarInstancia from './features/campanhas/CriarInstancia/page'
 import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
+import PipefullLayout from './features/pipefull/PipefullLayout'
+import DashboardPipefull from './features/pipefull/page.jsx'
+import MyTasks from './features/pipefull/Tasks/page.jsx'
 
 function App() {
   const { authUser } = useAuthContext();
@@ -36,6 +39,10 @@ function App() {
         > 
           <Route index element={<WebAppPage />} />
           <Route path='chat' element={<ChatPage />} />
+          <Route path='pipefull' element={<PipefullLayout />}>
+            <Route index element={<DashboardPipefull/>} />
+            <Route path='my-tasks' element={<MyTasks />}/>
+          </Route>
           <Route path='campanhas' element={<CampanhasLayout />}>
             <Route index element={<Dashboard />} />
             <Route path='listar-instancias' element={<ListarInstancias />} />
