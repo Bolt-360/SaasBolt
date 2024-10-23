@@ -1,58 +1,53 @@
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes } from 'sequelize';
+import minioClient from '../config/minio.js';
 
 export default (sequelize) => {
-  class Campaign extends Model {
-    static associate(models) {
-      Campaign.belongsTo(models.Instance, { foreignKey: 'instanceId' });
-      Campaign.belongsTo(models.Workspace, { foreignKey: 'workspaceId' });
-      Campaign.hasMany(models.MessageCampaign, { foreignKey: 'campaignId' });
-      Campaign.hasMany(models.Recipient, { foreignKey: 'campaignId' });
-    }
-  }
-
-  Campaign.init({
+  const Campaign = sequelize.define('Campaign', {
     name: {
       type: DataTypes.STRING,
       allowNull: false
     },
     type: {
-      type: DataTypes.ENUM('MESSAGE', 'MESSAGE_IMAGE', 'MESSAGE_DOCUMENT'),
+      type: DataTypes.STRING,
       allowNull: false
     },
-    status: {
-      type: DataTypes.ENUM('FINALIZED', 'IN_PROGRESS', 'TO_START'),
+    startImmediately: {
+      type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: 'TO_START'
+      defaultValue: true
     },
     startDate: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: true
     },
     messageInterval: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      defaultValue: 0
     },
-    instanceId: {
+    messages: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
+    instanceIds: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: true
+    },
+    csvFileUrl: {
+      type: DataTypes.STRING(500), // Aumentamos o tamanho para acomodar nomes de arquivo longos
+      allowNull: true
+    },
+    imageUrl: {
       type: DataTypes.STRING,
-      allowNull: false,
-      references: {
-        model: 'Instances',
-        key: 'id'
-      }
-    },
-    workspaceId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Workspaces',
-        key: 'id'
-      }
+      allowNull: true
     }
-  }, {
-    sequelize,
-    modelName: 'Campaign',
-    tableName: 'Campaigns'
   });
+
+  Campaign.prototype.getFullCsvUrl = async function() {
+    if (!this.csvFileUrl) return null;
+    const bucketName = process.env.MINIO_BUCKET || 'campaigns';
+    return await minioClient.presignedGetObject(bucketName, this.csvFileUrl, 24*60*60);
+  };
 
   return Campaign;
 };

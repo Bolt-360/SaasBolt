@@ -26,17 +26,12 @@ export const SocketContextProvider = ({ children }) => {
             });
 
             newSocket.on('connect', () => {
-                console.log('Socket conectado');
                 newSocket.emit('joinWorkspace', authUser.activeWorkspaceId);
                 setSocket(newSocket);
             });
 
             newSocket.on('getOnlineUsers', (users) => {
                 setOnlineUsers(users);
-            });
-
-            newSocket.on('qrcodeUpdated', (data) => {
-                console.log('QRCode updated:', data);
             });
 
             return () => newSocket.close();

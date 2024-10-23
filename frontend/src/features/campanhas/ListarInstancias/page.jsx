@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { useSocketContext } from '@/context/SocketContext'
 import { useInstancesFetch } from '@/hooks/useInstancesFetch'
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ import {
 
 export default function ListarInstancias() {
   const { 
-    instances, 
+    instances: initialInstances, 
     isLoading, 
     error, 
     updateInstance, 
@@ -32,6 +32,7 @@ export default function ListarInstancias() {
     disconnectInstance,
     deleteInstance
   } = useInstancesFetch();
+  const [instances, setInstances] = useState(initialInstances);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedInstance, setSelectedInstance] = useState(null);
   const { socket } = useSocketContext();
@@ -42,9 +43,41 @@ export default function ListarInstancias() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    setInstances(initialInstances);
+  }, [initialInstances]);
+
+  const handleConnectionUpdate = useCallback(async (data) => {
+    const instanceName = data.instance ? data.instance.split('-').pop() : data.instance;
+    
+    // Atualizar o estado imediatamente com as informações básicas
+    updateInstance({
+      name: instanceName,
+      connectionStatus: data.state
+    });
+
+    // Se a instância foi conectada, aguarde 2 segundos antes de buscar informações adicionais
+    if (data.state === 'open') {
+      setTimeout(async () => {
+        try {
+          const updatedInstance = await fetchSpecificInstance(instanceName);
+          if (updatedInstance) {
+            updateInstance({
+              ...updatedInstance,
+              name: instanceName,
+              connectionStatus: 'open',
+              ownerJid: updatedInstance.ownerJid
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao buscar informações atualizadas da instância:', error);
+        }
+      }, 2000); // 2 segundos de delay
+    }
+  }, [updateInstance, fetchSpecificInstance]);
+
+  useEffect(() => {
     if (socket) {
       const handleInstanceUpdate = async (updatedInstance) => {
-        console.log('Recebido update de instância:', updatedInstance);
         const instanceName = updatedInstance.name ? updatedInstance.name.split('-').pop() : updatedInstance.name;
         updateInstance({
           ...updatedInstance,
@@ -60,35 +93,35 @@ export default function ListarInstancias() {
       };
 
       const handleConnectionUpdate = async (data) => {
-        console.log('Recebido update de conexão:', data);
         const instanceName = data.instance ? data.instance.split('-').pop() : data.instance;
         
-        // Atualizar imediatamente o estado com as informações recebidas
+        // Atualizar o estado imediatamente com as informações básicas
         updateInstance({
           name: instanceName,
-          connectionStatus: data.state,
-          ownerJid: data.ownerJid || null
+          connectionStatus: data.state
         });
 
-        // Se a instância foi conectada, busque informações atualizadas
+        // Se a instância foi conectada, aguarde 2 segundos antes de buscar informações adicionais
         if (data.state === 'open') {
-          try {
-            const updatedInstance = await fetchSpecificInstance(instanceName);
-            if (updatedInstance) {
-              updateInstance({
-                ...updatedInstance,
-                name: instanceName,
-                connectionStatus: 'open'
-              });
+          setTimeout(async () => {
+            try {
+              const updatedInstance = await fetchSpecificInstance(instanceName);
+              if (updatedInstance) {
+                updateInstance({
+                  ...updatedInstance,
+                  name: instanceName,
+                  connectionStatus: 'open',
+                  ownerJid: updatedInstance.ownerJid
+                });
+              }
+            } catch (error) {
+              console.error('Erro ao buscar informações atualizadas da instância:', error);
             }
-          } catch (error) {
-            console.error('Erro ao buscar informações atualizadas da instância:', error);
-          }
+          }, 2000); // 2 segundos de delay
         }
       };
 
       const handleQRCodeUpdate = (data) => {
-        console.log('Recebido update de QR Code:', data);
         const instanceName = data.instance ? data.instance.split('-').pop() : data.instance;
         updateInstance({
           name: instanceName,
@@ -100,14 +133,6 @@ export default function ListarInstancias() {
       socket.on('instanceUpdated', handleInstanceUpdate);
       socket.on('connectionUpdate', handleConnectionUpdate);
       socket.on('qrcodeUpdated', handleQRCodeUpdate);
-      socket.on('instanceDisconnected', (instanceName) => {
-        console.log('Instância desconectada:', instanceName);
-        updateInstance({
-          name: instanceName ? instanceName.split('-').pop() : instanceName,
-          connectionStatus: 'closed',
-          ownerJid: null
-        });
-      });
 
       return () => {
         socket.off('instanceUpdated', handleInstanceUpdate);
@@ -117,14 +142,6 @@ export default function ListarInstancias() {
       };
     }
   }, [socket, updateInstance, fetchSpecificInstance]);
-
-  useEffect(() => {
-    console.log('Instances atualizadas:', instances.map(instance => ({
-      name: instance.name,
-      connectionStatus: instance.connectionStatus,
-      ownerJid: instance.ownerJid
-    })));
-  }, [instances]);
 
   const handleInstanceEvent = (eventData) => {
     const { event, instance, data } = eventData;
@@ -184,10 +201,10 @@ export default function ListarInstancias() {
   const handleDisconnect = async (instanceName) => {
     const success = await disconnectInstance(instanceName);
     if (success) {
-      console.log(`Instância ${instanceName} desconectada com sucesso`);
+      toast.success('Instância desconectada com sucesso');
       // Você pode adicionar uma notificação de sucesso aqui
     } else {
-      console.error(`Falha ao desconectar instância ${instanceName}`);
+      toast.error('Falha ao desconectar instância');
       // Você pode adicionar uma notificação de erro aqui
     }
   };
@@ -201,18 +218,22 @@ export default function ListarInstancias() {
     if (instanceToDelete) {
       setIsDeleting(true);
       try {
+        // Primeiro, desconectar a instância
+        await disconnectInstance(instanceToDelete.name);
+        
+        // Esperar 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Agora, deletar a instância
         const success = await deleteInstance(instanceToDelete.name);
         if (success) {
-          console.log(`Instância ${instanceToDelete.name} deletada com sucesso`);
-          // Remover a instância da lista local
-          removeInstance(instanceToDelete.name);
+          setInstances(prevInstances => prevInstances.filter(instance => instance.name !== instanceToDelete.name));
           // Você pode adicionar uma notificação de sucesso aqui
         } else {
-          console.error(`Falha ao deletar instância ${instanceToDelete.name}`);
           // Você pode adicionar uma notificação de erro aqui
         }
       } catch (error) {
-        console.error(`Erro ao deletar instância ${instanceToDelete.name}:`, error);
+        console.error(`Falha ao deletar instância ${instanceToDelete.name}:`, error);
         // Você pode adicionar uma notificação de erro aqui
       } finally {
         setIsDeleting(false);
@@ -280,7 +301,7 @@ export default function ListarInstancias() {
                   </TableHeader>
                   <TableBody>
                     {sortedAndFilteredInstances.map((instance) => (
-                      <TableRow key={instance.id}>
+                      <TableRow key={instance.id || instance.name}>
                         <TableCell className="font-medium">
                           {instance.name}
                         </TableCell>

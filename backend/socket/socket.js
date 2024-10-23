@@ -52,6 +52,13 @@ io.on("connection", (socket) => {
     console.log(`Cliente ${socket.id} entrou na sala: ${room}`);
     socket.emit('joinedRoom', room);
   });
+
+  socket.on('joinCampaignRoom', (data) => {
+    const room = `instance-${data.instanceName}`;
+    socket.join(room);
+    console.log(`Cliente ${socket.id} entrou na sala da campanha: ${room}`);
+    socket.emit('joinedCampaignRoom', room);
+  });
 });
 
 export { app, server, io };

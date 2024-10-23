@@ -4,7 +4,7 @@ import pkg from 'pg'
 import cookieParse from 'cookie-parser'
 import { server, app, io} from './socket/socket.js';
 import instanceRoutes from './routes/instance.routes.js';
-import campaignRoutes from './routes/campaign.js';
+import campaignRoutes from './routes/campaign.routes.js';
 import messageCampaignRoutes from './routes/messageCampaign.js';
 import recipientRoutes from './routes/recipient.js';
 import webhookRoutes from './routes/webhook.routes.js';
@@ -95,9 +95,17 @@ app.use((err, req, res, next) => {
 })
 
 io.on('connection', (socket) => {
+    console.log('Novo cliente conectado');
+
     socket.on('joinWorkspace', (workspaceId) => {
         socket.join(`workspace_${workspaceId}`);
     });
 
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
+
     // ... outros handlers de socket
 });
+
+export default server;

@@ -65,7 +65,6 @@ export const useInstancesFetch = () => {
       socket.on('instanceDisconnected', handleInstanceDisconnected);
 
       const handleInstanceCreated = (newInstance) => {
-        console.log('Recebido evento instanceCreated:', newInstance);
         setInstances(prev => {
           const existingIndex = prev.findIndex(instance => instance.id === newInstance.id);
           if (existingIndex !== -1) {
@@ -99,10 +98,8 @@ export const useInstancesFetch = () => {
       if (index !== -1) {
         const newInstances = [...prevInstances];
         newInstances[index] = { ...newInstances[index], ...updatedInstance };
-        console.log('Instância atualizada:', newInstances[index]);
         return newInstances;
       }
-      console.log('Nova instância adicionada:', updatedInstance);
       return [...prevInstances, updatedInstance];
     });
   }, []);
@@ -137,9 +134,12 @@ export const useInstancesFetch = () => {
       });
       if (response.status === 200) {
         const updatedInstance = response.data;
+        // Atualizar o estado da instância com as novas informações
         updateInstance({
           ...updatedInstance,
-          name: updatedInstance.name.split('-').pop(),
+          name: instanceName,
+          connectionStatus: 'open',
+          ownerJid: updatedInstance.ownerJid
         });
         return updatedInstance;
       }

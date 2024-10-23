@@ -1,6 +1,8 @@
 import sequelize from '../config/database.js';
 import models from '../models/index.js';
 import bcryptjs from 'bcryptjs';
+import { Sequelize } from 'sequelize';
+import retry from 'retry';
 
 const { User, Workspace, UserWorkspace, Conversation, Message, Instance, Campaign, MessageCampaign } = models;
 
@@ -208,46 +210,18 @@ async function createInitialInstances() {
 }
 
 async function createInitialCampaigns() {
-  const workspaces = await Workspace.findAll();
-  const instances = await Instance.findAll();
-
-  for (const workspace of workspaces) {
-    const instance = instances.find(i => i.workspaceId === workspace.id);
-    if (instance) {
-      const campaign1 = await Campaign.create({
-        name: `Campanha de Boas-vindas ${workspace.name}`,
-        type: 'MESSAGE',
-        status: 'TO_START',
-        startDate: new Date(),
-        messageInterval: 60, // 60 segundos
-        instanceId: instance.id,
-        workspaceId: workspace.id
-      });
-
-      await MessageCampaign.create({
-        content: 'Olá! Bem-vindo à nossa campanha de boas-vindas.',
-        order: 1,
-        campaignId: campaign1.id
-      });
-
-      const campaign2 = await Campaign.create({
-        name: `Campanha Promocional ${workspace.name}`,
-        type: 'MESSAGE_IMAGE',
-        status: 'TO_START',
-        startDate: new Date(Date.now() + 86400000), // Começa amanhã
-        messageInterval: 120, // 120 segundos
-        instanceId: instance.id,
-        workspaceId: workspace.id
-      });
-
-      await MessageCampaign.create({
-        content: 'Confira nossa promoção especial!',
-        order: 1,
-        campaignId: campaign2.id
-      });
-
-      console.log(`Campanhas de teste criadas para o workspace ${workspace.name}`);
-    }
+  try {
+    await Campaign.create({
+      name: 'Campanha Inicial',
+      type: 'TEXT',
+      startImmediately: true,
+      messageInterval: 60,
+      messages: JSON.stringify([{ type: 'TEXT', content: 'Mensagem inicial' }]),
+      // Não definimos instanceIds, csvFileUrl ou imageUrl, pois são opcionais agora
+    });
+    console.log('Campanha inicial criada com sucesso');
+  } catch (error) {
+    console.error('Erro ao criar campanha inicial:', error);
   }
 }
 
@@ -274,3 +248,32 @@ async function initDatabase() {
 }
 
 initDatabase();
+
+function connectWithRetry() {
+  const operation = retry.operation({
+    retries: 5,
+    factor: 3,
+    minTimeout: 1 * 1000,
+    maxTimeout: 60 * 1000,
+    randomize: true,
+  });
+
+  return new Promise((resolve, reject) => {
+    operation.attempt(async (currentAttempt) => {
+      try {
+        await sequelize.authenticate();
+        console.log('Connection has been established successfully.');
+        resolve(sequelize);
+      } catch (error) {
+        console.error('Unable to connect to the database:', error);
+        if (operation.retry(error)) {
+          console.log(`Retrying connection attempt ${currentAttempt}`);
+          return;
+        }
+        reject(error);
+      }
+    });
+  });
+}
+
+export default connectWithRetry;
