@@ -66,11 +66,16 @@ export const useInstancesFetch = () => {
       const handleInstanceCreated = (newInstance) => {
         console.log('Recebido evento instanceCreated:', newInstance);
         setInstances(prev => {
-            // Verifica se a instância já existe para evitar duplicatas
-            if (!prev.some(instance => instance.id === newInstance.id)) {
-                return [...prev, newInstance];
-            }
-            return prev;
+          const existingIndex = prev.findIndex(instance => instance.id === newInstance.id);
+          if (existingIndex !== -1) {
+            // Se a instância já existe, atualize-a
+            return prev.map((instance, index) => 
+              index === existingIndex ? { ...instance, ...newInstance, name: newInstance.name.split('-').pop() } : instance
+            );
+          } else {
+            // Se a instância não existe, adicione-a
+            return [...prev, { ...newInstance, name: newInstance.name.split('-').pop() }];
+          }
         });
       };
 
@@ -88,9 +93,14 @@ export const useInstancesFetch = () => {
   }, [socket, authUser?.activeWorkspaceId]);
 
   const updateInstance = useCallback((updatedInstance) => {
-    setInstances(prev => prev.map(instance => 
-      instance.id === updatedInstance.id ? { ...instance, ...updatedInstance } : instance
-    ));
+    setInstances(prevInstances => 
+      prevInstances.map(instance => {
+        if (instance.id === updatedInstance.id || instance.name === updatedInstance.name) {
+          return { ...instance, ...updatedInstance };
+        }
+        return instance;
+      })
+    );
   }, []);
 
   const addInstance = useCallback((newInstance) => {

@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { useCreateInstance } from '@/hooks/useCreateInstance';
@@ -92,9 +93,6 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
 
       const qrCodeData = await connectInstance(newFullInstanceName, authUser.token, workspaceId);
       setQrCode(qrCodeData);
-
-      // Dentro do CreateInstanceModal, após criar a instância com sucesso
-      socket.emit('instanceCreated', newInstanceData);
     } catch (error) {
       console.error('Erro ao criar instância:', error);
     }
@@ -136,6 +134,11 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
           <DialogTitle className={connectionState === 'open' ? 'text-green-700' : ''}>
             {connectionState === 'open' ? 'Instância Conectada' : 'Conectar Instância'}
           </DialogTitle>
+          <DialogDescription>
+            {connectionState === 'open' 
+              ? 'Sua instância do WhatsApp está pronta para uso.' 
+              : 'Crie uma nova instância do WhatsApp ou conecte-se a uma existente.'}
+          </DialogDescription>
         </DialogHeader>
         {!qrCode && connectionState !== 'open' ? (
           <div className="grid gap-4 py-4">

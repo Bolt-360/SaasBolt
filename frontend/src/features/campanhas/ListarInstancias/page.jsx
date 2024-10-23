@@ -13,7 +13,7 @@ import CreateInstanceModal from '@/components/CreateInstanceModal'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function ListarInstancias() {
-  const { instances, isLoading, error, updateInstance, addInstance, removeInstance } = useInstancesFetch();
+  const { instances, isLoading, error, updateInstance, addInstance, removeInstance, fetchInstances } = useInstancesFetch();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedInstance, setSelectedInstance] = useState(null);
   const { socket } = useSocketContext();
@@ -22,27 +22,59 @@ export default function ListarInstancias() {
 
   useEffect(() => {
     if (socket) {
-      socket.on('instanceUpdated', updateInstance);
-      socket.on('instanceCreated', (newInstance) => {
-        addInstance(newInstance);
-      });
-      socket.on('instanceDeleted', removeInstance);
-      socket.on('instanceEvent', handleInstanceEvent);
-      socket.on('instanceDisconnected', (instanceName) => {
-        updateInstance({ name: instanceName, connectionStatus: 'closed' });
-      });
-    }
+      const handleInstanceUpdate = async (updatedInstance) => {
+        console.log('Recebido update de instância:', updatedInstance);
+        
+        // Atualiza a instância localmente
+        updateInstance({
+          ...updatedInstance,
+          name: updatedInstance.name ? updatedInstance.name.split('-').pop() : updatedInstance.name,
+          connectionStatus: updatedInstance.connectionStatus || updatedInstance.state,
+          ownerJid: updatedInstance.ownerJid || null
+        });
 
-    return () => {
-      if (socket) {
-        socket.off('instanceUpdated', updateInstance);
-        socket.off('instanceCreated', addInstance);
-        socket.off('instanceDeleted', removeInstance);
-        socket.off('instanceEvent', handleInstanceEvent);
+        // Se o status mudou para 'open', busca todas as instâncias novamente
+        if (updatedInstance.connectionStatus === 'open' || updatedInstance.state === 'open') {
+          await fetchInstances();
+        }
+      };
+
+      const handleConnectionUpdate = async (data) => {
+        console.log('Recebido update de conexão:', data);
+        
+        // Atualiza a instância localmente
+        updateInstance({
+          id: data.instance,
+          name: data.instance ? data.instance.split('-').pop() : data.instance,
+          connectionStatus: data.state,
+          ownerJid: data.ownerJid || null
+        });
+
+        // Se o status mudou para 'open', busca todas as instâncias novamente
+        if (data.state === 'open') {
+          await fetchInstances();
+        }
+      };
+
+      socket.on('instanceUpdated', handleInstanceUpdate);
+      socket.on('connectionUpdate', handleConnectionUpdate);
+      socket.on('instanceDisconnected', async (instanceName) => {
+        console.log('Instância desconectada:', instanceName);
+        updateInstance({
+          name: instanceName ? instanceName.split('-').pop() : instanceName,
+          connectionStatus: 'closed',
+          ownerJid: null
+        });
+        await fetchInstances();
+      });
+
+      return () => {
+        socket.off('instanceUpdated', handleInstanceUpdate);
+        socket.off('connectionUpdate', handleConnectionUpdate);
         socket.off('instanceDisconnected');
-      }
+      };
     }
-  }, [socket, updateInstance, addInstance, removeInstance]);
+  }, [socket, updateInstance, fetchInstances]);
 
   useEffect(() => {
     console.log('Instances atualizadas:', instances);
@@ -53,6 +85,7 @@ export default function ListarInstancias() {
     
     updateInstance({
       id: instance,
+      name: instance.split('-').pop(),
       ...data
     });
   };
@@ -92,8 +125,8 @@ export default function ListarInstancias() {
         if (isConnected(a.connectionStatus) && !isConnected(b.connectionStatus)) return -1;
         if (!isConnected(a.connectionStatus) && isConnected(b.connectionStatus)) return 1;
         
-        // Se o status de conexão for o mesmo, ordenar por updatedAt
-        return new Date(b.updatedAt) - new Date(a.updatedAt);
+        // Se o status de conexão for o mesmo, ordenar por createdAt (do mais recente para o mais antigo)
+        return new Date(b.createdAt) - new Date(a.createdAt);
       });
   }, [instances, searchTerm, statusFilter]);
 
@@ -170,8 +203,10 @@ export default function ListarInstancias() {
                   </TableHeader>
                   <TableBody>
                     {sortedAndFilteredInstances.map((instance) => (
-                      <TableRow key={instance.id || Math.random()}>
-                        <TableCell className="font-medium">{instance.name || 'Sem nome'}</TableCell>
+                      <TableRow key={instance.id}>
+                        <TableCell className="font-medium">
+                          {instance.name}
+                        </TableCell>
                         <TableCell>
                           {isConnected(instance.connectionStatus) 
                             ? formatPhoneNumber(instance.ownerJid) 
