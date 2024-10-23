@@ -16,7 +16,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useSocketContext } from '@/context/SocketContext';
 import { CheckCircle, Loader } from 'lucide-react';
 
-export default function CreateInstanceModal({ isOpen, onClose }) {
+export default function CreateInstanceModal({ isOpen, onClose, selectedInstance }) {
   const [instanceName, setInstanceName] = useState('');
   const [qrCode, setQrCode] = useState(null);
   const { createInstance, isLoading } = useCreateInstance();
@@ -27,6 +27,16 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
   const [statusReason, setStatusReason] = useState(null);
   const [fullInstanceName, setFullInstanceName] = useState(null);
   const [closeProgress, setCloseProgress] = useState(0);
+
+  useEffect(() => {
+    if (selectedInstance) {
+      setInstanceName(selectedInstance.name);
+      setFullInstanceName(`${workspaceId}-${selectedInstance.name}`);
+      handleConnectExistingInstance();
+    } else {
+      resetValues();
+    }
+  }, [selectedInstance, workspaceId]);
 
   const setupSocketListeners = useCallback(() => {
     if (socket && fullInstanceName) {
@@ -82,6 +92,24 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
     };
   }, [connectionState]);
 
+  const handleConnectExistingInstance = async () => {
+    if (selectedInstance) {
+      try {
+        const newFullInstanceName = `${workspaceId}-${selectedInstance.name}`;
+        setFullInstanceName(newFullInstanceName);
+        
+        socket.emit('joinQRCodeRoom', { instance: newFullInstanceName });
+        socket.emit('joinInstanceRoom', { instance: newFullInstanceName });
+
+        const qrCodeData = await connectInstance(newFullInstanceName, authUser.token, workspaceId);
+        setQrCode(qrCodeData);
+        setConnectionState('qr');
+      } catch (error) {
+        console.error('Erro ao conectar instância existente:', error);
+      }
+    }
+  };
+
   const handleCreateInstance = async () => {
     try {
       await createInstance(instanceName, workspaceId);
@@ -93,19 +121,9 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
 
       const qrCodeData = await connectInstance(newFullInstanceName, authUser.token, workspaceId);
       setQrCode(qrCodeData);
+      setConnectionState('qr');
     } catch (error) {
       console.error('Erro ao criar instância:', error);
-    }
-  };
-
-  const handleRefreshQRCode = async () => {
-    if (fullInstanceName) {
-      try {
-        const qrCodeData = await connectInstance(fullInstanceName, authUser.token, workspaceId);
-        setQrCode(qrCodeData);
-      } catch (error) {
-        console.error('Erro ao atualizar QR Code:', error);
-      }
     }
   };
 
@@ -127,20 +145,24 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
     onClose();
   };
 
+  const getConnectionStatus = (status) => {
+    return status === 'open' ? 'Conectado' : 'Desconectado';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className={`sm:max-w-[425px] ${connectionState === 'open' ? 'bg-green-100' : ''}`}>
         <DialogHeader>
           <DialogTitle className={connectionState === 'open' ? 'text-green-700' : ''}>
-            {connectionState === 'open' ? 'Instância Conectada' : 'Conectar Instância'}
+            {connectionState === 'open' ? 'Instância Conectada' : (selectedInstance ? 'Conectar Instância Existente' : 'Criar Nova Instância')}
           </DialogTitle>
           <DialogDescription>
             {connectionState === 'open' 
               ? 'Sua instância do WhatsApp está pronta para uso.' 
-              : 'Crie uma nova instância do WhatsApp ou conecte-se a uma existente.'}
+              : (selectedInstance ? 'Conecte-se a uma instância existente.' : 'Crie uma nova instância do WhatsApp ou conecte-se a uma existente.')}
           </DialogDescription>
         </DialogHeader>
-        {!qrCode && connectionState !== 'open' ? (
+        {!qrCode && connectionState !== 'open' && !selectedInstance ? (
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -169,12 +191,19 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
               O modal será fechado em {((100 - closeProgress) / 50).toFixed(1)} segundos
             </p>
           </div>
-        ) : connectionState === 'connecting' ? (
+        ) : selectedInstance && connectionState === 'connecting' ? (
           <div className="flex flex-col items-center">
             <Loader className="w-24 h-24 text-blue-500 animate-spin" />
-            <p className="mt-4 text-lg font-semibold text-blue-600">Conectando...</p>
-            <p className="mt-2 text-sm text-gray-500">
-              Aguarde enquanto estabelecemos a conexão.
+            <p className="mt-4 text-lg font-semibold text-blue-600">Carregando QR Code...</p>
+          </div>
+        ) : selectedInstance && qrCode ? (
+          <div className="flex flex-col items-center">
+            <img src={qrCode} alt="QR Code para conexão" className="w-64 h-64 mb-4" key={qrCode} />
+            <p className="mt-4 text-sm text-gray-500 mb-4">
+              Escaneie este QR Code com o WhatsApp no seu celular para conectar a instância.
+            </p>
+            <p className="text-sm font-semibold mb-2">
+              Estado da conexão: {getConnectionStatus(connectionState)}
             </p>
           </div>
         ) : (
@@ -184,7 +213,7 @@ export default function CreateInstanceModal({ isOpen, onClose }) {
               Escaneie este QR Code com o WhatsApp no seu celular para conectar a instância.
             </p>
             <p className="text-sm font-semibold mb-2">
-              Estado da conexão: {connectionState}
+              Estado da conexão: {getConnectionStatus(connectionState)}
             </p>
             {statusReason && (
               <p className="text-sm text-gray-500 mb-4">

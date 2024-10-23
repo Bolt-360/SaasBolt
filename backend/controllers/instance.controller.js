@@ -281,3 +281,130 @@ export const listInstances = async (req, res) => {
     res.status(500).json({ error: 'Erro ao listar instâncias' });
   }
 };
+
+// Função para buscar informações de uma instância específica
+export const getInstanceInfo = async (req, res) => {
+  try {
+    const { workspaceId, instanceName } = req.params;
+    const fullInstanceName = `${instanceName}`;
+
+    // Verificar se a instância existe no banco de dados local
+    const localInstance = await Instance.findOne({
+      where: { name: instanceName, workspaceId: workspaceId }
+    });
+
+    if (!localInstance) {
+      return res.status(404).json({ message: "Instância não encontrada no banco de dados local" });
+    }
+
+    // Buscar informações da instância na Evolution API
+    const response = await axios.get(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
+      headers: {
+        'apikey': EVOLUTION_API_KEY
+      }
+    });
+
+    const instanceInfo = response.data.find(instance => instance.name === fullInstanceName);
+
+    if (!instanceInfo) {
+      return res.status(404).json({ message: "Instância não encontrada na Evolution API" });
+    }
+
+    res.json({
+      ...instanceInfo,
+      name: instanceName // Removendo o prefixo do workspaceId
+    });
+  } catch (error) {
+    console.error('Erro ao buscar informações da instância:', error);
+    res.status(500).json({ message: "Erro ao buscar informações da instância", error: error.message });
+  }
+};
+
+// Função para desconectar uma instância específica
+export const disconnectInstance = async (req, res) => {
+  try {
+    const { workspaceId, instanceName } = req.params;
+    const fullInstanceName = `${instanceName}`;
+
+    // Verificar se a instância existe no banco de dados local
+    const localInstance = await Instance.findOne({
+      where: { name: instanceName, workspaceId: workspaceId }
+    });
+
+    if (!localInstance) {
+      return res.status(404).json({ message: "Instância não encontrada no banco de dados local" });
+    }
+
+    // Desconectar a instância na Evolution API
+    const response = await axios.delete(`${EVOLUTION_API_URL}/instance/logout/${fullInstanceName}`, {
+      headers: {
+        'apikey': EVOLUTION_API_KEY
+      }
+    });
+
+    // Atualizar o status da instância no banco de dados local
+    await localInstance.update({ status: 'DISCONNECTED' });
+
+    res.json({ message: "Instância desconectada com sucesso", evolutionApiResponse: response.data });
+  } catch (error) {
+    console.error('Erro ao desconectar instância:', error);
+    res.status(500).json({ message: "Erro ao desconectar instância", error: error.message });
+  }
+};
+
+// Função para deletar uma instância específica
+export const deleteSpecificInstance = async (req, res) => {
+  try {
+    const { workspaceId, instanceName } = req.params;
+    const fullInstanceName = `${instanceName}`;
+
+    // Verificar se a instância existe no banco de dados local
+    const localInstance = await Instance.findOne({
+      where: { name: instanceName, workspaceId: workspaceId }
+    });
+
+    if (!localInstance) {
+      return res.status(404).json({ message: "Instância não encontrada no banco de dados local" });
+    }
+
+    // Primeiro, tente desconectar a instância
+    try {
+      await axios.delete(`${EVOLUTION_API_URL}/instance/logout/${fullInstanceName}`, {
+        headers: {
+          'apikey': EVOLUTION_API_KEY
+        }
+      });
+      console.log(`Instância ${fullInstanceName} desconectada com sucesso`);
+    } catch (disconnectError) {
+      console.error(`Erro ao desconectar instância ${fullInstanceName}:`, disconnectError.response?.data || disconnectError.message);
+      // Não retornamos erro aqui, pois a instância pode já estar desconectada
+    }
+
+    // Agora, tente deletar a instância
+    try {
+      const response = await axios.delete(`${EVOLUTION_API_URL}/instance/delete/${fullInstanceName}`, {
+        headers: {
+          'apikey': EVOLUTION_API_KEY
+        }
+      });
+
+      // Deletar a instância do banco de dados local
+      await localInstance.destroy();
+
+      res.json({ message: "Instância deletada com sucesso", evolutionApiResponse: response.data });
+    } catch (deleteError) {
+      console.error('Erro da Evolution API:', deleteError.response?.data || deleteError.message);
+      
+      // Se a Evolution API retornar um erro, ainda deletamos a instância local
+      if (deleteError.response && deleteError.response.status === 404) {
+        await localInstance.destroy();
+        res.json({ message: "Instância não encontrada na Evolution API, mas removida do banco de dados local" });
+      } else {
+        throw deleteError;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao deletar instância:', error);
+    res.status(500).json({ message: "Erro ao deletar instância", error: error.message });
+  }
+};

@@ -7,7 +7,10 @@ import {
     deleteInstance,
     getInstancesByWorkspace,
     connectInstance,
-    listInstances
+    listInstances,
+    getInstanceInfo,
+    disconnectInstance,
+    deleteSpecificInstance
 } from '../controllers/instance.controller.js';
 import { isAuthenticate } from '../middleware/verifyToken.js';
 
@@ -33,5 +36,10 @@ router.get('/:id', isAuthenticate, getInstanceById);
 router.get('/workspace/:workspaceId', isAuthenticate, getInstancesByWorkspace);
 router.get('/connect/:instanceName', isAuthenticate, connectInstance);
 router.get('/list/:workspaceId', isAuthenticate, listInstances);
+
+// Novas rotas
+router.get('/list/:workspaceId/:instanceName', isAuthenticate, getInstanceInfo);
+router.delete('/disconnect/:workspaceId/:instanceName', isAuthenticate, disconnectInstance);
+router.delete('/delete/:workspaceId/:instanceName', isAuthenticate, deleteSpecificInstance);
 
 export default router;

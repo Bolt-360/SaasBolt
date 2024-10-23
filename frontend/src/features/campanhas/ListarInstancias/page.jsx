@@ -1,83 +1,129 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useSocketContext } from '@/context/SocketContext'
 import { useInstancesFetch } from '@/hooks/useInstancesFetch'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, QrCode, Power, Trash2, Plus, Search } from 'lucide-react'
+import { MoreHorizontal, QrCode, Power, Trash2, Plus, Search, Loader2 } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import CreateInstanceModal from '@/components/CreateInstanceModal'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 export default function ListarInstancias() {
-  const { instances, isLoading, error, updateInstance, addInstance, removeInstance, fetchInstances } = useInstancesFetch();
+  const { 
+    instances, 
+    isLoading, 
+    error, 
+    updateInstance, 
+    addInstance, 
+    removeInstance, 
+    fetchSpecificInstance,
+    disconnectInstance,
+    deleteInstance
+  } = useInstancesFetch();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedInstance, setSelectedInstance] = useState(null);
   const { socket } = useSocketContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [instanceToDelete, setInstanceToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (socket) {
       const handleInstanceUpdate = async (updatedInstance) => {
         console.log('Recebido update de instância:', updatedInstance);
-        
-        // Atualiza a instância localmente
+        const instanceName = updatedInstance.name ? updatedInstance.name.split('-').pop() : updatedInstance.name;
         updateInstance({
           ...updatedInstance,
-          name: updatedInstance.name ? updatedInstance.name.split('-').pop() : updatedInstance.name,
+          name: instanceName,
           connectionStatus: updatedInstance.connectionStatus || updatedInstance.state,
           ownerJid: updatedInstance.ownerJid || null
         });
 
-        // Se o status mudou para 'open', busca todas as instâncias novamente
+        // Se a instância foi conectada, busque informações atualizadas
         if (updatedInstance.connectionStatus === 'open' || updatedInstance.state === 'open') {
-          await fetchInstances();
+          await fetchSpecificInstance(instanceName);
         }
       };
 
       const handleConnectionUpdate = async (data) => {
         console.log('Recebido update de conexão:', data);
+        const instanceName = data.instance ? data.instance.split('-').pop() : data.instance;
         
-        // Atualiza a instância localmente
+        // Atualizar imediatamente o estado com as informações recebidas
         updateInstance({
-          id: data.instance,
-          name: data.instance ? data.instance.split('-').pop() : data.instance,
+          name: instanceName,
           connectionStatus: data.state,
           ownerJid: data.ownerJid || null
         });
 
-        // Se o status mudou para 'open', busca todas as instâncias novamente
+        // Se a instância foi conectada, busque informações atualizadas
         if (data.state === 'open') {
-          await fetchInstances();
+          try {
+            const updatedInstance = await fetchSpecificInstance(instanceName);
+            if (updatedInstance) {
+              updateInstance({
+                ...updatedInstance,
+                name: instanceName,
+                connectionStatus: 'open'
+              });
+            }
+          } catch (error) {
+            console.error('Erro ao buscar informações atualizadas da instância:', error);
+          }
         }
+      };
+
+      const handleQRCodeUpdate = (data) => {
+        console.log('Recebido update de QR Code:', data);
+        const instanceName = data.instance ? data.instance.split('-').pop() : data.instance;
+        updateInstance({
+          name: instanceName,
+          qrCode: data.qrcode,
+          connectionStatus: 'qrcode'
+        });
       };
 
       socket.on('instanceUpdated', handleInstanceUpdate);
       socket.on('connectionUpdate', handleConnectionUpdate);
-      socket.on('instanceDisconnected', async (instanceName) => {
+      socket.on('qrcodeUpdated', handleQRCodeUpdate);
+      socket.on('instanceDisconnected', (instanceName) => {
         console.log('Instância desconectada:', instanceName);
         updateInstance({
           name: instanceName ? instanceName.split('-').pop() : instanceName,
           connectionStatus: 'closed',
           ownerJid: null
         });
-        await fetchInstances();
       });
 
       return () => {
         socket.off('instanceUpdated', handleInstanceUpdate);
         socket.off('connectionUpdate', handleConnectionUpdate);
+        socket.off('qrcodeUpdated', handleQRCodeUpdate);
         socket.off('instanceDisconnected');
       };
     }
-  }, [socket, updateInstance, fetchInstances]);
+  }, [socket, updateInstance, fetchSpecificInstance]);
 
   useEffect(() => {
-    console.log('Instances atualizadas:', instances);
+    console.log('Instances atualizadas:', instances.map(instance => ({
+      name: instance.name,
+      connectionStatus: instance.connectionStatus,
+      ownerJid: instance.ownerJid
+    })));
   }, [instances]);
 
   const handleInstanceEvent = (eventData) => {
@@ -135,15 +181,46 @@ export default function ListarInstancias() {
     setIsCreateModalOpen(true);
   }
 
-  const handleDisconnect = (instanceId) => {
-    if (socket) {
-      socket.emit('disconnectInstance', { instanceId });
+  const handleDisconnect = async (instanceName) => {
+    const success = await disconnectInstance(instanceName);
+    if (success) {
+      console.log(`Instância ${instanceName} desconectada com sucesso`);
+      // Você pode adicionar uma notificação de sucesso aqui
+    } else {
+      console.error(`Falha ao desconectar instância ${instanceName}`);
+      // Você pode adicionar uma notificação de erro aqui
     }
   };
 
-  const handleDelete = (instanceId) => {
-    // Implementar lógica para deletar
-  }
+  const handleDelete = (instance) => {
+    setInstanceToDelete(instance);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (instanceToDelete) {
+      setIsDeleting(true);
+      try {
+        const success = await deleteInstance(instanceToDelete.name);
+        if (success) {
+          console.log(`Instância ${instanceToDelete.name} deletada com sucesso`);
+          // Remover a instância da lista local
+          removeInstance(instanceToDelete.name);
+          // Você pode adicionar uma notificação de sucesso aqui
+        } else {
+          console.error(`Falha ao deletar instância ${instanceToDelete.name}`);
+          // Você pode adicionar uma notificação de erro aqui
+        }
+      } catch (error) {
+        console.error(`Erro ao deletar instância ${instanceToDelete.name}:`, error);
+        // Você pode adicionar uma notificação de erro aqui
+      } finally {
+        setIsDeleting(false);
+        setDeleteModalOpen(false);
+        setInstanceToDelete(null);
+      }
+    }
+  };
 
   if (isLoading) return <div>Carregando...</div>
   if (error) return <div>{error}</div>
@@ -229,13 +306,13 @@ export default function ListarInstancias() {
                                 </DropdownMenuItem>
                               )}
                               {isConnected(instance.connectionStatus) && (
-                                <DropdownMenuItem onClick={() => handleDisconnect(instance.id)}>
+                                <DropdownMenuItem onClick={() => handleDisconnect(instance.name)}>
                                   <Power className="mr-2 h-4 w-4" />
                                   <span>Desconectar</span>
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(instance.id)}>
+                              <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(instance)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Deletar</span>
                               </DropdownMenuItem>
@@ -259,6 +336,31 @@ export default function ListarInstancias() {
         }}
         selectedInstance={selectedInstance}
       />
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja deletar a instância {instanceToDelete?.name}? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setDeleteModalOpen(false)} variant="outline" disabled={isDeleting}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmDelete} variant="destructive" disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deletando...
+                </>
+              ) : (
+                'Deletar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

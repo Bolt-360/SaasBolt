@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { useSocketContext } from '@/context/SocketContext';
+import axios from 'axios';
 
 export const useInstancesFetch = () => {
   const [instances, setInstances] = useState([]);
@@ -93,14 +94,17 @@ export const useInstancesFetch = () => {
   }, [socket, authUser?.activeWorkspaceId]);
 
   const updateInstance = useCallback((updatedInstance) => {
-    setInstances(prevInstances => 
-      prevInstances.map(instance => {
-        if (instance.id === updatedInstance.id || instance.name === updatedInstance.name) {
-          return { ...instance, ...updatedInstance };
-        }
-        return instance;
-      })
-    );
+    setInstances(prevInstances => {
+      const index = prevInstances.findIndex(instance => instance.name === updatedInstance.name);
+      if (index !== -1) {
+        const newInstances = [...prevInstances];
+        newInstances[index] = { ...newInstances[index], ...updatedInstance };
+        console.log('Instância atualizada:', newInstances[index]);
+        return newInstances;
+      }
+      console.log('Nova instância adicionada:', updatedInstance);
+      return [...prevInstances, updatedInstance];
+    });
   }, []);
 
   const addInstance = useCallback((newInstance) => {
@@ -123,6 +127,87 @@ export const useInstancesFetch = () => {
     }
   }, [socket]);
 
+  const fetchSpecificInstance = useCallback(async (instanceName) => {
+    try {
+      const response = await axios.get(`/api/instances/list/${authUser.activeWorkspaceId}/${authUser.activeWorkspaceId}-${instanceName}`, {
+        headers: {
+          'Authorization': `Bearer ${authUser.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        const updatedInstance = response.data;
+        updateInstance({
+          ...updatedInstance,
+          name: updatedInstance.name.split('-').pop(),
+        });
+        return updatedInstance;
+      }
+    } catch (error) {
+      console.error('Erro ao buscar instância específica:', error);
+    }
+    return null;
+  }, [authUser.activeWorkspaceId, authUser.token, updateInstance]);
+
+  const disconnectInstance = useCallback(async (instanceName) => {
+    try {
+      const fullInstanceName = `${authUser.activeWorkspaceId}-${instanceName}`;
+      const response = await axios.delete(`/api/instances/disconnect/${authUser.activeWorkspaceId}/${fullInstanceName}`, {
+        headers: {
+          'Authorization': `Bearer ${authUser.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        updateInstance({
+          name: instanceName,
+          connectionStatus: 'closed',
+          ownerJid: null
+        });
+        return true;
+      }
+    } catch (error) {
+      console.error('Erro ao desconectar instância:', error);
+    }
+    return false;
+  }, [authUser.activeWorkspaceId, authUser.token, updateInstance]);
+
+  const deleteInstance = useCallback(async (instanceName) => {
+    try {
+      const fullInstanceName = `${authUser.activeWorkspaceId}-${instanceName}`;
+      const response = await axios.delete(`/api/instances/delete/${authUser.activeWorkspaceId}/${fullInstanceName}`, {
+        headers: {
+          'Authorization': `Bearer ${authUser.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        setInstances(prev => prev.filter(instance => instance.name !== instanceName));
+        return true;
+      }
+    } catch (error) {
+      console.error('Erro ao deletar instância:', error);
+    }
+    return false;
+  }, [authUser.activeWorkspaceId, authUser.token]);
+
+  const connectInstance = useCallback(async (instanceName) => {
+    try {
+      const response = await axios.get(`/api/instances/connect/${authUser.activeWorkspaceId}-${instanceName}`, {
+        headers: {
+          'Authorization': `Bearer ${authUser.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Erro ao conectar instância:', error);
+    }
+    return null;
+  }, [authUser.activeWorkspaceId, authUser.token]);
+
   return {
     instances,
     isLoading,
@@ -131,7 +216,9 @@ export const useInstancesFetch = () => {
     updateInstance,
     addInstance,
     removeInstance,
-    joinInstanceRoom,
-    leaveInstanceRoom
+    fetchSpecificInstance,
+    disconnectInstance,
+    deleteInstance,
+    connectInstance
   };
 };
