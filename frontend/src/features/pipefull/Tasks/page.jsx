@@ -1,9 +1,12 @@
 'use client'
 
 import React from 'react'
-import { useState } from 'react'    
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from 'react'
 import { Plus, ListChecks, CircleUserRound, Folder, Calendar, ListFilter } from 'lucide-react'
+import { usePage } from './TasksContext';
+import { TableTasks } from '../components/TableTasks';
+import { TasksProvider } from './TasksContext';
+import { DataKanban } from '../components/kanban/kanban';
 
 
 // Dados simulados para os gráficos
@@ -14,7 +17,15 @@ const dataTable = [
     { task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Protótipo" }
 ]
 
-export default function MyTasks() {
+
+function MyTasksContent() {
+    const { pageState, setTable, setKanban, setCalendar } = usePage();
+    
+    const [ active, setActive ] = useState(false);
+    const handleButtonClick = () => {
+        setActive(true)
+    }
+    
     return (
         <div className="flex h-screen bg-white">
         {/* Sidebar */}
@@ -27,14 +38,20 @@ export default function MyTasks() {
             {/* Estatísticas Gerais */}
             <div className='border rounded-md bg-white'>
                 <div className="flex items-center gap-6 mb-1  p-3">
-                    <span className='border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer'>
+                    <button 
+                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${active ? 'bg-gray-300' : ''}`} 
+                    onClick={setTable}
+                    >
                         Tabela
-                    </span>
-                    <span className='border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer'>
+                    </button>
+                    <button 
+                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${active ? 'bg-gray-300' : ''}`}
+                    onClick={setKanban}
+                    >
                         Kanban
-                    </span>
+                    </button>
                     <span className='border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer'>
-                        Calendário
+                        <a onClick={setCalendar}>Calendário</a>
                     </span>
 
                     <button className='flex gap-1 ml-auto mr-3 bg-blue-600 rounded-md text-white px-2 py-1'>
@@ -67,36 +84,23 @@ export default function MyTasks() {
                 </div>
                 <hr className='mb-2'/>
 
-                <div>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="sticky top-0 bg-white">Tasks</TableHead>
-                            <TableHead className="sticky top-0 bg-white">Projetos</TableHead>
-                            <TableHead className="sticky top-0 bg-white">Responsável</TableHead>
-                            <TableHead className="sticky top-0 bg-white">Data</TableHead>
-                            <TableHead className="sticky top-0 bg-white">Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {dataTable.map((data) => (
-                            <TableRow 
-                            key={data.task}
-                            className=""
-                            >
-                                <TableCell>{data.task}</TableCell>
-                                <TableCell>{data.projeto}</TableCell>
-                                <TableCell>{data.responsavel}</TableCell>
-                                <TableCell>{data.data.toLocaleDateString()}</TableCell>
-                                <TableCell>{data.status}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                    </Table>
+                {/* Deixar div responsiva */}
+                <div> 
+                    {pageState === "table" && (<TableTasks/>)}
+                    {pageState === "kanban" && (<DataKanban/>)}
+                    {pageState === "calendar" && <div>Visualização do Calendário</div>}
                 </div>
             </div>
             </main>
         </div>
         </div>
     )
+}
+
+export default function MyTasks() {
+    return (
+        <TasksProvider>
+            <MyTasksContent />
+        </TasksProvider>
+    );
 }

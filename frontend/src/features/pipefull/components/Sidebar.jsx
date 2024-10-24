@@ -16,7 +16,7 @@ import CreateInstanceModal from '@/components/CreateInstanceModal'
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/app/pipefull', end: true },
     { icon: CircleCheckBig, label: 'Minhas Tasks', href: '/app/pipefull/my-tasks', end: true },
-    { icon: Handshake, label: 'Membros', href: '/app/pipefull/', end: true},
+    { icon: Handshake, label: 'Membros', href: '/app/pipefull/members', end: true},
     { icon: GitCompareArrows, label: 'Projetos', href: '/app/pipefull/', end: true},
 ]
 
