@@ -35,8 +35,10 @@ export const useFetchCampaign = () => {
         formDataToSubmit.append('csv', formData.csvFile);
       }
 
-      // Convertendo para um array de inteiros e então para JSON
-      const instanceIds = [parseInt(formData.instancia, 10)];
+      const instanceIds = formData.instancia ? [parseInt(formData.instancia, 10)] : [];
+      if (instanceIds.length === 0) {
+        throw new Error('Instance ID is required');
+      }
       formDataToSubmit.append('instanceIds', JSON.stringify(instanceIds));
 
       if (formData.arquivo) {
