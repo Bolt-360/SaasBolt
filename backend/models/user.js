@@ -14,10 +14,9 @@ export default (sequelize) => {
             });
 
             User.belongsToMany(models.Conversation, {
-                through: models.ConversationParticipants,
-                foreignKey: 'userId',
-                otherKey: 'conversationId',
-                as: 'participatedConversations'
+                through: 'ConversationParticipants',
+                as: 'conversations',
+                foreignKey: 'userId'
             });
 
             User.belongsToMany(models.Workspace, {
@@ -25,7 +24,17 @@ export default (sequelize) => {
                 foreignKey: 'userId',
                 otherKey: 'workspaceId',
                 as: 'participatedWorkspaces'
-            })
+            });
+
+            User.belongsTo(models.Workspace, {
+                foreignKey: 'activeWorkspaceId',
+                as: 'activeWorkspace'
+            });
+
+            User.hasMany(models.UserWorkspace, { 
+                foreignKey: 'userId', 
+                as: 'userWorkspaces' 
+            });
         }
     }
 
@@ -64,6 +73,14 @@ export default (sequelize) => {
                 isIn: [['Masculino', 'Feminino']],
             },
         },
+        activeWorkspaceId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'Workspaces',
+                key: 'id'
+            }
+        }
     }, {
         sequelize,
         modelName: 'User',

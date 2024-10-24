@@ -4,9 +4,10 @@ import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import { validateCPF } from "../utils/validarCPF.js"
 import { errorHandler } from "../utils/error.js"
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
-const { User } = models;
+const { User, Workspace, UserWorkspace } = models;
 //Cadastro
 export const cadastro = async(req, res, next) => {
     const { username, email, password, confirmPassword, cpf, gender } = req.body
@@ -58,71 +59,81 @@ export const cadastro = async(req, res, next) => {
         //Gerar Token JWT
         const token = jwt.sign({
             id: newUser._id,
+            email: newUser.email,
+            username: newUser.username,
         }, process.env.JWT_SECRET, {
             expiresIn: '7d',
         })
         // Salvar o usuário no banco de dados
         await newUser.save()
-        res.cookie('access_token', token, {httpOnly: true}).status(201).json({
-            _id: newUser._id,
-            username: newUser.username,
-            email: newUser.email,
-            token,
-            profilePicture: newUser.profilePicture,
-        })
+        res.status(201).json({
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                profilePicture: newUser.profilePicture,
+            },
+            token
+        });
     }catch(error){
-        console.log("Erro ao cadastrar", error)
-        return next(errorHandler(500, 'Internal Server Error'))
+        return next(errorHandler(500, 'Erro interno do servidor'));
     }
 }
 
 //Login
 export const login = async (req, res, next) => {
-    const { email, password } = req.body
-
-    // Verificar se email e senha foram fornecidos
-    if (!email || !password) {
-        return next(errorHandler(400, 'Preencha todos os campos'))
-    }
-
     try {
-        // Buscar o usuário pelo email (aguardando a resposta do banco)
-        const user = await User.findOne({ where: { email } })
+        const { email, password } = req.body;
 
-        // Verificar se o usuário existe
-        if (!user) {
-            return next(errorHandler(400, 'Email ou senha inválido'))
+        const user = await User.findOne({
+            where: { email },
+            include: [
+                {
+                    model: Workspace,
+                    as: 'participatedWorkspaces',
+                    through: { model: UserWorkspace, attributes: ['role'] },
+                    required: false
+                },
+                {
+                    model: Workspace,
+                    as: 'activeWorkspace',
+                    required: false
+                }
+            ],
+            attributes: ['id', 'email', 'username', 'password', 'profilePicture'] // Adicionando profilePicture
+        });
+
+        if (!user || !await bcrypt.compare(password, user.password)) {
+            return res.status(401).json({ message: "Credenciais inválidas" });
         }
 
-        // Verificar se a senha fornecida corresponde à senha criptografada
-        const match = bcryptjs.compareSync(password, user.password)
-
-        if (!match) {
-            return next(errorHandler(400, 'Email ou senha inválido'))
-        }
-
-        // Gerar token JWT
-        const token = jwt.sign(
-            { id: user.id },  // Corrigido para usar `user.id`
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        )
-
-        // Definir cookie e enviar resposta
-        res.cookie('access_token', token, { httpOnly: true }).status(200).json({
-            _id: user.id,  // Corrigido para usar `user.id`
-            username: user.username,
+        const token = jwt.sign({
+            id: user.id,
             email: user.email,
-            token,
-            profilePicture: user.profilePicture,
-        })
+            username: user.username,
+            activeWorkspaceId: user.activeWorkspace ? user.activeWorkspace.id : null,
+            profilePicture: user.profilePicture // Adicionando profilePicture ao token
+        }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+        res.json({
+            user: {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                profilePicture: user.profilePicture, // Adicionando profilePicture à resposta
+                activeWorkspaceId: user.activeWorkspace ? user.activeWorkspace.id : null,
+                workspaces: user.participatedWorkspaces ? user.participatedWorkspaces.map(w => ({
+                    id: w.id,
+                    name: w.name,
+                    role: w.UserWorkspace ? w.UserWorkspace.role : null
+                })) : []
+            },
+            token
+        });
     } catch (error) {
-        console.log("Erro ao logar", error)
-        return next(errorHandler(500, 'Internal Server Error'))
+        next(error);
     }
-}
-
+};
 
 export const logout = (req, res) => {
     try{

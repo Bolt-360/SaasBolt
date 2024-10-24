@@ -2,7 +2,14 @@ import express from 'express'
 import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
-import models from './models/index.js';
+import { server, app, io} from './socket/socket.js';
+import instanceRoutes from './routes/instance.routes.js';
+import campaignRoutes from './routes/campaign.routes.js';
+import messageCampaignRoutes from './routes/messageCampaign.js';
+import recipientRoutes from './routes/recipient.js';
+import webhookRoutes from './routes/webhook.routes.js';
+
+app.set('io', io);
 
 dotenv.config()
 
@@ -28,7 +35,7 @@ pool.connect()
         console.error('Erro ao conectar ao PostgreSQL:', err)
     })
 
-const app = express()
+ //const app = express()
 app.get("/", async (req, res) => {
     let client;
 
@@ -51,6 +58,9 @@ import authRouters from "./routes/auth.routes.js"
 import messageRouters from "./routes/message.routes.js"
 import userRouters from "./routes/user.routes.js"
 import workspacesRouters from "./routes/workspaces.routes.js"
+import conversationsRouters from "./routes/conversations.routes.js"
+import contactRoutes from './routes/contact.routes.js'
+
 
 //JSON para enviar os dados para o frontend
 app.use(express.json())
@@ -61,8 +71,15 @@ app.use("/api/auth", authRouters)
 app.use("/api/messages", messageRouters)
 app.use("/api/users", userRouters)
 app.use("/api/workspaces", workspacesRouters)
+app.use("/api/conversations", conversationsRouters)
+app.use('/api/contacts', contactRoutes)
+app.use('/api/instances', instanceRoutes)
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/message-campaigns', messageCampaignRoutes);
+app.use('/api/recipients', recipientRoutes);
+app.use('/webhook', webhookRoutes);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)
 })
 
@@ -76,3 +93,19 @@ app.use((err, req, res, next) => {
         message,
     })
 })
+
+io.on('connection', (socket) => {
+    console.log('Novo cliente conectado');
+
+    socket.on('joinWorkspace', (workspaceId) => {
+        socket.join(`workspace_${workspaceId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
+
+    // ... outros handlers de socket
+});
+
+export default server;
