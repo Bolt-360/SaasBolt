@@ -6,7 +6,7 @@ import { Plus, ListChecks, CircleUserRound, Folder, Calendar, ListFilter } from 
 import { usePage } from './TasksContext';
 import { TableTasks } from '../components/TableTasks';
 import { TasksProvider } from './TasksContext';
-import { DataKanban } from '../components/kanban/kanban';
+import { DataKanban } from '../components/kanban/dataKanban';
 
 
 // Dados simulados para os gráficos
@@ -19,12 +19,7 @@ const dataTable = [
 
 
 function MyTasksContent() {
-    const { pageState, setTable, setKanban, setCalendar } = usePage();
-    
-    const [ active, setActive ] = useState(false);
-    const handleButtonClick = () => {
-        setActive(true)
-    }
+    const { pageState, activeButton, setTable, setKanban, setCalendar } = usePage();
     
     return (
         <div className="flex h-screen bg-white">
@@ -39,20 +34,25 @@ function MyTasksContent() {
             <div className='border rounded-md bg-white'>
                 <div className="flex items-center gap-6 mb-1  p-3">
                     <button 
-                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${active ? 'bg-gray-300' : ''}`} 
+                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'table' ? 'bg-gray-300' : 'bg-white'}`} 
                     onClick={setTable}
                     >
                         Tabela
                     </button>
+
                     <button 
-                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${active ? 'bg-gray-300' : ''}`}
+                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'kanban' ? 'bg-gray-300' : 'bg-white'}`}
                     onClick={setKanban}
                     >
                         Kanban
                     </button>
-                    <span className='border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer'>
-                        <a onClick={setCalendar}>Calendário</a>
-                    </span>
+                    
+                    <button 
+                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'calendar' ? 'bg-gray-300' : 'bg-white'}`}
+                    onClick={setCalendar}
+                    >
+                        Calendário
+                    </button>
 
                     <button className='flex gap-1 ml-auto mr-3 bg-blue-600 rounded-md text-white px-2 py-1'>
                         <Plus/>

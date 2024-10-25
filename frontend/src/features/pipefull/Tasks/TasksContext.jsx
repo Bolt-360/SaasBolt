@@ -6,13 +6,25 @@ const TasksContext = createContext(undefined);
 export const TasksProvider = ({ children }) => {
   // Estado que armazena qual botão foi clicado
   const [pageState, setPageState] = useState("table"); // "home" é o estado inicial
+    const [activeButton, setActiveButton] = useState("table");
 
-    const setTable = () => setPageState("table");
-    const setKanban = () => setPageState("kanban");
-    const setCalendar = () => setPageState("calendar");
+    const setTable = () => {
+        setPageState("table");
+        setActiveButton("table");
+    };
+    
+    const setKanban = () => {
+        setPageState("kanban");
+        setActiveButton("kanban");
+    };
+    
+    const setCalendar = () => {
+        setPageState("calendar");
+        setActiveButton("calendar");
+    };
 
     return (
-    <TasksContext.Provider value={{ pageState, setTable, setKanban, setCalendar }}>
+    <TasksContext.Provider value={{ pageState, activeButton, setTable, setKanban, setCalendar }}>
         {children}
     </TasksContext.Provider>
     );
