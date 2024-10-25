@@ -56,6 +56,7 @@ const DynamicEditor = forwardRef(({ content, onContentChange }, ref) => {
   };
 
   return (
+    <>
     <div className="flex-grow relative border rounded-lg">
       <EditorContent editor={editor} />
       {!editor?.getText() && (
@@ -63,32 +64,33 @@ const DynamicEditor = forwardRef(({ content, onContentChange }, ref) => {
           Digite uma mensagem
         </span>
       )}
-      <div className="flex space-x-2 mt-2">
-        <div
-          onClick={() => toggleFormat('toggleBold')}
-          className={`p-1 rounded ${isBold ? 'bg-gray-200' : ''} hover:cursor-pointer`}
-        >
-          <Bold size={20} />
-        </div>
-        <div
-          onClick={() => toggleFormat('toggleItalic')}
-          className={`p-1 rounded ${isItalic ? 'bg-gray-200' : ''} hover:cursor-pointer`}
-        >
-          <Italic size={20} />
-        </div>
-        <div
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="p-1 rounded hover:cursor-pointer"
-        >
-          <Smile size={20} />
-        </div>
-      </div>
       {showEmojiPicker && (
         <div className="absolute z-10">
           <Picker data={data} onEmojiSelect={addEmoji} />
         </div>
       )}
     </div>
+    <div className="flex space-x-2 mt-2">
+        <div
+          onClick={() => toggleFormat('toggleBold')}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer"
+        >
+          <Bold size={20} />
+        </div>
+        <div
+          onClick={() => toggleFormat('toggleItalic')}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer"
+        >
+          <Italic size={20} />
+        </div>
+        <div
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer"
+        >
+          <Smile size={20} />
+        </div>
+      </div>
+    </>
   );
 });
 

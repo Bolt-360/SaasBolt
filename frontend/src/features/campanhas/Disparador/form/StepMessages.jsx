@@ -112,27 +112,6 @@ export default function StepMessages({ formData, handleInputChange, csvVariables
                   content={field === 'principal' ? mensagem.principal : mensagem.alternativas[field === 'alternativa1' ? 0 : 1]}
                   onContentChange={(value) => handleMensagemChange(index, field, value)}
                 />
-                <br/>
-                <div className="flex gap-2 mb-2">
-                  <div
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer"
-                    onClick={() => applyTextFormat(index, field, 'bold')}
-                  >
-                    <Bold className="h-4 w-4" />
-                  </div>
-                  <div
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer"
-                    onClick={() => applyTextFormat(index, field, 'italic')}
-                  >
-                    <Italic className="h-4 w-4" />
-                  </div>
-                  <div
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer"
-                    onClick={() => toggleEmojiPicker(index, field)}
-                  >
-                    <Smile className="h-4 w-4" />
-                  </div>
-                </div>
                 {emojiPickers[`${index}-${field}`] && (
                   <Picker data={data} onEmojiSelect={(emoji) => addEmoji(emoji, index, field)} />
                 )}
