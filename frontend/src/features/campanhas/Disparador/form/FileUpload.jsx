@@ -125,7 +125,6 @@ export default function FileUpload({ field, label, accept, formData, handleInput
           <>
             <Upload className="mx-auto h-12 w-12 text-gray-400" />
             <p>Arraste e solte o {label.toLowerCase()} aqui, ou clique para selecionar</p>
-            <p className="text-sm text-gray-500 mt-2">Arquivo CSV</p>
           </>
         )}
       </div>

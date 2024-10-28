@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from '@/context/AuthContext';
 
 export const useFetchCampaign = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { authUser } = useAuthContext();
+  const workspaceId = authUser.activeWorkspaceId;
 
-  const createCampaign = async (formData, workspaceId) => {
+  const createCampaign = async (formData) => {
     setIsLoading(true);
     try {
       const formDataToSubmit = new FormData();

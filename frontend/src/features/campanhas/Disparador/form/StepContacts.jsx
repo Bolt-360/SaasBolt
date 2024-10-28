@@ -34,18 +34,25 @@ export default function StepContacts({
     return `${instanceId}`;
   };
 
-  const formatPhoneNumber = (number) => {
-    if (!number) return '';
+  const formatPhoneNumber = (numero) => {
     // Remove todos os caracteres não numéricos
-    const cleaned = number.toString().replace(/\D/g, '');
+    const digits = numero.replace(/[^\d]/g, '');
     
-    // Se já começar com 55, retorna o número como está
-    if (cleaned.startsWith('55')) {
-      return cleaned;
+    // Se começar com 55, verifica se tem o tamanho correto
+    if (digits.startsWith('55')) {
+      if (digits.length === 12 || digits.length === 13) {
+        return digits;
+      }
+      return null;
     }
     
-    // Adiciona 55 no início
-    return `55${cleaned}`;
+    // Se não começar com 55, adiciona e verifica o tamanho
+    const withCountry = `55${digits}`;
+    if (withCountry.length === 12 || withCountry.length === 13) {
+      return withCountry;
+    }
+    
+    return null;
   };
 
   const parseCsvContent = (content) => {
@@ -59,26 +66,34 @@ export default function StepContacts({
         throw new Error('O arquivo CSV deve conter pelo menos um cabeçalho e uma linha de dados');
       }
 
-      // Extrai os headers e remove espaços em branco
       const headers = lines[0]
         .split(',')
         .map(h => h.trim());
 
-      // Remove a primeira coluna (número) e pega as variáveis restantes
-      const variables = headers.slice(1); // ['NOME', 'TURNO', 'ENVIADO']
+      const variables = headers.slice(1);
 
-      const parsedData = lines.slice(1).map(line => {
+      const parsedData = lines.slice(1).map((line, index) => {
         const values = line.split(',').map(v => v.trim());
-        const row = {
-          numeroOriginal: values[0] || '',
-          numeroFormatado: formatPhoneNumber(values[0]),
-        };
+        const numeroOriginal = values[0];
+
+        if (!numeroOriginal) {
+          throw new Error(`Linha ${index + 2}: Número de telefone não pode estar vazio`);
+        }
+
+        const numeroFormatado = formatPhoneNumber(numeroOriginal);
         
-        // Adiciona as outras colunas com seus respectivos headers
-        headers.forEach((header, i) => {
-          if (i > 0) { // Pula a primeira coluna que é o número
-            row[header.toLowerCase()] = values[i] || ''; // Converte header para minúsculo
-          }
+        if (!numeroFormatado) {
+          throw new Error(`Linha ${index + 2}: Número inválido: ${numeroOriginal}`);
+        }
+
+        const row = {
+          numeroOriginal,
+          numeroFormatado
+        };
+
+        // Adiciona as outras colunas como variáveis
+        headers.slice(1).forEach((header, i) => {
+          row[header.toLowerCase()] = values[i + 1] || '';
         });
 
         return row;
@@ -86,7 +101,7 @@ export default function StepContacts({
 
       return {
         data: parsedData,
-        variables: variables
+        variables: variables.map(v => v.toLowerCase())
       };
     } catch (error) {
       throw new Error(`Erro ao processar CSV: ${error.message}`);
@@ -106,7 +121,7 @@ export default function StepContacts({
         try {
           const text = e.target.result;
           const { data: parsedData, variables } = parseCsvContent(text);
-          const validData = parsedData.filter(row => row.numeroFormatado.length >= 12);
+          const validData = parsedData.filter(row => row.numeroFormatado);
           
           if (validData.length === 0) {
             throw new Error('Nenhum número válido encontrado no CSV');
@@ -183,32 +198,21 @@ export default function StepContacts({
   };
 
   const handleDownloadExample = (e) => {
-    e.preventDefault(); // Previne o comportamento padrão do botão
+    e.preventDefault();
     
-    const csvContent = "numero,nome,cidade\n5584999999991,João Silva,Natal\n5584988888881,Maria Santos,Parnamirim";
+    const csvContent = "telefone,nome,cidade\n" +
+                      "84999999999,João Silva,Natal\n" +
+                      "84988888888,Maria Santos,Parnamirim\n" +
+                      "84977777777,Pedro Souza,Mossoró";
     
     // Cria o blob com o conteúdo CSV
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     
     // Cria uma URL temporária para o blob
-    const url = window.URL.createObjectURL(blob);
-    
-    // Cria um elemento <a> temporário
     const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'exemplo_contatos.csv');
-    
-    // Adiciona o link ao documento
-    document.body.appendChild(link);
-    
-    // Simula o clique no link
+    link.href = URL.createObjectURL(blob);
+    link.download = 'exemplo_contatos.csv';
     link.click();
-    
-    // Remove o link do documento
-    document.body.removeChild(link);
-    
-    // Libera a URL temporária
-    window.URL.revokeObjectURL(url);
   };
 
   return (

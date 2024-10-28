@@ -40,6 +40,28 @@ export default (sequelize) => {
     imageUrl: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    // Novos campos
+    status: {
+      type: DataTypes.ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'COMPLETED_WITH_ERRORS'),
+      defaultValue: 'PENDING',
+      allowNull: false
+    },
+    successCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    failureCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    error: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    lastProcessedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   });
 

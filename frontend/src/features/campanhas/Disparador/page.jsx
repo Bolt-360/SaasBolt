@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Send, PlayCircle, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Send, PlayCircle, ArrowLeft, ArrowRight, Info } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import StepBasicInfo from './form/StepBasicInfo'
 import StepContacts from './form/StepContacts'
@@ -13,9 +13,12 @@ import StepReview from './form/StepReview'
 import { steps } from './form/constants'
 import { useToast } from "@/hooks/use-toast"
 import { useFetchCampaign } from '@/hooks/useFetchCampaign';
+import { useNavigate } from 'react-router-dom';
 
 export default function Disparador() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0)
+  const [isReviewed, setIsReviewed] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
     tipo: '',
@@ -34,6 +37,7 @@ export default function Disparador() {
   const [isNextDisabled, setIsNextDisabled] = useState(true)
   const { toast } = useToast()
   const { createCampaign, isLoading } = useFetchCampaign();
+  const [campaignCreated, setCampaignCreated] = useState(false);
 
   useEffect(() => {
     if (currentStep === 0) {
@@ -74,28 +78,43 @@ export default function Disparador() {
     })
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  // Função para lidar com a confirmação da revisão
+  const handleReviewConfirm = () => {
+    setIsReviewed(true);
+  };
+
+  // Função para criar a campanha após reviso
+  const handleCreateCampaign = async (e) => {
+    e.preventDefault();
     
+    if (!isReviewed) {
+      toast({
+        title: "Revisão necessária",
+        description: "Por favor, revise os dados da campanha antes de criar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Assumindo que você tem acesso ao workspaceId
-      const workspaceId = 2; // Substitua pelo ID correto do workspace
-      await createCampaign(formData, workspaceId);
+      await createCampaign(formData);
       toast({
         title: "Sucesso!",
         description: "Campanha criada com sucesso.",
       });
-      // Aqui você pode redirecionar o usuário ou limpar o formulário
-      // Por exemplo:
-      // router.push('/campanhas');
+      setCampaignCreated(true);
+      
     } catch (error) {
-      console.error('Erro ao enviar formulário:', error);
       toast({
         title: "Erro",
-        description: error.message || "Falha ao criar a campanha. Por favor, tente novamente.",
+        description: error.message || "Não foi possível criar a campanha",
         variant: "destructive",
       });
     }
+  };
+
+  const handleGoToCampaigns = () => {
+    navigate('/app/campanhas/listar-campanhas');
   };
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, steps.length - 1))
@@ -153,33 +172,63 @@ export default function Disparador() {
                 </div>
               ))}
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleCreateCampaign} className="space-y-4">
               {renderStep()}
               <div className="flex justify-between mt-6">
-                <Button type="button" onClick={prevStep} disabled={currentStep === 0}>
+                <Button 
+                  type="button" 
+                  onClick={prevStep} 
+                  disabled={currentStep === 0}
+                >
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Anterior
                 </Button>
+
                 {currentStep < steps.length - 1 ? (
-                  <Button type="button" onClick={nextStep} disabled={isNextDisabled}>
+                  <Button 
+                    type="button" 
+                    onClick={nextStep} 
+                    disabled={isNextDisabled}
+                  >
                     Próximo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                ) : (
-                  <Button type="submit" disabled={isLoading}>
+                ) : !isReviewed ? (
+                  <Button 
+                    type="button"
+                    onClick={handleReviewConfirm}
+                    className="bg-yellow-500 hover:bg-yellow-600"
+                  >
+                    <Info className="mr-2 h-4 w-4" />
+                    Confirmar Revisão
+                  </Button>
+                ) : !campaignCreated ? (
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="bg-green-500 hover:bg-green-600"
+                  >
                     {isLoading ? (
                       "Criando campanha..."
                     ) : formData.inicioImediato ? (
                       <>
                         <PlayCircle className="mr-2 h-4 w-4" />
-                        Iniciar Campanha
+                        Criar Campanha
                       </>
                     ) : (
                       <>
                         <Send className="mr-2 h-4 w-4" />
-                        Agendar Campanha
+                        Criar Campanha Agendada
                       </>
                     )}
+                  </Button>
+                ) : (
+                  <Button 
+                    type="button"
+                    onClick={handleGoToCampaigns}
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    Ir para Campanhas
                   </Button>
                 )}
               </div>

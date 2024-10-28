@@ -8,6 +8,7 @@ import campaignRoutes from './routes/campaign.routes.js';
 import messageCampaignRoutes from './routes/messageCampaign.js';
 import recipientRoutes from './routes/recipient.js';
 import webhookRoutes from './routes/webhook.routes.js';
+import { initCampaignService, checkImmediateCampaigns, scheduleCampaigns } from './services/campaignService.js';
 
 app.set('io', io);
 
@@ -79,10 +80,12 @@ app.use('/api/message-campaigns', messageCampaignRoutes);
 app.use('/api/recipients', recipientRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
-server.listen(PORT, () => {
-    console.log("Server is running on port: " + PORT)
-})
 
+// Inicia o serviço de campanhas após iniciar o servidor
+server.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+    initCampaignService();
+});
 
 //Error Handler
 app.use((err, req, res, next) => {
