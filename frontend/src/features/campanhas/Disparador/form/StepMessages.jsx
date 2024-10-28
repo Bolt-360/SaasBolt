@@ -16,12 +16,38 @@ import {
   TooltipProvider 
 } from "@/components/ui/tooltip";
 
-export default function StepMessages({ formData, handleInputChange, csvVariables }) {
+export default function StepMessages({ formData, handleInputChange }) {
   const [activeMessageIndex, setActiveMessageIndex] = useState(0);
   const editorRefs = useRef({}); // Armazena referências separadas para cada aba
   const [emojiPickers, setEmojiPickers] = useState({});
 
-  const availableVariables = csvVariables.slice(1);
+  // Garantir que temos acesso às variáveis do CSV
+  const availableVariables = formData.csvVariables || [];
+
+  // Funções de Drag and Drop
+  const handleDragStart = (e, variable) => {
+    e.dataTransfer.setData('text/plain', `{{${variable.toLowerCase()}}}`);
+    e.target.classList.add('dragging');
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.classList.remove('dragging');
+  };
+
+  const handleEditorDrop = (editor, event) => {
+    event.preventDefault();
+    const variable = event.dataTransfer.getData('text/plain');
+    
+    const view = editor.view;
+    const pos = view.posAtCoords({ 
+      left: event.clientX, 
+      top: event.clientY 
+    });
+
+    if (pos) {
+      editor.commands.insertContentAt(pos.pos, variable);
+    }
+  };
 
   const handleMensagemChange = (index, field, value) => {
     const novasMensagens = [...formData.mensagens];
@@ -69,41 +95,32 @@ export default function StepMessages({ formData, handleInputChange, csvVariables
     }
   };
 
-  // Adicione a função handleDragStart
-  const handleDragStart = (e, variable) => {
-    e.dataTransfer.setData('text/plain', `{{${variable}}}`);
-  };
-
-  // Adicione a função handleDrop para inserir a variável no editor
-  const handleDrop = (index, field, variable) => {
-    const editorInstance = editorRefs.current[`${index}-${field}`];
-    if (editorInstance) {
-      editorInstance.commands.insertContent(variable);
-    }
-  };
-
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        <Alert className="mb-4">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Variáveis Disponíveis</AlertTitle>
-          <AlertDescription>
-            Arraste e solte as variáveis abaixo para incluí-las em suas mensagens.
-          </AlertDescription>
-        </Alert>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {availableVariables.map((variable, index) => (
-            <Badge
-              key={index}
-              draggable
-              onDragStart={(e) => handleDragStart(e, variable)}
-              className="cursor-move"
-            >
-              {variable}
-            </Badge>
-          ))}
-        </div>
+        {availableVariables.length > 0 && (
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h4 className="text-sm font-medium mb-2">Variáveis disponíveis:</h4>
+            <div className="flex flex-wrap gap-2">
+              {availableVariables.map((variable, index) => (
+                <div
+                  key={index}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, variable)}
+                  onDragEnd={handleDragEnd}
+                  className="px-3 py-1.5 bg-white rounded-md text-sm cursor-move 
+                           border border-gray-200 hover:bg-gray-50 
+                           active:bg-gray-100 transition-colors
+                           shadow-sm hover:shadow
+                           draggable-variable"
+                >
+                  {variable}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {formData.mensagens.map((mensagem, index) => (
           <div key={index} className="space-y-4 mb-6">
             <div className="flex items-center justify-between">
@@ -139,6 +156,10 @@ export default function StepMessages({ formData, handleInputChange, csvVariables
                     ref={(el) => setEditorRef(el, index, field)}
                     content={field === 'principal' ? mensagem.principal : mensagem.alternativas[field === 'alternativa1' ? 0 : 1]}
                     onContentChange={(value) => handleMensagemChange(index, field, value)}
+                    editorProps={{
+                      handleDrop: (view, event) => handleEditorDrop(view.editor, event),
+                      handleDragOver: (e) => e.preventDefault(),
+                    }}
                   />
                   {emojiPickers[`${index}-${field}`] && (
                     <Picker data={data} onEmojiSelect={(emoji) => addEmoji(emoji, index, field)} />

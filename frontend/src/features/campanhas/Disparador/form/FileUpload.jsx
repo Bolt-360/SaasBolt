@@ -64,10 +64,6 @@ export default function FileUpload({ field, label, accept, formData, handleInput
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    toast({
-      title: "Arquivo removido",
-      description: "O arquivo foi removido com sucesso.",
-    });
   }
 
   const isValidFileType = (file, acceptedTypes) => {

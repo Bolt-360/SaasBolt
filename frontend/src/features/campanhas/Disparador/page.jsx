@@ -21,14 +21,17 @@ export default function Disparador() {
     tipo: '',
     instancia: '',
     csvFile: null,
+    csvData: [],
+    formattedNumbers: [],
+    verifiedNumbers: [],
     mensagens: [{ principal: '', alternativas: ['', ''] }],
     inicioImediato: false,
     dataInicio: '',
     intervalo: '',
-    arquivo: null
+    arquivo: null,
+    csvVariables: [], // Adicionar este campo
   })
   const [isNextDisabled, setIsNextDisabled] = useState(true)
-  const [csvVariables, setCsvVariables] = useState([])
   const { toast } = useToast()
   const { createCampaign, isLoading } = useFetchCampaign();
 
@@ -46,21 +49,21 @@ export default function Disparador() {
   }, [currentStep, formData])
 
   const handleInputChange = (field, value) => {
-    setFormData({ ...formData, [field]: value })
-    if (field === 'csvFile' && value) {
-      // Lógica para extrair variáveis do CSV
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const content = e.target.result
-        const lines = content.split('\n')
-        if (lines.length > 0) {
-          const headers = lines[0].split(',')
-          setCsvVariables(headers)
-        }
-      }
-      reader.readAsText(value)
-    }
-  }
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleCsvDataChange = (csvData, formattedNumbers, verifiedNumbers, variables = []) => {
+    setFormData(prev => ({
+      ...prev,
+      csvData,
+      formattedNumbers,
+      verifiedNumbers,
+      csvVariables: variables // Salvar as variáveis no estado
+    }));
+  };
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -102,8 +105,8 @@ export default function Disparador() {
     const props = {
       formData,
       handleInputChange,
-      csvVariables
-    }
+      handleCsvDataChange,
+    };
 
     switch(currentStep) {
       case 0:

@@ -9,17 +9,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useVerifyNumbers } from '@/hooks/use-verify-numbers';
 import { cn } from "@/lib/utils"
 
-export default function StepContacts({ formData, handleInputChange }) {
-  const [csvData, setCsvData] = useState([]);
-  const [formattedNumbers, setFormattedNumbers] = useState([]);
-  const [verifiedNumbers, setVerifiedNumbers] = useState([]);
+export default function StepContacts({ 
+  formData, 
+  handleInputChange,
+  handleCsvDataChange 
+}) {
   const { toast } = useToast();
   const { verifyNumbers, isVerifying } = useVerifyNumbers();
-
+  
+  // Usar os dados do formData
+  const csvData = formData.csvData || [];
+  const formattedNumbers = formData.formattedNumbers || [];
+  const verifiedNumbers = formData.verifiedNumbers || [];
+  
   const clearContactsData = () => {
-    setCsvData([]);
-    setFormattedNumbers([]);
-    setVerifiedNumbers([]);
+    if (handleCsvDataChange) { // Adicione uma verificação de segurança
+      handleCsvDataChange([], [], []);
+      handleInputChange('csvFile', null);
+    }
   };
 
   const formatInstanceName = () => {
@@ -52,39 +59,43 @@ export default function StepContacts({ formData, handleInputChange }) {
         throw new Error('O arquivo CSV deve conter pelo menos um cabeçalho e uma linha de dados');
       }
 
-      // Pega os headers mas não valida mais o nome da coluna numero
+      // Extrai os headers e remove espaços em branco
       const headers = lines[0]
         .split(',')
         .map(h => h.trim());
 
-      const parsedData = lines.slice(1).map((line, index) => {
+      // Remove a primeira coluna (número) e pega as variáveis restantes
+      const variables = headers.slice(1); // ['NOME', 'TURNO', 'ENVIADO']
+
+      const parsedData = lines.slice(1).map(line => {
         const values = line.split(',').map(v => v.trim());
         const row = {
-          numeroOriginal: values[0] || '', // Primeira coluna sempre será o número
-          numeroFormatado: formatPhoneNumber(values[0]), // Formata o número da primeira coluna
+          numeroOriginal: values[0] || '',
+          numeroFormatado: formatPhoneNumber(values[0]),
         };
         
         // Adiciona as outras colunas com seus respectivos headers
         headers.forEach((header, i) => {
-          if (i > 0) { // Pula a primeira coluna que já foi tratada
-            row[header] = values[i] || '';
+          if (i > 0) { // Pula a primeira coluna que é o número
+            row[header.toLowerCase()] = values[i] || ''; // Converte header para minúsculo
           }
         });
 
         return row;
       });
 
-      return parsedData;
+      return {
+        data: parsedData,
+        variables: variables
+      };
     } catch (error) {
       throw new Error(`Erro ao processar CSV: ${error.message}`);
     }
   };
 
   const handleFileUpload = async (field, file) => {
-    // Se o arquivo for null (removido), limpa os dados
     if (!file) {
       clearContactsData();
-      handleInputChange(field, null);
       return;
     }
     
@@ -94,24 +105,25 @@ export default function StepContacts({ formData, handleInputChange }) {
       reader.onload = async (e) => {
         try {
           const text = e.target.result;
-          const parsedData = parseCsvContent(text);
-          
-          // Filtra números vazios ou inválidos
+          const { data: parsedData, variables } = parseCsvContent(text);
           const validData = parsedData.filter(row => row.numeroFormatado.length >= 12);
           
           if (validData.length === 0) {
             throw new Error('Nenhum número válido encontrado no CSV');
           }
 
-          setCsvData(validData);
-          setFormattedNumbers(validData.map(row => row.numeroFormatado));
-          setVerifiedNumbers([]);
+          if (handleCsvDataChange) {
+            handleCsvDataChange(
+              validData,
+              validData.map(row => row.numeroFormatado),
+              [],
+              variables // Passando as variáveis extraídas
+            );
+          }
           
           handleInputChange(field, file);
         } catch (error) {
           clearContactsData();
-          handleInputChange(field, null);
-          console.error('Erro ao processar CSV:', error);
           toast({
             title: "Erro no processamento",
             description: error.message,
@@ -120,21 +132,9 @@ export default function StepContacts({ formData, handleInputChange }) {
         }
       };
 
-      reader.onerror = () => {
-        clearContactsData();
-        handleInputChange(field, null);
-        toast({
-          title: "Erro",
-          description: "Falha ao ler o arquivo",
-          variant: "destructive"
-        });
-      };
-
       reader.readAsText(file);
     } catch (error) {
       clearContactsData();
-      handleInputChange(field, null);
-      console.error('Erro na leitura do arquivo:', error);
       toast({
         title: "Erro",
         description: "Falha ao processar o arquivo CSV",
@@ -145,14 +145,11 @@ export default function StepContacts({ formData, handleInputChange }) {
 
   const handleVerifyNumbers = async () => {
     try {
-      const payload = {
+      const results = await verifyNumbers({
         numbers: formattedNumbers,
         instanceName: formatInstanceName()
-      };
-
-      const results = await verifyNumbers(payload);
+      });
       
-      // Atualiza o csvData com os resultados da verificação
       const updatedCsvData = csvData.map(row => {
         const verifiedNumber = results.find(r => r.number === row.numeroFormatado);
         return {
@@ -163,8 +160,13 @@ export default function StepContacts({ formData, handleInputChange }) {
         };
       });
 
-      setCsvData(updatedCsvData);
-      setVerifiedNumbers(results);
+      // Aqui está o problema - precisamos manter as variáveis ao atualizar os dados
+      handleCsvDataChange(
+        updatedCsvData, 
+        formattedNumbers, 
+        results,
+        formData.csvVariables // Mantém as variáveis existentes
+      );
 
       toast({
         title: "Verificação concluída",
@@ -180,14 +182,55 @@ export default function StepContacts({ formData, handleInputChange }) {
     }
   };
 
+  const handleDownloadExample = (e) => {
+    e.preventDefault(); // Previne o comportamento padrão do botão
+    
+    const csvContent = "numero,nome,cidade\n5584999999991,João Silva,Natal\n5584988888881,Maria Santos,Parnamirim";
+    
+    // Cria o blob com o conteúdo CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Cria uma URL temporária para o blob
+    const url = window.URL.createObjectURL(blob);
+    
+    // Cria um elemento <a> temporário
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'exemplo_contatos.csv');
+    
+    // Adiciona o link ao documento
+    document.body.appendChild(link);
+    
+    // Simula o clique no link
+    link.click();
+    
+    // Remove o link do documento
+    document.body.removeChild(link);
+    
+    // Libera a URL temporária
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <Alert>
         <Info className="h-4 w-4" />
         <AlertTitle>Importação de Contatos</AlertTitle>
-        <AlertDescription>
-          Faça o upload de um arquivo CSV. A primeira coluna será sempre considerada como números de telefone.
-          Os números podem estar com ou sem o código do país (55).
+        <AlertDescription className="flex items-center justify-between">
+          <span>
+            Faça o upload de um arquivo CSV. A primeira coluna será sempre considerada como números de telefone.
+            Os números podem estar com ou sem o código do país (55).
+          </span>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleDownloadExample}
+            className="ml-4"
+            type="button" // Garante que o botão não submeta um formulário
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Baixar Exemplo
+          </Button>
         </AlertDescription>
       </Alert>
 
@@ -226,13 +269,10 @@ export default function StepContacts({ formData, handleInputChange }) {
                 <TableRow>
                   <TableHead>Número</TableHead>
                   {Object.keys(csvData[0])
-                    .filter(key => !['numeroOriginal', 'numeroFormatado', 'exists', 'jid'].includes(key))
+                    .filter(key => !['numeroOriginal', 'numeroFormatado', 'exists', 'jid', 'name'].includes(key))
                     .map(header => (
                       <TableHead key={header}>{header}</TableHead>
                     ))}
-                  {verifiedNumbers.length > 0 && (
-                    <TableHead>Nome WhatsApp</TableHead>
-                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -246,13 +286,10 @@ export default function StepContacts({ formData, handleInputChange }) {
                   >
                     <TableCell>{row.numeroFormatado}</TableCell>
                     {Object.entries(row)
-                      .filter(([key]) => !['numeroOriginal', 'numeroFormatado', 'exists', 'jid'].includes(key))
+                      .filter(([key]) => !['numeroOriginal', 'numeroFormatado', 'exists', 'jid', 'name'].includes(key))
                       .map(([key, value]) => (
                         <TableCell key={key}>{value}</TableCell>
                       ))}
-                    {verifiedNumbers.length > 0 && (
-                      <TableCell>{row.name || '-'}</TableCell>
-                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -264,9 +301,13 @@ export default function StepContacts({ formData, handleInputChange }) {
               {verifiedNumbers.length > 0 && (
                 <>
                   <span className="inline-block w-3 h-3 bg-green-50 border border-green-200 rounded-sm mr-2" />
-                  <span className="mr-4">Números válidos</span>
+                  <span className="mr-4">
+                    Números válidos ({csvData.filter(row => row.exists === true).length})
+                  </span>
                   <span className="inline-block w-3 h-3 bg-red-50 border border-red-200 rounded-sm mr-2" />
-                  <span>Números inválidos</span>
+                  <span>
+                    Números inválidos ({csvData.filter(row => row.exists === false).length})
+                  </span>
                 </>
               )}
             </div>
