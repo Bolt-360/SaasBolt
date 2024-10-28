@@ -9,6 +9,12 @@ import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import { useAuthContext } from '@/context/AuthContext';
 import DynamicEditor from './DynamicEditor';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipTrigger,
+  TooltipProvider 
+} from "@/components/ui/tooltip";
 
 export default function StepMessages({ formData, handleInputChange, csvVariables }) {
   const [activeMessageIndex, setActiveMessageIndex] = useState(0);
@@ -63,66 +69,89 @@ export default function StepMessages({ formData, handleInputChange, csvVariables
     }
   };
 
+  // Adicione a função handleDragStart
+  const handleDragStart = (e, variable) => {
+    e.dataTransfer.setData('text/plain', `{{${variable}}}`);
+  };
+
+  // Adicione a função handleDrop para inserir a variável no editor
+  const handleDrop = (index, field, variable) => {
+    const editorInstance = editorRefs.current[`${index}-${field}`];
+    if (editorInstance) {
+      editorInstance.commands.insertContent(variable);
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <Alert className="mb-4">
-        <Info className="h-4 w-4" />
-        <AlertTitle>Variáveis Disponíveis</AlertTitle>
-        <AlertDescription>
-          Arraste e solte as variáveis abaixo para incluí-las em suas mensagens.
-        </AlertDescription>
-      </Alert>
-      <div className="flex flex-wrap gap-2 mb-4">
-        {availableVariables.map((variable, index) => (
-          <Badge
-            key={index}
-            draggable
-            onDragStart={(e) => handleDragStart(e, variable)}
-            className="cursor-move"
-          >
-            {variable}
-          </Badge>
-        ))}
-      </div>
-      {formData.mensagens.map((mensagem, index) => (
-        <div key={index} className="space-y-4 mb-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Mensagem {index + 1}</h3>
-            {index !== 0 && (
-              <Button
-                type="button"
-                onClick={() => handleRemoveMensagem(index)}
-                variant="ghost"
-                size="sm"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <Tabs defaultValue="principal">
-            <TabsList>
-              <TabsTrigger value="principal">Principal</TabsTrigger>
-              <TabsTrigger value="alternativa1">Alternativa 1</TabsTrigger>
-              <TabsTrigger value="alternativa2">Alternativa 2</TabsTrigger>
-            </TabsList>
-            {['principal', 'alternativa1', 'alternativa2'].map((field) => (
-              <TabsContent value={field} key={field}>
-                <DynamicEditor
-                  ref={(el) => setEditorRef(el, index, field)}
-                  content={field === 'principal' ? mensagem.principal : mensagem.alternativas[field === 'alternativa1' ? 0 : 1]}
-                  onContentChange={(value) => handleMensagemChange(index, field, value)}
-                />
-                {emojiPickers[`${index}-${field}`] && (
-                  <Picker data={data} onEmojiSelect={(emoji) => addEmoji(emoji, index, field)} />
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
+    <TooltipProvider>
+      <div className="space-y-4">
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Variáveis Disponíveis</AlertTitle>
+          <AlertDescription>
+            Arraste e solte as variáveis abaixo para incluí-las em suas mensagens.
+          </AlertDescription>
+        </Alert>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {availableVariables.map((variable, index) => (
+            <Badge
+              key={index}
+              draggable
+              onDragStart={(e) => handleDragStart(e, variable)}
+              className="cursor-move"
+            >
+              {variable}
+            </Badge>
+          ))}
         </div>
-      ))}
-      <Button type="button" onClick={handleAddMensagem} variant="outline" className="w-full">
-        <Plus className="mr-2" /> Adicionar Mensagem
-      </Button>
-    </div>
+        {formData.mensagens.map((mensagem, index) => (
+          <div key={index} className="space-y-4 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Mensagem {index + 1}</h3>
+              {index !== 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      onClick={() => handleRemoveMensagem(index)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Deletar mensagem</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <Tabs defaultValue="principal">
+              <TabsList>
+                <TabsTrigger value="principal">Principal</TabsTrigger>
+                <TabsTrigger value="alternativa1">Alternativa 1</TabsTrigger>
+                <TabsTrigger value="alternativa2">Alternativa 2</TabsTrigger>
+              </TabsList>
+              {['principal', 'alternativa1', 'alternativa2'].map((field) => (
+                <TabsContent value={field} key={field}>
+                  <DynamicEditor
+                    ref={(el) => setEditorRef(el, index, field)}
+                    content={field === 'principal' ? mensagem.principal : mensagem.alternativas[field === 'alternativa1' ? 0 : 1]}
+                    onContentChange={(value) => handleMensagemChange(index, field, value)}
+                  />
+                  {emojiPickers[`${index}-${field}`] && (
+                    <Picker data={data} onEmojiSelect={(emoji) => addEmoji(emoji, index, field)} />
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+        ))}
+        <Button type="button" onClick={handleAddMensagem} variant="outline" className="w-full">
+          <Plus className="mr-2" /> Adicionar Mensagem
+        </Button>
+      </div>
+    </TooltipProvider>
   );
 }

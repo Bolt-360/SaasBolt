@@ -7,10 +7,22 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import { useToast } from "@/hooks/use-toast"
 import { fileTypes } from './constants'
 
-export default function FileUpload({ field, label, accept, formData, handleInputChange }) {
+export default function FileUpload({ field, label, accept, formData, handleInputChange, isLoading }) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef(null)
   const { toast } = useToast()
+
+  const processFile = (file) => {
+    if (isValidFileType(file, accept)) {
+      handleInputChange(field, file)
+    } else {
+      toast({
+        title: "Tipo de arquivo inválido",
+        description: `Por favor, selecione um arquivo do tipo correto: ${accept}`,
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleDragEnter = (e) => {
     e.preventDefault()
@@ -35,32 +47,14 @@ export default function FileUpload({ field, label, accept, formData, handleInput
     
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      const file = files[0]
-      if (isValidFileType(file, accept)) {
-        handleInputChange(field, file)
-      } else {
-        toast({
-          title: "Tipo de arquivo inválido",
-          description: `Por favor, selecione um arquivo do tipo correto: ${fileTypes[formData.tipo]?.description}`,
-          variant: "destructive",
-        })
-      }
+      processFile(files[0])
     }
   }
 
   const handleFileUpload = (event) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (isValidFileType(file, accept)) {
-        handleInputChange(field, file)
-      } else {
-        toast({
-          title: "Tipo de arquivo inválido",
-          description: `Por favor, selecione um arquivo do tipo correto: ${fileTypes[formData.tipo]?.description}`,
-          variant: "destructive",
-        })
-        event.target.value = ''
-      }
+      processFile(file)
     }
   }
 

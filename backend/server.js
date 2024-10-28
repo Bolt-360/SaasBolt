@@ -60,7 +60,7 @@ import userRouters from "./routes/user.routes.js"
 import workspacesRouters from "./routes/workspaces.routes.js"
 import conversationsRouters from "./routes/conversations.routes.js"
 import contactRoutes from './routes/contact.routes.js'
-
+import whatsappRoutes from './routes/whatsapp.routes.js';
 
 //JSON para enviar os dados para o frontend
 app.use(express.json())
@@ -78,7 +78,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/message-campaigns', messageCampaignRoutes);
 app.use('/api/recipients', recipientRoutes);
 app.use('/webhook', webhookRoutes);
-
+app.use('/api/whatsapp', whatsappRoutes);
 server.listen(PORT, () => {
     console.log("Server is running on port: " + PORT)
 })
