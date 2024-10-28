@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthContext } from '@/context/AuthContext';
 
 export function useVerifyNumbers() {
   const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
+  const { authUser } = useAuthContext();
 
   const verifyNumbers = async ({ numbers, instanceName }) => {
+    const newInstanceName = authUser.activeWorkspaceId + '-' + instanceName;
+    
     if (!numbers?.length) {
       toast({
         title: "Erro",
@@ -21,11 +25,11 @@ export function useVerifyNumbers() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${authUser?.token}`
         },
         body: JSON.stringify({
           numbers,
-          instanceName
+          instanceName: newInstanceName
         })
       });
 
