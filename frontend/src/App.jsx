@@ -19,6 +19,7 @@ import PipefullLayout from './features/pipefull/PipefullLayout'
 import DashboardPipefull from './features/pipefull/page.jsx'
 import MyTasks from './features/pipefull/Tasks/page.jsx'
 import Members from './features/pipefull/Members/page'
+import Calendar from './features/pipefull/components/calendario'
 
 function App() {
   const { authUser } = useAuthContext();

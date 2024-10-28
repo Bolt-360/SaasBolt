@@ -7,6 +7,7 @@ import { usePage } from './TasksContext';
 import { TableTasks } from '../components/TableTasks';
 import { TasksProvider } from './TasksContext';
 import { DataKanban } from '../components/kanban/dataKanban';
+import Calendario from '../components/calendario';
 
 
 // Dados simulados para os gráficos
@@ -88,7 +89,7 @@ function MyTasksContent() {
                 <div> 
                     {pageState === "table" && (<TableTasks/>)}
                     {pageState === "kanban" && (<DataKanban/>)}
-                    {pageState === "calendar" && <div>Visualização do Calendário</div>}
+                    {pageState === "calendar" && (<Calendario/>)}
                 </div>
             </div>
             </main>
