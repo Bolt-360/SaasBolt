@@ -23,7 +23,7 @@ export default function StepContacts({ formData, handleInputChange }) {
   };
 
   const formatInstanceName = () => {
-    const workspaceId = 2; // Você pode pegar isso do contexto ou props
+    const workspaceId = user.workspaceId; // Você pode pegar isso do contexto ou props
     const instanceId = formData.instancia;
     return `${workspaceId}-${instanceId}`;
   };
