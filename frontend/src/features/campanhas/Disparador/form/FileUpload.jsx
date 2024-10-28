@@ -58,15 +58,16 @@ export default function FileUpload({ field, label, accept, formData, handleInput
     }
   }
 
-  const handleRemoveFile = () => {
-    handleInputChange(field, null)
+  const handleRemoveFile = (e) => {
+    e.stopPropagation();
+    handleInputChange(field, null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = '';
     }
     toast({
       title: "Arquivo removido",
       description: "O arquivo foi removido com sucesso.",
-    })
+    });
   }
 
   const isValidFileType = (file, acceptedTypes) => {
@@ -119,10 +120,7 @@ export default function FileUpload({ field, label, accept, formData, handleInput
               variant="ghost"
               size="sm"
               className="absolute top-2 right-2"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleRemoveFile()
-              }}
+              onClick={handleRemoveFile}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -131,7 +129,7 @@ export default function FileUpload({ field, label, accept, formData, handleInput
           <>
             <Upload className="mx-auto h-12 w-12 text-gray-400" />
             <p>Arraste e solte o {label.toLowerCase()} aqui, ou clique para selecionar</p>
-            <p className="text-sm text-gray-500 mt-2">{fileTypes[formData.tipo]?.description}</p>
+            <p className="text-sm text-gray-500 mt-2">Arquivo CSV</p>
           </>
         )}
       </div>

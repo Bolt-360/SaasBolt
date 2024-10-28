@@ -5,10 +5,19 @@ export function useVerifyNumbers() {
   const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
 
-  const verifyNumbers = async (numbers, instanceName) => {
+  const verifyNumbers = async ({ numbers, instanceName }) => {
+    if (!numbers?.length) {
+      toast({
+        title: "Erro",
+        description: "Nenhum número para verificar",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsVerifying(true);
     try {
-      const response = await fetch('http://localhost:2345/api/whatsapp/verify-numbers', {
+      const response = await fetch('/api/whatsapp/verify-numbers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,12 +34,19 @@ export function useVerifyNumbers() {
         throw new Error(errorData.error || 'Erro ao verificar números');
       }
 
-      return await response.json();
+      const data = await response.json();
+      
+      toast({
+        title: "Sucesso",
+        description: `${data.valid?.length || 0} números válidos encontrados`,
+      });
+
+      return data;
     } catch (error) {
       console.error('Erro na verificação:', error);
       toast({
         title: "Erro na verificação",
-        description: error.message,
+        description: error.message || "Não foi possível verificar os números",
         variant: "destructive",
       });
       throw error;
@@ -41,4 +57,3 @@ export function useVerifyNumbers() {
 
   return { verifyNumbers, isVerifying };
 }
-
