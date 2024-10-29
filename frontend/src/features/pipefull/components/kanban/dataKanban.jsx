@@ -1,34 +1,44 @@
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { KanbanHeader } from "./kanbanHeader";
 import { KanbanCard } from "./kanbanCard";
 import { usePage } from "../../Tasks/TasksContext";
 
+// Função para carregar e salvar tarefas no localStorage
+const loadTasksFromStorage = () => JSON.parse(localStorage.getItem('tasks')) || [];
+const saveTasksToStorage = (tasks) => localStorage.setItem('tasks', JSON.stringify(tasks));
+
 export function DataKanban({ dataTable }) {
-    const [tasks, setTasks] = useState(dataTable || []);
+    // Inicializa o estado das tarefas com os dados do localStorage ou do dataTable inicial
+    const [tasks, setTasks] = useState(dataTable || loadTasksFromStorage);
     const { taskStatus } = usePage();
+
+    // Atualiza o localStorage sempre que o estado das tarefas muda
+    useEffect(() => {
+        saveTasksToStorage(tasks);
+    }, [tasks]);
 
     const onDragEnd = (result) => {
         const { source, destination } = result;
 
         if (!destination) return; // Se não houver destino, retorna
 
-        // Se a tarefa foi movida dentro da mesma coluna
         if (source.droppableId === destination.droppableId) {
-            const updatedTasks = Array.from(tasks); // Faz uma cópia do estado atual
-            const [movedTask] = updatedTasks.splice(source.index, 1); // Remove a tarefa da posição original
-            updatedTasks.splice(destination.index, 0, movedTask); // Insere a tarefa na nova posição
-            setTasks(updatedTasks); // Atualiza o estado
+            // Se a tarefa foi movida dentro da mesma coluna, atualiza a ordem
+            const updatedTasks = Array.from(tasks);
+            const [movedTask] = updatedTasks.splice(source.index, 1);
+            updatedTasks.splice(destination.index, 0, movedTask);
+            setTasks(updatedTasks);
 
         } else {
-            // Se a tarefa foi movida para uma coluna diferente
+            // Se a tarefa foi movida para outra coluna, atualiza o status
             const updatedTasks = tasks.map((task) => {
-                if (task.id === Number(result.draggableId)) { // Verifica se a tarefa foi movida
-                    return { ...task, status: destination.droppableId }; // Atualiza o status da tarefa
+                if (task.id === Number(result.draggableId)) {
+                    return { ...task, status: destination.droppableId };
                 }
                 return task;
             });
-            setTasks(updatedTasks); // Atualiza o estado
+            setTasks(updatedTasks);
         }
     };
 
@@ -37,7 +47,7 @@ export function DataKanban({ dataTable }) {
             <div className="flex overflow-x-auto">
                 {taskStatus.map((status) => {
                     const taskCount = tasks.filter(task => task.status === status).length;
-                    console.log("Tasks for status:", status, tasks.filter(task => task.status === status)); // Debugging
+                    console.log("Tasks for status:", status, tasks.filter(task => task.status === status)); 
                     return (
                         <div key={status} className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-[200px] mb-2">
                             <KanbanHeader status={status} taskCount={taskCount} />
@@ -62,7 +72,7 @@ export function DataKanban({ dataTable }) {
                                                             {...provided.draggableProps}
                                                             {...provided.dragHandleProps}
                                                         >
-                                                            <KanbanCard task={task} /> {/* Passa a tarefa corretamente */}
+                                                            <KanbanCard task={task} /> 
                                                         </div>
                                                     )}
                                                 </Draggable>
@@ -78,3 +88,4 @@ export function DataKanban({ dataTable }) {
         </DragDropContext>
     );
 }
+    

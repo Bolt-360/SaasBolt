@@ -1,5 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
-
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // dados que serão utilizados na tabela
 let id = 1;
@@ -8,27 +7,34 @@ const dataTable = [
     { id: id++, task: 'Layout', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Em andamento" },
     { id: id++, task: 'Teste', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Concluído" },
     { id: id++, task: 'Estudos', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "A fazer" }
-]
+];
 
-const taskStatus = ["Backlog", "A fazer", "Em andamento", "Em revisão", "Concluído" ]
+const taskStatus = ["Backlog", "A fazer", "Em andamento", "Em revisão", "Concluído"];
 
 const members = [
-    {name: 'Lucas', email: 'lucas@bolt360.com.br', funcao: 'TechLead'},
-    {name: 'Matheus', email:'matheus@bolt360.com.br', funcao: 'Estagiário'},
-    {name: 'Victor', email: 'victor@bolt360.com.br', funcao: 'Desenvolvedor'},
-    {name: 'Michael', email:'michael@bolt360.com.br', funcao: 'Estagiário'}
-]
+    { name: 'Lucas', email: 'lucas@bolt360.com.br', funcao: 'TechLead' },
+    { name: 'Matheus', email: 'matheus@bolt360.com.br', funcao: 'Estagiário' },
+    { name: 'Victor', email: 'victor@bolt360.com.br', funcao: 'Desenvolvedor' },
+    { name: 'Michael', email: 'michael@bolt360.com.br', funcao: 'Estagiário' }
+];
 
-// Crie o contexto
+// Criação do contexto
 const TasksContext = createContext(undefined);
 
 export const TasksProvider = ({ children }) => {
-    // Estado que armazena qual botão foi clicado
-    const [pageState, setPageState] = useState("table"); // "home" é o estado inicial
+    // Estado para gerenciamento de páginas e botões ativos
+    const [pageState, setPageState] = useState("table"); 
     const [activeButton, setActiveButton] = useState("table");
-    const [tableData, setTableData] = useState(dataTable); // Adicionando os dados ao estado
+    
+    const [tableData, setTableData] = useState(() => {
+        const savedTasks = localStorage.getItem("tasks");
+        return savedTasks ? JSON.parse(savedTasks) : dataTable;
+    });
+    
+    useEffect(() => {
+        localStorage.setItem('tasks', JSON.stringify(tableData));
+    }, [tableData]);
 
-    // navegação da página
     const setTable = () => {
         setPageState("table");
         setActiveButton("table");
@@ -44,50 +50,60 @@ export const TasksProvider = ({ children }) => {
         setActiveButton("calendar");
     };
 
-    // funções para manipular os dados
     const addTask = (newTask) => {
-        newTask.id = id++; // Atribui o próximo ID e o incrementa
-        setTableData(prev => [...prev, newTask]);
+        newTask.id = id++;
+        setTableData(prev => {
+            const updatedData = [...prev, newTask];
+            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
+            return updatedData;
+        });
     };
 
-    // Remove uma tarefa pelo ID
     const removeTask = (taskId) => {
-        setTableData(prev => prev.filter(task => task.id !== taskId));
+        setTableData(prev => {
+            const updatedData = prev.filter(task => task.id !== taskId);
+            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
+            return updatedData;
+        });
     };
 
-    // Atualiza uma tarefa pelo ID
     const updateTask = (taskId, updatedTask) => {
-        setTableData(prev => prev.map(task => 
-            task.id === taskId ? { ...task, ...updatedTask } : task
-        ));
+        setTableData(prev => {
+            const updatedData = prev.map(task => 
+                task.id === taskId ? { ...task, ...updatedTask } : task
+            );
+            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
+            return updatedData;
+        });
     };
 
-    // Atualiza apenas o status de uma tarefa pelo ID
     const updateTaskStatus = (taskId, newStatus) => {
-        setTableData(prev => prev.map(task => 
-            task.id === taskId ? { ...task, status: newStatus } : task
-        ));
+        setTableData(prev => {
+            const updatedData = prev.map(task => 
+                task.id === taskId ? { ...task, status: newStatus } : task
+            );
+            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
+            return updatedData;
+        });
     };
-
 
     return (
-    <TasksContext.Provider value={{ 
-        pageState, 
-        activeButton, 
-        tableData, 
-        setTable, 
-        setKanban, 
-        setCalendar,
-        addTask,
-        removeTask,
-        updateTask,
-        updateTaskStatus,
-        taskStatus,
-        members, 
-        }}
-    >
-        {children}
-    </TasksContext.Provider>
+        <TasksContext.Provider value={{ 
+            pageState, 
+            activeButton, 
+            tableData, 
+            setTable, 
+            setKanban, 
+            setCalendar,
+            addTask,
+            removeTask,
+            updateTask,
+            updateTaskStatus,
+            taskStatus,
+            members, 
+        }}>
+            {children}
+        </TasksContext.Provider>
     );
 };
 

@@ -1,7 +1,7 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export function TableTasks( {dataTable} ) {
-    return(
+export function TableTasks({ dataTable }) {
+    return (
         <>
             <Table>
                 <TableHeader>
@@ -13,21 +13,22 @@ export function TableTasks( {dataTable} ) {
                         <TableHead className="sticky top-0 bg-white">Status</TableHead>
                     </TableRow>
                 </TableHeader>
-                    <TableBody>
+                <TableBody>
                     {dataTable.map((data) => (
-                        <TableRow 
-                        key={data.id}
-                        className=""
-                        >
+                        <TableRow key={data.id}>
                             <TableCell>{data.task}</TableCell>
                             <TableCell>{data.projeto}</TableCell>
                             <TableCell>{data.responsavel}</TableCell>
-                            <TableCell>{data.data.toLocaleDateString()}</TableCell>
-                            <TableCell><span className="bg-blue-400 rounded-lg p-1">{data.status}</span></TableCell>
+                            <TableCell>
+                                {new Date(data.data).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                                <span className="bg-blue-400 rounded-lg p-1">{data.status}</span>
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
         </>
-    )
+    );
 }
