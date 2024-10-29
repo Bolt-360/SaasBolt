@@ -4,63 +4,53 @@ import { KanbanHeader } from "./kanbanHeader";
 import { KanbanCard } from "./kanbanCard";
 import { usePage } from "../../Tasks/TasksContext";
 
-
-export function DataKanban( {dataTable} ) {
+export function DataKanban({ dataTable }) {
     const [tasks, setTasks] = useState(dataTable || []);
     const { taskStatus } = usePage();
 
     const onDragEnd = (result) => {
         const { source, destination } = result;
-        
-        // Verifique se há um destino válido
-        if (!destination) return;
-    
+
+        if (!destination) return; // Se não houver destino, retorna
+
+        // Se a tarefa foi movida dentro da mesma coluna
         if (source.droppableId === destination.droppableId) {
-            // Movendo dentro da mesma coluna
-            const updatedTasks = tasks
-                .filter((task) => task.status === source.droppableId);
-            const [movedTask] = updatedTasks.splice(source.index, 1);
-            updatedTasks.splice(destination.index, 0, movedTask);
-            
-            // Mesclando tarefas atualizadas com o estado geral
-            const newTasks = tasks.map(task =>
-                task.status === source.droppableId ? updatedTasks.shift() : task
-            );
-    
-            setTasks(newTasks);
-    
+            const updatedTasks = Array.from(tasks); // Faz uma cópia do estado atual
+            const [movedTask] = updatedTasks.splice(source.index, 1); // Remove a tarefa da posição original
+            updatedTasks.splice(destination.index, 0, movedTask); // Insere a tarefa na nova posição
+            setTasks(updatedTasks); // Atualiza o estado
+
         } else {
-            // Movendo para uma coluna diferente
+            // Se a tarefa foi movida para uma coluna diferente
             const updatedTasks = tasks.map((task) => {
-                if (task.id === result.draggableId) {
-                    return { ...task, status: destination.droppableId };
+                if (task.id === Number(result.draggableId)) { // Verifica se a tarefa foi movida
+                    return { ...task, status: destination.droppableId }; // Atualiza o status da tarefa
                 }
                 return task;
             });
-            setTasks(updatedTasks);
+            setTasks(updatedTasks); // Atualiza o estado
         }
     };
-    
+
     return (
         <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex overflow-x-auto">
-                {taskStatus.map((status, index) => {
+                {taskStatus.map((status) => {
                     const taskCount = tasks.filter(task => task.status === status).length;
+                    console.log("Tasks for status:", status, tasks.filter(task => task.status === status)); // Debugging
                     return (
                         <div key={status} className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-[200px] mb-2">
-                            <KanbanHeader status={status} taskCount={taskCount}/>
+                            <KanbanHeader status={status} taskCount={taskCount} />
                             <Droppable droppableId={status}>
-                                {provided => (
+                                {(provided) => (
                                     <div
-                                    {...provided.droppableProps}
-                                    ref={provided.innerRef}
-                                    className="min-h-[200px] py-1.5"
+                                        {...provided.droppableProps}
+                                        ref={provided.innerRef}
+                                        className="min-h-[200px] py-1.5"
                                     >
                                         {tasks
-                                        .filter(task => task.status === status)
-                                        .map((task, index) => {
-                                            console.log("Task:", task); // Verifique se a tarefa está correta
-                                            return (
+                                            .filter(task => task.status === status)
+                                            .map((task, index) => (
                                                 <Draggable 
                                                     key={task.id} 
                                                     draggableId={String(task.id)} 
@@ -72,20 +62,19 @@ export function DataKanban( {dataTable} ) {
                                                             {...provided.draggableProps}
                                                             {...provided.dragHandleProps}
                                                         >
-                                                            <KanbanCard tasks={task} />
+                                                            <KanbanCard task={task} /> {/* Passa a tarefa corretamente */}
                                                         </div>
                                                     )}
                                                 </Draggable>
-                                            );
-                                        })}
+                                            ))}
                                         {provided.placeholder}
                                     </div>
                                 )}
                             </Droppable>
                         </div>
-                )})}
+                    );
+                })}
             </div>
         </DragDropContext>
     );
 }
-

@@ -77,7 +77,7 @@ function MyTasksContent() {
                 <div> 
                     {pageState === "table" && (<TableTasks dataTable={tableData} />)}
                     {pageState === "kanban" && (<DataKanban dataTable={tableData} />)}
-                    {pageState === "calendar" && (<Calendario/>)}
+                    {pageState === "calendar" && (<Calendario dataTable={tableData}/>)}
                 </div>
             </div>
             </main>
