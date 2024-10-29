@@ -2,22 +2,16 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useState } from "react";
 import { KanbanHeader } from "./kanbanHeader";
 import { KanbanCard } from "./kanbanCard";
+import { usePage } from "../../Tasks/TasksContext";
 
-const TaskStatus = ["Backlog", "To Do", "In Progress", "In Review", "Done"  ]
 
-const initialTasks = [
-    { id: "1", content: "Prototipação de telas", status: "To Do"},
-    { id: "2", content: "Rotas de renderização", status: "In Progress"},
-    { id: "3", content: "Disparador", status: "In Progress"},
-    { id: "4", content: "Site Passini", status: "In Review"}
-];
-
-export function DataKanban( ) {
-    const [tasks, setTasks] = useState(initialTasks);
+export function DataKanban( {dataTable} ) {
+    const [tasks, setTasks] = useState(dataTable || []);
+    const { taskStatus } = usePage();
 
     const onDragEnd = (result) => {
         const { source, destination } = result;
-    
+        
         // Verifique se há um destino válido
         if (!destination) return;
     
@@ -50,11 +44,11 @@ export function DataKanban( ) {
     return (
         <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex overflow-x-auto">
-                {TaskStatus.map((status, index) => {
+                {taskStatus.map((status, index) => {
                     const taskCount = tasks.filter(task => task.status === status).length;
                     return (
-                        <div className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-[200px] mb-2">
-                            <KanbanHeader key={index} status={status} taskCount={taskCount}/>
+                        <div key={status} className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-[200px] mb-2">
+                            <KanbanHeader status={status} taskCount={taskCount}/>
                             <Droppable droppableId={status}>
                                 {provided => (
                                     <div
@@ -65,11 +59,11 @@ export function DataKanban( ) {
                                         {tasks
                                         .filter(task => task.status === status)
                                         .map((task, index) => {
-                                            console.log("Task:", task.content); // Verifique se a tarefa está correta
+                                            console.log("Task:", task); // Verifique se a tarefa está correta
                                             return (
                                                 <Draggable 
                                                     key={task.id} 
-                                                    draggableId={task.id} 
+                                                    draggableId={String(task.id)} 
                                                     index={index}
                                                 >
                                                     {(provided) => (
@@ -78,7 +72,7 @@ export function DataKanban( ) {
                                                             {...provided.draggableProps}
                                                             {...provided.dragHandleProps}
                                                         >
-                                                            <KanbanCard tasks={task.content} />
+                                                            <KanbanCard tasks={task} />
                                                         </div>
                                                     )}
                                                 </Draggable>

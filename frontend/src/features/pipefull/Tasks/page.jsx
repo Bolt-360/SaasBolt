@@ -8,19 +8,10 @@ import { TableTasks } from '../components/TableTasks';
 import { TasksProvider } from './TasksContext';
 import { DataKanban } from '../components/kanban/dataKanban';
 import Calendario from '../components/calendario';
-
-
-// Dados simulados para os gráficos
-const dataTable = [
-    { task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Protótipo" },
-    { task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Protótipo" },
-    { task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Protótipo" },
-    { task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Protótipo" }
-]
-
+import ModalTasks from '../components/ModalTasks';
 
 function MyTasksContent() {
-    const { pageState, activeButton, setTable, setKanban, setCalendar } = usePage();
+    const { pageState, activeButton, setTable, setKanban, setCalendar, tableData, addTask, removeTask, updateTask, updateTaskStatus  } = usePage();
     
     return (
         <div className="flex h-screen bg-white">
@@ -33,7 +24,7 @@ function MyTasksContent() {
             
             {/* Estatísticas Gerais */}
             <div className='border rounded-md bg-white'>
-                <div className="flex items-center gap-6 mb-1  p-3">
+                <div className="flex items-center gap-6 mb-1  p-3 ">
                     <button 
                     className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'table' ? 'bg-gray-300' : 'bg-white'}`} 
                     onClick={setTable}
@@ -55,10 +46,7 @@ function MyTasksContent() {
                         Calendário
                     </button>
 
-                    <button className='flex gap-1 ml-auto mr-3 bg-blue-600 rounded-md text-white px-2 py-1'>
-                        <Plus/>
-                        New
-                    </button>
+                    <ModalTasks />
                 </div>
                 <hr className='mb-2'/>
 
@@ -87,8 +75,8 @@ function MyTasksContent() {
 
                 {/* Deixar div responsiva */}
                 <div> 
-                    {pageState === "table" && (<TableTasks/>)}
-                    {pageState === "kanban" && (<DataKanban/>)}
+                    {pageState === "table" && (<TableTasks dataTable={tableData} />)}
+                    {pageState === "kanban" && (<DataKanban dataTable={tableData} />)}
                     {pageState === "calendar" && (<Calendario/>)}
                 </div>
             </div>

@@ -102,3 +102,6 @@ export default function Calendario() {
         />
     );
 }
+
+
+// A data não atualiza automaticamente quando o usúario passa os dias.
