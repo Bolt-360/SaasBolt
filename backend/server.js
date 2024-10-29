@@ -2,13 +2,13 @@ import express from 'express'
 import dotenv from 'dotenv'
 import pkg from 'pg'
 import cookieParse from 'cookie-parser'
-import { server, app, io} from './socket/socket.js';
+import { server, app, io } from './socket/socket.js';
 import instanceRoutes from './routes/instance.routes.js';
 import campaignRoutes from './routes/campaign.routes.js';
 import messageCampaignRoutes from './routes/messageCampaign.js';
 import recipientRoutes from './routes/recipient.js';
 import webhookRoutes from './routes/webhook.routes.js';
-import { initCampaignService, checkImmediateCampaigns, scheduleCampaigns } from './services/campaignService.js';
+import messageHistoryRoutes from './routes/messageHistory.routes.js';
 
 app.set('io', io);
 
@@ -80,11 +80,11 @@ app.use('/api/message-campaigns', messageCampaignRoutes);
 app.use('/api/recipients', recipientRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/message-history', messageHistoryRoutes);
 
 // Inicia o serviço de campanhas após iniciar o servidor
 server.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
-    initCampaignService();
 });
 
 //Error Handler

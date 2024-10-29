@@ -1,101 +1,205 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Bell, User } from 'lucide-react'
+import { Progress } from "@/components/ui/progress"
+import { useFetchCampaign } from '@/hooks/useFetchCampaign'
+import { useCampaignSocket } from '@/hooks/useCampaignSocket'
+import { Loader2, Clock, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { useDeleteCampaign } from '@/hooks/useDeleteCampaign'
+import { CampaignDetailsDialog } from "@/components/ui/campaign-details-dialog"
 
-// Dados simulados de campanhas
-const campanhasData = [
-  { id: 1, nome: "Promoção de Verão", status: "finalizada", mensagens: [
-    { data: "2023-12-01 10:00", mensagem: "Aproveite nossa promoção de verão!", destinatario: "+55 11 98765-4321" },
-    { data: "2023-12-01 10:05", mensagem: "50% de desconto em todos os produtos!", destinatario: "+55 11 98765-4322" },
-  ]},
-  { id: 2, nome: "Lançamento Produto X", status: "em_andamento", mensagens: [
-    { data: "2023-12-05 09:00", mensagem: "Novo produto chegando!", destinatario: "+55 11 98765-4323" },
-  ]},
-  { id: 3, nome: "Black Friday", status: "a_iniciar", mensagens: [] },
-]
+// Função para traduzir os status
+const getStatusLabel = (status) => {
+    const statusMap = {
+        'PENDING': 'Pendente',
+        'PROCESSING': 'Em Andamento',
+        'COMPLETED': 'Concluída',
+        'COMPLETED_WITH_ERRORS': 'Concluída com Erros',
+        'ERROR': 'Erro',
+        'FAILED': 'Falhou',
+        'CANCELLED': 'Cancelada'
+    };
+    return statusMap[status] || status;
+};
+
+const CampanhaCard = ({ campanha, onDelete, status }) => {
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+    const { deleteCampaign, isLoading } = useDeleteCampaign()
+    const isProcessing = campanha.status === 'PROCESSING'
+
+    const handleDelete = async () => {
+        try {
+            await deleteCampaign(campanha.workspaceId, campanha.id)
+            setShowDeleteDialog(false)
+            onDelete?.()
+        } catch (error) {
+            console.error('Erro ao excluir:', error)
+        }
+    }
+
+    return (
+        <>
+            <Card 
+                className={`transition-shadow ${
+                    isProcessing ? 'border-blue-400 shadow-blue-100' : ''
+                } hover:shadow-lg`}
+            >
+                <div 
+                    className="cursor-pointer"
+                    onClick={() => setShowDetailsDialog(true)}
+                >
+                    <CardHeader>
+                        <CardTitle className="flex justify-between items-center">
+                            <span>{campanha.name}</span>
+                            <span className={`text-sm px-2 py-1 rounded ${
+                                campanha.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                campanha.status === 'ERROR' ? 'bg-red-100 text-red-800' :
+                                campanha.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                            }`}>
+                                {getStatusLabel(campanha.status)}
+                            </span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {isProcessing && (
+                            <div className="space-y-2">
+                                <Progress 
+                                    value={status?.progress || 0} 
+                                    className="w-full" 
+                                />
+                                <div className="text-sm space-y-1">
+                                    <div className="flex justify-between">
+                                        <span>Progresso:</span>
+                                        <span>{status?.progress || 0}%</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Mensagens:</span>
+                                        <span>
+                                            {status?.currentMessage || 0}/
+                                            {status?.totalMessages || campanha.totalMessages || 0}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-green-600">
+                                        <span>Sucesso:</span>
+                                        <span>{status?.stats?.sent || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between text-red-600">
+                                        <span>Falhas:</span>
+                                        <span>{status?.stats?.failed || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {!isProcessing && (
+                            <div className="text-sm space-y-1">
+                                <div className="flex justify-between">
+                                    <span>Total:</span>
+                                    <span>{campanha.totalMessages}</span>
+                                </div>
+                                <div className="flex justify-between text-green-600">
+                                    <span>Enviadas:</span>
+                                    <span>{campanha.successCount || 0}</span>
+                                </div>
+                                <div className="flex justify-between text-red-600">
+                                    <span>Falhas:</span>
+                                    <span>{campanha.failureCount || 0}</span>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </div>
+
+                <div className="px-6 pb-4 pt-2 border-t">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setShowDeleteDialog(true)
+                        }}
+                        disabled={isProcessing}
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir Campanha
+                    </Button>
+                </div>
+            </Card>
+
+            <CampaignDetailsDialog
+                open={showDetailsDialog}
+                onOpenChange={setShowDetailsDialog}
+                campaign={campanha}
+                status={status}
+            />
+
+            <ConfirmDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                title="Excluir Campanha"
+                description="Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita."
+                onConfirm={handleDelete}
+                isLoading={isLoading}
+            />
+        </>
+    )
+}
 
 const ListarCampanhas = () => {
-  const [selectedCampanha, setSelectedCampanha] = useState(null)
+    const { campaigns, campaignsStatus } = useCampaignSocket();
+    
+    const renderCampanhas = (filteredCampaigns) => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredCampaigns.map(campanha => (
+                <CampanhaCard 
+                    key={campanha.id} 
+                    campanha={campanha}
+                    status={campaignsStatus[campanha.id]}
+                />
+            ))}
+        </div>
+    );
 
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Main content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-        <Tabs defaultValue="todas" className="mb-6">
-          <TabsList>
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="finalizadas">Finalizadas</TabsTrigger>
-            <TabsTrigger value="em_andamento">Em Andamento</TabsTrigger>
-            <TabsTrigger value="a_iniciar">A Iniciar</TabsTrigger>
-          </TabsList>
-          <TabsContent value="todas">
-            <CampanhasList campanhas={campanhasData} onSelect={setSelectedCampanha} />
-          </TabsContent>
-          <TabsContent value="finalizadas">
-            <CampanhasList campanhas={campanhasData.filter(c => c.status === 'finalizada')} onSelect={setSelectedCampanha} />
-          </TabsContent>
-          <TabsContent value="em_andamento">
-            <CampanhasList campanhas={campanhasData.filter(c => c.status === 'em_andamento')} onSelect={setSelectedCampanha} />
-          </TabsContent>
-          <TabsContent value="a_iniciar">
-            <CampanhasList campanhas={campanhasData.filter(c => c.status === 'a_iniciar')} onSelect={setSelectedCampanha} />
-          </TabsContent>
-        </Tabs>
+    return (
+        <div className="h-screen overflow-hidden">
+            <main className="h-full overflow-y-auto">
+                <div className="p-4 pb-[30px] space-y-6">
+                    <Tabs defaultValue="em_andamento" className="w-full">
+                        <TabsList>
+                            <TabsTrigger value="em_andamento">Em Andamento</TabsTrigger>
+                            <TabsTrigger value="completed">Concluídas</TabsTrigger>
+                            <TabsTrigger value="failed">Falhas</TabsTrigger>
+                            <TabsTrigger value="todas">Todas</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="em_andamento" className="mt-4">
+                            {renderCampanhas(campaigns.filter(c => c.status === 'PROCESSING'))}
+                        </TabsContent>
 
-        {selectedCampanha && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedCampanha.nome}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data de Envio</TableHead>
-                    <TableHead>Mensagem</TableHead>
-                    <TableHead>Destinatário</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {selectedCampanha.mensagens.map((msg, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{msg.data}</TableCell>
-                      <TableCell>{msg.mensagem}</TableCell>
-                      <TableCell>{msg.destinatario}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-      </main>
-    </div>
-  )
-}
+                        <TabsContent value="completed" className="mt-4">
+                            {renderCampanhas(campaigns.filter(c => c.status === 'COMPLETED'))}
+                        </TabsContent>
 
-const CampanhasList = ({ campanhas, onSelect }) => {
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {campanhas.map((campanha) => (
-        <Card key={campanha.id} className="cursor-pointer" onClick={() => onSelect(campanha)}>
-          <CardHeader>
-            <CardTitle>{campanha.nome}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Status: {campanha.status}</p>
-            <p>Mensagens: {campanha.mensagens.length}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-}
+                        <TabsContent value="failed" className="mt-4">
+                            {renderCampanhas(campaigns.filter(c => 
+                                c.status === 'ERROR' || c.status === 'COMPLETED_WITH_ERRORS'
+                            ))}
+                        </TabsContent>
+
+                        <TabsContent value="todas" className="mt-4">
+                            {renderCampanhas(campaigns)}
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </main>
+        </div>
+    );
+};
 
 export default ListarCampanhas

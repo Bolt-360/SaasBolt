@@ -243,6 +243,18 @@ export default function ListarInstancias() {
     }
   };
 
+  // Função de formatação melhorada
+  const formatInstanceName = (fullName) => {
+    if (!fullName) return '';
+    
+    // Encontra o primeiro hífen e retorna tudo depois dele
+    const parts = fullName.split('-');
+    if (parts.length < 2) return fullName;
+    
+    // Remove a primeira parte (número) e junta o resto
+    return parts.slice(1).join('-');
+  };
+
   if (isLoading) return <div>Carregando...</div>
   if (error) return <div>{error}</div>
 

@@ -9,9 +9,10 @@ import WorkspaceModel from './workspace.js';
 import UserWorkspaceModel from './userWorkspace.js';
 import WorkspaceModuleModel from './workspaceModule.js';
 import InstanceModel from './instance.js';
-import CampaignModel from './campaign.js';
+import CampaignModel from './Campaign.js';
 import MessageCampaignModel from './messageCampaign.js';
 import RecipientModel from './recipient.js';
+import MessageHistoryModel from './messageHistory.js';
 // Remova ou comente a linha abaixo se MessageLog não existir
 // import MessageLogModel from './messageLog.js';
 
@@ -27,6 +28,7 @@ const models = {
   Campaign: CampaignModel(sequelize),
   MessageCampaign: MessageCampaignModel(sequelize),
   Recipient: RecipientModel(sequelize),
+  MessageHistory: MessageHistoryModel(sequelize),
   // Remova ou comente a linha abaixo se MessageLog não existir
   // MessageLog: MessageLogModel(sequelize),
 };

@@ -1,112 +1,85 @@
 import models from '../models/index.js';
-import { parse } from 'csv-parse/sync';
-import fs from 'fs/promises';
-import path from 'path';
-import { scheduleJob } from 'node-schedule';
-import { startCampaign } from '../services/campaignService.js';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import minioClient from '../config/minio.js';
-import { DataTypes } from 'sequelize';
+import { startCampaign } from '../services/campaignService.js';
+import { io } from '../socket/socket.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const { Campaign, CampaignMessage, Instance } = models;
-
-const BASE_DIR = process.env.BASE_DIR || process.cwd();
+const { Campaign } = models;
+const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'campaigns';
 
 export const createCampaign = async (req, res) => {
     try {
-        const { 
-            name, 
-            type, 
-            startImmediately, 
-            startDate, 
-            messageInterval, 
-            messages, 
-            workspaceId, 
-            instanceIds 
-        } = req.body;
-
-        // Criar a campanha no banco de dados
-        const campaign = new Campaign({
-            name,
-            type,
-            startImmediately,
-            startDate,
-            messageInterval,
-            messages: JSON.parse(messages),
-            instanceIds: JSON.parse(instanceIds),
-        });
-
-        // Processar o arquivo CSV
-        if (req.files && req.files.csv) {
-            const csvFile = req.files.csv;
-            const bucketName = process.env.MINIO_BUCKET || 'campaigns';
-            const objectName = `${Date.now()}-${csvFile.name}`;
-
-            try {
-                // Verifica se o bucket existe, se não, cria
-                const bucketExists = await minioClient.bucketExists(bucketName);
-                if (!bucketExists) {
-                    await minioClient.makeBucket(bucketName);
-                }
-
-                // Faz o upload do arquivo para o MinIO
-                await minioClient.putObject(bucketName, objectName, csvFile.data);
-
-                // Salva apenas o nome do objeto no banco de dados
-                campaign.csvFileUrl = objectName;
-            } catch (minioError) {
-                console.error('Erro ao processar arquivo no MinIO:', minioError);
-                return res.status(500).json({ message: 'Erro ao processar arquivo CSV' });
-            }
-        } else {
-            console.log('Nenhum arquivo CSV foi enviado');
+        const workspaceId = req.params.workspaceId;
+        
+        // Verificar se tem arquivo CSV
+        if (!req.files || !req.files.csv) {
+            throw new Error('Arquivo CSV é obrigatório');
         }
 
-        // Processar a imagem, se existir
-        if (req.files && req.files.image) {
-            const imageFile = req.files.image;
-            const bucketName = process.env.MINIO_BUCKET || 'campaigns';
-            const objectName = `${Date.now()}-${imageFile.name}`;
+        const csvFile = req.files.csv;
+        const fileName = `${workspaceId}/csv/${uuidv4()}-${csvFile.name}`;
 
-            try {
-                // Faz o upload da imagem para o MinIO
-                await minioClient.putObject(bucketName, objectName, imageFile.data);
-
-                // Gera a URL da imagem
-                const imageUrl = await minioClient.presignedGetObject(bucketName, objectName, 24*60*60); // URL válida por 24 horas
-
-                // Salva a URL da imagem no modelo de campanha
-                campaign.imageUrl = imageUrl;
-            } catch (minioError) {
-                console.error('Erro ao processar imagem no MinIO:', minioError);
-                return res.status(500).json({ message: 'Erro ao processar imagem' });
+        // Garantir que o bucket existe
+        try {
+            const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+            if (!bucketExists) {
+                await minioClient.makeBucket(BUCKET_NAME);
             }
+        } catch (error) {
+            console.error('Erro ao verificar/criar bucket:', error);
+            throw new Error('Erro ao configurar armazenamento');
         }
 
-        // Salvar a campanha no banco de dados
-        await campaign.save();
+        // Upload do arquivo para o MinIO
+        await minioClient.putObject(
+            BUCKET_NAME,
+            fileName,
+            csvFile.data,
+            csvFile.size,
+            csvFile.mimetype
+        );
 
+        // Processar outros dados da campanha
+        const campaignData = {
+            ...req.body,
+            workspaceId: parseInt(workspaceId),
+            startImmediately: req.body.startImmediately === 'true',
+            messageInterval: parseInt(req.body.messageInterval),
+            instanceIds: JSON.parse(req.body.instanceIds),
+            messages: JSON.parse(req.body.messages),
+            csvFileUrl: `${BUCKET_NAME}/${fileName}` // Salvar a URL do arquivo
+        };
+
+        const campaign = await Campaign.create(campaignData);
+        
+        io.to(`workspace_${workspaceId}`).emit('campaignCreated', campaign);
+        
         res.status(201).json(campaign);
     } catch (error) {
-        console.error('Erro ao criar campanha:', error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
 export const getCampaigns = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
+        
         const campaigns = await Campaign.findAll({
-            where: { workspaceId },
-            include: [CampaignMessage]
+            where: {
+                workspaceId: workspaceId
+            },
+            order: [['createdAt', 'DESC']]
         });
-        res.status(200).json(campaigns);
+
+        // Retorna array vazio se não houver campanhas
+        return res.status(200).json(campaigns || []);
+        
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Erro ao buscar campanhas:", error);
+        return res.status(500).json({ 
+            message: "Erro ao buscar campanhas", 
+            error: error.message 
+        });
     }
 };
 
@@ -128,28 +101,21 @@ export const getCampaignById = async (req, res) => {
 export const updateCampaign = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, type, scheduledDate, messages } = req.body;
-
         const campaign = await Campaign.findByPk(id);
+        
         if (!campaign) {
             return res.status(404).json({ message: 'Campanha não encontrada' });
         }
-
-        await campaign.update({ name, type, scheduledDate });
-
-        // Atualizar mensagens
-        await CampaignMessage.destroy({ where: { campaignId: id } });
-        await CampaignMessage.bulkCreate(messages.map(message => ({
-            ...message,
-            campaignId: id
-        })));
-
-        // Reagendar a campanha
-        scheduleJob(scheduledDate, () => startCampaign(id));
-
-        res.status(200).json(campaign);
+        
+        await campaign.update(req.body);
+        
+        // Emitir evento de socket para o workspace específico
+        io.to(`workspace_${campaign.workspaceId}`).emit('campaignUpdated', campaign);
+        
+        res.json(campaign);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Erro ao atualizar campanha:', error);
+        res.status(500).json({ error: error.message });
     }
 };
 

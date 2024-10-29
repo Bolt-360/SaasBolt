@@ -1,6 +1,7 @@
 import models from '../models/index.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { io } from '../socket/socket.js';
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ const configureWebhook = async (instanceName, workspaceId) => {
 };
 
 // Função para criar uma nova instância
-export const createInstance = async (req, res, io) => {
+export const createInstance = async (req, res) => {
     try {
         const { name } = req.body;
         const workspaceId = req.params.workspaceId;
@@ -74,9 +75,7 @@ export const createInstance = async (req, res, io) => {
         // Passo 2: Configurar o webhook
         try {
             const webhookResponse = await configureWebhook(name, workspaceId);
-            console.log("Webhook configurado com sucesso", webhookResponse.data);
         } catch (webhookError) {
-            console.log("Falha ao configurar webhook", webhookError);
             throw new Error('Falha ao configurar webhook');
         }
 
@@ -140,7 +139,7 @@ export const getInstanceById = async (req, res) => {
 };
 
 // Função para atualizar uma instância
-export const updateInstance = async (req, res, io) => {
+export const updateInstance = async (req, res) => {
     try {
         const instance = await Instance.findByPk(req.params.id);
         if (instance) {
@@ -161,7 +160,7 @@ export const updateInstance = async (req, res, io) => {
 };
 
 // Função para deletar uma instância
-export const deleteInstance = async (req, res, io) => {
+export const deleteInstance = async (req, res) => {
     try {
         const instance = await Instance.findByPk(req.params.id);
         if (instance) {
@@ -262,13 +261,11 @@ export const listInstances = async (req, res) => {
     });
 
     const allInstances = response.data;
-    console.log(`Total de instâncias na Evolution API: ${allInstances.length}`);
 
     const filteredInstances = allInstances.filter(instance => 
       localInstanceNames.includes(instance.name)
     );
 
-    console.log(`Instâncias filtradas: ${filteredInstances.length}`);
 
     const formattedInstances = filteredInstances.map(instance => ({
       ...instance,
@@ -374,7 +371,6 @@ export const deleteSpecificInstance = async (req, res) => {
           'apikey': EVOLUTION_API_KEY
         }
       });
-      console.log(`Instância ${fullInstanceName} desconectada com sucesso`);
     } catch (disconnectError) {
       console.error(`Erro ao desconectar instância ${fullInstanceName}:`, disconnectError.response?.data || disconnectError.message);
       // Não retornamos erro aqui, pois a instância pode já estar desconectada

@@ -1,0 +1,1004 @@
+{
+  "success": true,
+  "message": "Sucesso ao listar orçamentos",
+  "inProgressTotal": 66,
+  "awaitingApprovalTotal": 0,
+  "approvedTotal": 11,
+  "canceledTotal": 0,
+  "finishedTotal": 1,
+  "customerQuotes": [
+      {
+          "images": {
+              "t": [],
+              "dd": [],
+              "de": [],
+              "dm": [],
+              "md": [],
+              "me": [
+                  "bparts/quotes/attachment/webapp/1729735078506_carro23-Copyjpg.jpg"
+              ],
+              "td": [],
+              "te": [],
+              "tm": []
+          },
+          "warranties": [],
+          "canBcEditQuotePreview": false,
+          "comments": {
+              "images": "",
+              "vehicle": "asxsxa"
+          },
+          "address": {
+              "uuid": "bd50dc1c-17f4-4800-ad49-7fa348e3a910",
+              "street": "Rua Teodósio da Rocha",
+              "district": "Parque São Rafael",
+              "city": "São Paulo",
+              "state": "SP",
+              "lat_long": "lat: -23.6292983, lng: -46.4742715",
+              "createdAt": "2024-10-24T01:58:06.000Z",
+              "cep": "08320040"
+          },
+          "complements": [],
+          "customer": {},
+          "carWorkshopRepair": {
+              "uuid": "57908c65-4722-4168-8ba0-dadee4c77113",
+              "images": [
+                  "bparts/quotes/attachment/webapp/images/1729736267838_1727506073807_foto3jpg-Copyjpg.jpg"
+              ],
+              "status": "painting",
+              "webapp_quote_uuid": "3447163c-80c2-4bfa-9c80-69d05c03ee12",
+              "estimated_conclusion_at": "2024-11-01T02:17:29.000Z",
+              "createdAt": "2024-10-24T02:17:49.000Z",
+              "initial_checklist": [
+                  {
+                      "title": "Alavanca de cambio",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Ar Condicionado",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Bagagito",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Bancos",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Buzina",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Calotas",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Cinto de seguranca",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Combustível",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Desalinhamento",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Difusor de peça",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Engate",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Granizo",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Guarnição da porta",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Higienização",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Insulfilm",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Interior de Veiculo de carga",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Interior do porta malas",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Kit segurança",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Lanterna e farol",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Limpeza de motor",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Palhetas",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Parabarro",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Placa",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Pneu / Rodas",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Radio",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Revisão",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Tapete",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Tinta escorrida",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "Vidro eletrico",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "vidros",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  },
+                  {
+                      "title": "volante",
+                      "approved": true,
+                      "disapproved": false,
+                      "approvedComment": "",
+                      "disapprovedComment": ""
+                  }
+              ]
+          },
+          "bcOffer": [],
+          "chosenOffer": [
+              {
+                  "uuid": "55468e8a-3920-4e12-9719-cc0073949d13",
+                  "willBcSupplyParts": false,
+                  "isDisqualified": false,
+                  "carWorkshop": {
+                      "uuid": "7ed3cb24-dd85-4036-da9c-561754fc89bc",
+                      "distance": "346.19 km",
+                      "operatingDays": [
+                          {
+                              "day": "2024-10-29",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-10-30",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-05",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-06",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-12",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-13",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-19",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-26",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-27",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-03",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-04",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-10",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-11",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-17",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-18",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-01",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-07",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-08",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-14",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-15",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          }
+                      ],
+                      "discount": null,
+                      "laborPrice": "1000.00",
+                      "servicesIncluded": [
+                          "Carro lavado"
+                      ],
+                      "parts": [
+                          {
+                              "uuid": "33d72848-ac05-480d-9d63-212b676b9f2b",
+                              "name": "peça um",
+                              "integrationCode": null,
+                              "quantity": 1,
+                              "chosenPart": "alternativeValue",
+                              "genuineValue": "1.00",
+                              "alternativeValue": "11.00",
+                              "usedValue": "0.00",
+                              "willBcSupplyPart": false
+                          }
+                      ]
+                  }
+              }
+          ],
+          "uuid": "3447163c-80c2-4bfa-9c80-69d05c03ee12",
+          "hasBcOffer": true,
+          "status": "finished",
+          "ref": "COT_00348",
+          "createdAt": "2024-10-24T01:58:07.000Z",
+          "vehicle": {
+              "uuid": "92cd7ef0-967f-484f-b68a-45f91945d69c",
+              "brand": "teste marca",
+              "model": "2008 Allure 1.6 Flex 16V 5p Mec.",
+              "plate": "qqq1234",
+              "chassi": "ABC123456789AB12C",
+              "year": 2024,
+              "color": "cinza",
+              "armored_vehicle": false,
+              "createdAt": "2024-10-24T01:58:05.000Z"
+          },
+          "schedules": [
+              {
+                  "uuid": "e2b28834-bf94-488e-adf8-11790b354e7b",
+                  "date": "2024-10-29T10:00:00.000Z",
+                  "status": "accepted"
+              },
+              {
+                  "uuid": "b4bbfea9-a760-416f-8e02-4ba2e90ef7b1",
+                  "date": "2024-10-29T10:00:00.000Z",
+                  "status": "rejected"
+              }
+          ],
+          "auction": [
+              {
+                  "uuid": "55468e8a-3920-4e12-9719-cc0073949d13",
+                  "willBcSupplyParts": false,
+                  "isDisqualified": false,
+                  "carWorkshop": {
+                      "uuid": "7ed3cb24-dd85-4036-da9c-561754fc89bc",
+                      "distance": "346.19 km",
+                      "operatingDays": [
+                          {
+                              "day": "2024-10-29",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-10-30",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-05",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-06",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-12",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-13",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-19",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-26",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-11-27",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-03",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-04",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-10",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-11",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-17",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2024-12-18",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-01",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-07",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-08",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-14",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          },
+                          {
+                              "day": "2025-01-15",
+                              "time": [
+                                  "08:00",
+                                  "09:00",
+                                  "10:00",
+                                  "11:00",
+                                  "12:00",
+                                  "13:00",
+                                  "14:00",
+                                  "15:00",
+                                  "16:00",
+                                  "17:00",
+                                  "18:00"
+                              ]
+                          }
+                      ],
+                      "discount": null,
+                      "laborPrice": "1000.00",
+                      "servicesIncluded": [
+                          "Carro lavado"
+                      ],
+                      "parts": [
+                          {
+                              "uuid": "33d72848-ac05-480d-9d63-212b676b9f2b",
+                              "name": "peça um",
+                              "integrationCode": null,
+                              "quantity": 1,
+                              "chosenPart": "alternativeValue",
+                              "genuineValue": "1.00",
+                              "alternativeValue": "11.00",
+                              "usedValue": "0.00",
+                              "willBcSupplyPart": false
+                          }
+                      ]
+                  }
+              }
+          ]
+      }
+  ]
+}

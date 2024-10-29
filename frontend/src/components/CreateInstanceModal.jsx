@@ -30,8 +30,11 @@ export default function CreateInstanceModal({ isOpen, onClose, selectedInstance 
 
   useEffect(() => {
     if (selectedInstance) {
-      setInstanceName(selectedInstance.name);
-      setFullInstanceName(`${workspaceId}-${selectedInstance.name}`);
+      const instanceNameParts = selectedInstance.name.split('-');
+      const actualInstanceName = instanceNameParts.slice(1).join('-');
+      
+      setInstanceName(actualInstanceName || selectedInstance.name);
+      setFullInstanceName(`${workspaceId}-${actualInstanceName || selectedInstance.name}`);
       handleConnectExistingInstance();
     } else {
       resetValues();
@@ -95,7 +98,10 @@ export default function CreateInstanceModal({ isOpen, onClose, selectedInstance 
   const handleConnectExistingInstance = async () => {
     if (selectedInstance) {
       try {
-        const newFullInstanceName = `${workspaceId}-${selectedInstance.name}`;
+        const instanceNameParts = selectedInstance.name.split('-');
+        const actualInstanceName = instanceNameParts.slice(1).join('-');
+        const newFullInstanceName = `${workspaceId}-${actualInstanceName || selectedInstance.name}`;
+        
         setFullInstanceName(newFullInstanceName);
         
         socket.emit('joinQRCodeRoom', { instance: newFullInstanceName });

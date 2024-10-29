@@ -132,11 +132,12 @@ export default function StepContacts({
               validData,
               validData.map(row => row.numeroFormatado),
               [],
-              variables // Passando as variáveis extraídas
+              variables
             );
           }
           
-          handleInputChange(field, file);
+          // Salvar o arquivo original
+          handleInputChange('csvFile', file);
         } catch (error) {
           clearContactsData();
           toast({

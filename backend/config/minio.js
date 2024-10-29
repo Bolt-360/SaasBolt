@@ -14,4 +14,21 @@ const minioClient = new Client({
     insecure: process.env.MINIO_USE_SSL !== 'true'
 });
 
+// Criar bucket se não existir
+const initializeMinio = async () => {
+    try {
+        const bucketName = process.env.MINIO_BUCKET_NAME || 'campaigns';
+        const bucketExists = await minioClient.bucketExists(bucketName);
+        
+        if (!bucketExists) {
+            await minioClient.makeBucket(bucketName);
+            console.log('Bucket criado com sucesso');
+        }
+    } catch (error) {
+        console.error('Erro ao inicializar MinIO:', error);
+    }
+};
+
+initializeMinio();
+
 export default minioClient;

@@ -1,406 +1,320 @@
 import models from '../models/index.js';
-import { parse } from 'csv-parse/sync';
-import axios from 'axios';
-import { io } from '../socket/socket.js';
-import { Op } from 'sequelize';
-import minioClient from '../config/minio.js';
-import { EVOLUTION_API_URL, EVOLUTION_API_KEY } from '../config/evolutionapi.cjs';
+import { io } from '../socket/socket.js';    
+const { Campaign, MessageHistory } = models;
+import { getCsvContent } from '../utils/getCsvContent.js';
+import { sendWhatsAppMessage } from './sendWhatsAppMessage.js';
+import { checkImmediateCampaigns } from './checkImmediateCampaigns.js';
+import { processCsvContent } from '../controllers/processCsvContent.js';
 
-const { Campaign } = models;
-
-// Função para enviar mensagem via API do WhatsApp
-const sendWhatsAppMessage = async (workspaceId, instanceId, number, text, delay = 1000) => {
-  console.log(`\nPreparando envio para ${number}`);
-  
-  try {
-    const messagePayload = {
-      number,
-      text: text.replace(/\n/g, '\\n'),
-      delay: delay * 1000, // Converte segundos para milissegundos
-      linkPreview: true
-    };
-
-    // Converte o instanceId para string e formata o nome da instância
-    const instanceName = `${workspaceId}-${String(instanceId)}`;
-    
-    const apiUrl = `${EVOLUTION_API_URL}/message/sendText/${instanceName}`;
-    console.log('URL da API:', apiUrl);
-    console.log('Payload:', JSON.stringify(messagePayload, null, 2));
-
-    const response = await axios.post(
-      apiUrl,
-      messagePayload,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY
-        }
-      }
-    );
-    
-    return response.data;
-  } catch (error) {
-    console.error('Erro completo:', error);
-    console.error('URL utilizada:', `${EVOLUTION_API_URL}/message/sendText/${instanceName}`);
-    console.error('Configurações:', {
-      apiUrl: EVOLUTION_API_URL,
-      apiKey: EVOLUTION_API_KEY ? 'Presente' : 'Ausente',
-      workspaceId,
-      instanceId,
-      instanceName
-    });
-    throw error;
-  }
-};
-
-// Função para processar variáveis na mensagem com validação
-const processMessageVariables = (message, contact) => {
-  if (!message || !contact) {
-    throw new Error('Mensagem ou dados do contato inválidos');
-  }
-
-  let processedMessage = message;
-  Object.entries(contact).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      const regex = new RegExp(`{{${key}}}`, 'gi');
-      processedMessage = processedMessage.replace(regex, value.toString());
-    }
-  });
-  return processedMessage;
-};
-
-// Função para ler arquivo do MinIO
-const readFileFromMinio = async (fileUrl) => {
-  try {
-    const bucketName = process.env.MINIO_BUCKET || 'campaigns';
-    const fileStream = await minioClient.getObject(bucketName, fileUrl);
-    
-    return new Promise((resolve, reject) => {
-      let fileContent = '';
-      
-      fileStream.on('data', chunk => {
-        fileContent += chunk.toString();
-      });
-      
-      fileStream.on('end', () => {
-        resolve(fileContent);
-      });
-      
-      fileStream.on('error', error => {
-        reject(error);
-      });
-    });
-  } catch (error) {
-    console.error('Erro ao ler arquivo do MinIO:', error);
-    throw error;
-  }
-};
-
-// Função para formatar número de telefone
-const formatPhoneNumber = (numero) => {
-  if (!numero) return null;
-  
-  // Remove tudo que não for número
-  const digits = numero.toString().replace(/\D/g, '');
-  
-  // Se já começar com 55 e tiver o tamanho correto, retorna
-  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
-    return digits;
-  }
-  
-  // Se não começar com 55, adiciona
-  const withCountry = digits.startsWith('55') ? digits : `55${digits}`;
-  
-  // Verifica se tem o tamanho correto após adicionar 55
-  if (withCountry.length === 12 || withCountry.length === 13) {
-    return withCountry;
-  }
-  
-  return null;
-};
-
-// Função para converter HTML para texto simples
-const htmlToText = (html) => {
-  // Remove todas as tags HTML, mantendo o texto
-  let text = html.replace(/<[^>]*>/g, '');
-  
-  // Substitui <br> e </p> por quebras de linha
-  text = html.replace(/<br\s*\/?>/gi, '\n')
-             .replace(/<\/p>/gi, '\n')
-             .replace(/<[^>]*>/g, '');
-  
-  // Remove quebras de linha duplicadas
-  text = text.replace(/\n\s*\n/g, '\n');
-  
-  // Remove espaços em branco extras
-  text = text.trim();
-  
-  // Converte entidades HTML comuns
-  text = text.replace(/&nbsp;/g, ' ')
-             .replace(/&amp;/g, '&')
-             .replace(/&lt;/g, '<')
-             .replace(/&gt;/g, '>')
-             .replace(/&quot;/g, '"')
-             .replace(/&#39;/g, "'");
-  
-  return text;
-};
-
-// Função para converter HTML para formato WhatsApp
-const htmlToWhatsAppFormat = (html) => {
-  let text = html;
-  
-  // Primeiro, substitui as quebras de linha HTML por marcadores temporários
-  text = text
-    .replace(/<br\s*\/?>/gi, '{{BREAK}}')
-    .replace(/<\/p><p>/gi, '{{BREAK}}{{BREAK}}')
-    .replace(/<\/p>/gi, '{{BREAK}}')
-    .replace(/<p>/gi, '');
-    
-  // Converte tags HTML para formatação WhatsApp com espaços
-  text = text
-    // Negrito: <strong> ou <b> para *texto*
-    .replace(/<(strong|b)>(.*?)<\/\1>/gi, ' *$2* ')
-    
-    // Itálico: <em> ou <i> para _texto_
-    .replace(/<(em|i)>(.*?)<\/\1>/gi, ' _$2_ ')
-    
-    // Tachado: <strike> ou <s> para ~texto~
-    .replace(/<(strike|s)>(.*?)<\/\1>/gi, ' ~$2~ ')
-    
-    // Remove todas as outras tags HTML
-    .replace(/<[^>]*>/g, '')
-    
-    // Converte entidades HTML
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-    
-  // Substitui os marcadores temporários por \n
-  text = text
-    .replace(/{{BREAK}}/g, '\n')
-    // Remove múltiplos espaços
-    .replace(/\s+/g, ' ')
-    // Remove espaços antes de pontuação
-    .replace(/\s+([.,!?:;])/g, '$1')
-    // Garante espaço após pontuação
-    .replace(/([.,!?:;])(\S)/g, '$1 $2')
-    // Remove espaços extras no início/fim
-    .trim();
-  
-  return text;
-};
-
-// Função principal para iniciar a campanha
-export const startCampaign = async (campaignId) => {
-  const campaign = await Campaign.findByPk(campaignId);
-  if (!campaign) {
-    throw new Error('Campanha não encontrada');
-  }
-
-  console.log('\n====================================');
-  console.log(`Iniciando campanha: ${campaign.name} (ID: ${campaignId})`);
-  console.log('====================================\n');
-
-  try {
-    await campaign.update({ 
-      status: 'IN_PROGRESS',
-      lastProcessedAt: new Date()
-    });
-
-    // Lê o arquivo CSV do MinIO
-    console.log('Lendo arquivo CSV do MinIO...');
-    const csvContent = await readFileFromMinio(campaign.csvFileUrl);
-    const contacts = parse(csvContent, { 
-      columns: true, 
-      skip_empty_lines: true 
-    });
-
-    console.log(`Total de contatos carregados: ${contacts.length}`);
-    console.log('Exemplo do primeiro contato:', contacts[0]);
-
+// Função para iniciar a campanha
+const startCampaign = async (campaignId) => {
+    let campaign;
     let successCount = 0;
     let failureCount = 0;
-    const totalMessages = contacts.length;
+    let startTime = Date.now();
+    let contacts = [];
+    let totalMessages = 0;
 
-    for (const [index, contact] of contacts.entries()) {
-      try {
-        // Pega o valor da primeira coluna, independente do nome
-        const firstColumnValue = Object.values(contact)[0];
-        const numeroFormatado = formatPhoneNumber(firstColumnValue);
+    try {
+        campaign = await Campaign.findByPk(campaignId);
+        if (!campaign) throw new Error('Campanha não encontrada');
 
-        if (!numeroFormatado) {
-          console.error(`Contato ${index + 1} com número inválido:`, firstColumnValue);
-          failureCount++;
-          continue;
-        }
-
-        // Adiciona o número formatado ao objeto de contato
-        const contactWithFormattedNumber = {
-          ...contact,
-          numeroFormatado
-        };
-
-        // Ajuste aqui: Verificando a estrutura correta da mensagem
-        const message = campaign.messages[0];
-        if (!message?.content) { // Mudou de principal para content
-          console.error('Estrutura da mensagem:', message);
-          throw new Error('Mensagem principal não encontrada na campanha');
-        }
-
-        console.log(`\nProcessando mensagem ${index + 1}/${totalMessages}`);
-        console.log('Dados do contato:', contactWithFormattedNumber);
-
-        // Usa message.content ao invés de message.principal
-        const messageHtml = processMessageVariables(message.content, contactWithFormattedNumber);
-        console.log('Mensagem HTML:', messageHtml);
-        
-        // Converte HTML para formato WhatsApp
-        const whatsappText = htmlToWhatsAppFormat(messageHtml);
-        console.log('Mensagem formatada para WhatsApp:', whatsappText);
-
-        // Pega o primeiro instanceId do array e garante que é um número
-        const instanceId = campaign.instanceIds[0];
-        
-        if (!instanceId) {
-          throw new Error('ID da instância não encontrado');
-        }
-
-        // Pega o workspaceId ou usa um valor padrão (1 neste caso)
-        const workspaceId = campaign.workspaceId || 1;
-
-        await sendWhatsAppMessage(
-          workspaceId,
-          instanceId, // Já é um número do array
-          numeroFormatado,
-          whatsappText,
-          campaign.messageInterval || 1
-        );
-
-        successCount++;
-        console.log(`✓ Mensagem ${index + 1} enviada com sucesso`);
-        
-        await campaign.update({ successCount });
-
-        io.emit('campaignUpdate', {
-          campaignId,
-          status: 'IN_PROGRESS',
-          successCount,
-          failureCount,
-          totalMessages,
-          currentMessage: index + 1
+        // Atualizar status para PROCESSING e emitir evento
+        await campaign.update({ status: 'PROCESSING' });
+        console.log('\x1b[35m%s\x1b[0m', `[SOCKET EMIT] campaignStatusChanged:`, {
+            campaignId: campaign.id,
+            previousStatus: 'PENDING',
+            newStatus: 'PROCESSING'
+        });
+        io.to(`workspace_${campaign.workspaceId}`).emit('campaignStatusChanged', {
+            campaignId: campaign.id,
+            previousStatus: 'PENDING',
+            newStatus: 'PROCESSING',
+            timestamp: new Date()
         });
 
-        // Aguarda o intervalo em segundos
-        const intervalInSeconds = campaign.messageInterval || 1;
-        console.log(`Aguardando ${intervalInSeconds}s antes do próximo envio...`);
-        await new Promise(resolve => setTimeout(resolve, intervalInSeconds * 1000));
-
-      } catch (error) {
-        console.error(`\n✗ Erro ao processar mensagem ${index + 1}/${totalMessages}:`, error.message);
-        failureCount++;
-        
-        await campaign.update({ failureCount });
-        
-        io.emit('campaignError', {
-          campaignId,
-          error: error.message,
-          contact: contact?.numeroFormatado || 'Número inválido'
+        // Log e emissão do início da campanha
+        console.log('\x1b[34m%s\x1b[0m', `[SOCKET EMIT] campaignStarted:`, {
+            campaignId: campaign.id,
+            name: campaign.name,
+            workspaceId: campaign.workspaceId
         });
-      }
-    }
+        
+        // Buscar e processar o CSV
+        const csvContent = await getCsvContent(campaign.csvFileUrl);
+        contacts = await processCsvContent(csvContent);
+        
+        const messages = Array.isArray(campaign.messages) 
+            ? campaign.messages 
+            : JSON.parse(campaign.messages);
 
-    const finalStatus = failureCount === totalMessages ? 'FAILED' : 
-                       failureCount > 0 ? 'COMPLETED_WITH_ERRORS' : 
-                       'COMPLETED';
+        totalMessages = contacts.length * messages.length;
 
-    await campaign.update({ 
-      status: finalStatus,
-      lastProcessedAt: new Date()
-    });
+        io.to(`workspace_${campaign.workspaceId}`).emit('campaignStarted', {
+            campaignId: campaign.id,
+            name: campaign.name,
+            startTime: new Date(),
+            totalContacts: contacts.length,
+            totalMessages
+        });
 
-    console.log('\n====================================');
-    console.log('Campanha finalizada');
-    console.log(`Status: ${finalStatus}`);
-    console.log(`Sucesso: ${successCount}`);
-    console.log(`Falhas: ${failureCount}`);
-    console.log('====================================\n');
+        // Durante o processamento
+        for (const contact of contacts) {
+            for (const messageObj of messages) {
+                let processedMessage = messageObj.content; // Inicializa com o conteúdo original
+                
+                try {
+                    // Processa a mensagem substituindo variáveis
+                    processedMessage = processMessageVariables(messageObj.content, contact);
+                    
+                    await sendWhatsAppMessage(
+                        campaign.workspaceId,
+                        campaign.instanceIds[0],
+                        contact,
+                        [messageObj]
+                    );
 
-    io.emit('campaignComplete', {
-      campaignId,
-      status: finalStatus,
-      successCount,
-      failureCount,
-      totalMessages
-    });
+                    // Registrar envio bem-sucedido
+                    await MessageHistory.create({
+                        campaignId: campaign.id,
+                        contact: contact.phone,
+                        message: processedMessage,
+                        status: 'SENT',
+                        sentAt: new Date(),
+                        metadata: {
+                            contactName: contact.name,
+                            messageType: 'text',
+                            variables: contact
+                        }
+                    });
 
-  } catch (error) {
-    console.error('\nErro fatal ao processar campanha:', error);
-    await campaign.update({ 
-      status: 'FAILED',
-      error: error.message,
-      lastProcessedAt: new Date()
-    });
-    throw error;
-  }
-};
+                    successCount++;
+                    
+                    console.log('\x1b[32m%s\x1b[0m', `[SOCKET EMIT] messageSent:`, {
+                        campaignId: campaign.id,
+                        contact: contact.phone,
+                        status: 'SENT'
+                    });
+                    
+                    io.to(`workspace_${campaign.workspaceId}`).emit('messageSent', {
+                        campaignId: campaign.id,
+                        contact: contact.phone,
+                        message: processedMessage,
+                        sentAt: new Date(),
+                        status: 'SENT'
+                    });
 
-// Função para verificar campanhas agendadas
-export const scheduleCampaigns = async () => {
-  try {
-    const pendingCampaigns = await Campaign.findAll({
-      where: {
-        status: 'PENDING',
-        startImmediately: false,
-        startDate: {
-          [Op.lte]: new Date()
+                } catch (error) {
+                    // Registrar falha no envio
+                    await MessageHistory.create({
+                        campaignId: campaign.id,
+                        contact: contact.phone,
+                        message: processedMessage, // Usa a mensagem processada ou original
+                        status: 'ERROR',
+                        error: error.message,
+                        sentAt: new Date(),
+                        metadata: {
+                            contactName: contact.name,
+                            messageType: 'text',
+                            variables: contact,
+                            errorDetails: error.stack
+                        }
+                    });
+
+                    failureCount++;
+                    
+                    console.log('\x1b[31m%s\x1b[0m', `[SOCKET EMIT] messageError:`, {
+                        campaignId: campaign.id,
+                        contact: contact.phone,
+                        error: error.message
+                    });
+                    
+                    io.to(`workspace_${campaign.workspaceId}`).emit('messageError', {
+                        campaignId: campaign.id,
+                        contact: contact.phone,
+                        message: processedMessage,
+                        error: error.message,
+                        sentAt: new Date()
+                    });
+                }
+
+                // Log e emissão do progresso
+                emitProgress(campaign, successCount, failureCount, totalMessages);
+            }
         }
-      }
-    });
 
-    for (const campaign of pendingCampaigns) {
-      console.log(`\nIniciando campanha agendada: ${campaign.name}`);
-      startCampaign(campaign.id).catch(error => {
-        console.error(`Erro ao iniciar campanha ${campaign.id}:`, error);
-      });
+        // Log e emissão da conclusão
+        console.log('\x1b[34m%s\x1b[0m', `[SOCKET EMIT] campaignCompleted:`, {
+            campaignId: campaign.id,
+            status: 'COMPLETED',
+            stats: { totalMessages, successCount, failureCount }
+        });
+        io.to(`workspace_${campaign.workspaceId}`).emit('campaignCompleted', {
+            campaignId: campaign.id,
+            status: 'COMPLETED',
+            stats: {
+                totalMessages,
+                successCount,
+                failureCount,
+                completedAt: new Date()
+            }
+        });
+
+        // Ao finalizar com sucesso
+        await campaign.update({ 
+            status: 'COMPLETED',
+            successCount,
+            failureCount,
+            lastProcessedAt: new Date()
+        });
+        console.log('\x1b[35m%s\x1b[0m', `[SOCKET EMIT] campaignStatusChanged:`, {
+            campaignId: campaign.id,
+            previousStatus: 'PROCESSING',
+            newStatus: 'COMPLETED'
+        });
+        io.to(`workspace_${campaign.workspaceId}`).emit('campaignStatusChanged', {
+            campaignId: campaign.id,
+            previousStatus: 'PROCESSING',
+            newStatus: 'COMPLETED',
+            timestamp: new Date(),
+            stats: {
+                successCount,
+                failureCount,
+                totalMessages
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro detalhado na campanha:', {
+            campaignId,
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
     }
-  } catch (error) {
-    console.error('Erro ao verificar campanhas agendadas:', error);
-  }
 };
 
-// Função para verificar campanhas imediatas
-export const checkImmediateCampaigns = async () => {
-  try {
-    const pendingCampaigns = await Campaign.findAll({
-      where: {
-        status: 'PENDING',
-        startImmediately: true
-      }
+// Função auxiliar para emitir progresso
+const emitProgress = (campaign, successCount, failureCount, totalMessages) => {
+    const totalProcessed = successCount + failureCount;
+    const percentage = (totalProcessed / totalMessages) * 100;
+    
+    // Log do progresso
+    console.log('\x1b[36m%s\x1b[0m', `[SOCKET EMIT] campaignProgress:`, {
+        campaignId: campaign.id,
+        progress: `${percentage.toFixed(2)}%`,
+        stats: { sent: successCount, failed: failureCount }
     });
-
-    for (const campaign of pendingCampaigns) {
-      console.log(`\nIniciando campanha imediata: ${campaign.name}`);
-      await startCampaign(campaign.id);
-    }
-  } catch (error) {
-    console.error('Erro ao verificar campanhas imediatas:', error);
-  }
+    
+    io.to(`workspace_${campaign.workspaceId}`).emit('campaignProgress', {
+        campaignId: campaign.id,
+        status: campaign.status,
+        progress: {
+            percentage: Math.min(percentage, 100),
+            currentCount: totalProcessed,
+            totalMessages
+        },
+        stats: {
+            sent: successCount,
+            failed: failureCount
+        }
+    });
 };
 
-// Função para iniciar o serviço de campanhas
-export const initCampaignService = () => {
-  console.log('Iniciando serviço de campanhas...');
-  
-  // Verifica campanhas imediatas a cada 10 segundos
-  setInterval(checkImmediateCampaigns, 10000);
-  
-  // Verifica campanhas agendadas a cada minuto
-  setInterval(scheduleCampaigns, 60000);
-  
-  // Executa uma verificação inicial
-  checkImmediateCampaigns();
+// Verificação periódica com debounce simples
+let timeoutId = null;
+const debouncedCheck = () => {
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(checkImmediateCampaigns, 5000);
+};
+
+// Agendar verificação a cada 5 segundos
+setInterval(async () => {
+    try {
+        const hasPending = await Campaign.count({
+            where: {
+                status: 'PENDING',
+                startImmediately: true
+            }
+        });
+
+        if (hasPending > 0) {
+            debouncedCheck();
+        }
+    } catch (error) {
+        console.error('Erro ao verificar campanhas pendentes:', error);
+    }
+}, 5000);
+
+
+/**
+ * Updates campaign status
+ * @param {string} campaignId - Campaign ID
+ * @param {string} status - New status
+ * @param {Error} error - Error object (optional)
+ */
+
+const updateCampaignStatus = async (campaignId, status, error = null) => {
+    try {
+        const campaign = await Campaign.findByPk(campaignId);
+        if (campaign) {
+            await campaign.update({ 
+                status,
+                error: error?.message || null 
+            });
+            
+            io.to(`workspace_${campaign.workspaceId}`).emit('campaignStatusUpdated', {
+                campaignId,
+                status,
+                error: error?.message || null
+            });
+        }
+    } catch (error) {
+        console.error('Error updating campaign status:', error);
+    }
+};
+
+const emitCampaignStatusChange = (campaign, newStatus) => {
+    io.to(`workspace_${campaign.workspaceId}`).emit('campaignStatusChanged', {
+        campaignId: campaign.id,
+        previousStatus: campaign.status,
+        newStatus: newStatus,
+        timestamp: new Date(),
+        stats: {
+            successCount: campaign.successCount,
+            failureCount: campaign.failureCount
+        }
+    });
+};
+
+// Função auxiliar para processar variáveis na mensagem
+const processMessageVariables = (message, contact) => {
+    let processedMessage = message;
+    
+    // Substitui variáveis básicas
+    processedMessage = processedMessage
+        .replace(/\{nome\}/g, contact.name || '')
+        .replace(/\{telefone\}/g, contact.phone || '');
+    
+    // Se houver outras variáveis no metadata do contato
+    if (contact.variables) {
+        Object.entries(contact.variables).forEach(([key, value]) => {
+            processedMessage = processedMessage.replace(
+                new RegExp(`\\{${key}\\}`, 'g'), 
+                value || ''
+            );
+        });
+    }
+    
+    return processedMessage;
+};
+
+export {
+    startCampaign,
+    checkImmediateCampaigns,
+    debouncedCheck,
+    updateCampaignStatus,
+    emitCampaignStatusChange
 };

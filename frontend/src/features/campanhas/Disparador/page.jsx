@@ -88,28 +88,22 @@ export default function Disparador() {
     e.preventDefault();
     
     if (!isReviewed) {
-      toast({
-        title: "Revisão necessária",
-        description: "Por favor, revise os dados da campanha antes de criar.",
-        variant: "destructive",
-      });
-      return;
+        toast({
+            title: "Revisão necessária",
+            description: "Por favor, revise os dados da campanha antes de criar.",
+            variant: "destructive",
+        });
+        return;
     }
 
     try {
-      await createCampaign(formData);
-      toast({
-        title: "Sucesso!",
-        description: "Campanha criada com sucesso.",
-      });
-      setCampaignCreated(true);
-      
+        const result = await createCampaign(formData);
+        setCampaignCreated(true);
+        navigate('/app/campanhas/listar-campanhas');
+        
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível criar a campanha",
-        variant: "destructive",
-      });
+        console.error('Erro ao criar campanha:', error);
+        // Toast já é mostrado no hook
     }
   };
 

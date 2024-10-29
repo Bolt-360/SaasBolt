@@ -1,51 +1,38 @@
-import { DataTypes } from 'sequelize';
-import minioClient from '../config/minio.js';
+import { DataTypes, Model } from 'sequelize';
 
 export default (sequelize) => {
-  const Campaign = sequelize.define('Campaign', {
-    name: {
-      type: DataTypes.STRING,
+  class Campaign extends Model {
+    static associate(models) {
+      Campaign.belongsTo(models.Workspace, {
+        foreignKey: 'workspaceId',
+        as: 'workspace'
+      });
+    }
+  }
+
+  Campaign.init({
+    workspaceId: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
-    type: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
+    name: DataTypes.STRING,
+    type: DataTypes.STRING,
     startImmediately: {
       type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true
+      defaultValue: false
     },
-    startDate: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    messageInterval: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0
-    },
-    messages: {
-      type: DataTypes.JSON,
-      allowNull: true
-    },
+    startDate: DataTypes.DATE,
+    messageInterval: DataTypes.INTEGER,
+    messages: DataTypes.JSONB,
     instanceIds: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      allowNull: true
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      defaultValue: []
     },
-    csvFileUrl: {
-      type: DataTypes.STRING(500), // Aumentamos o tamanho para acomodar nomes de arquivo longos
-      allowNull: true
-    },
-    imageUrl: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    // Novos campos
+    csvFileUrl: DataTypes.STRING,
+    imageUrl: DataTypes.STRING,
     status: {
-      type: DataTypes.ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'COMPLETED_WITH_ERRORS'),
-      defaultValue: 'PENDING',
-      allowNull: false
+      type: DataTypes.STRING,
+      defaultValue: 'PENDING'
     },
     successCount: {
       type: DataTypes.INTEGER,
@@ -55,21 +42,14 @@ export default (sequelize) => {
       type: DataTypes.INTEGER,
       defaultValue: 0
     },
-    error: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    lastProcessedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    }
+    error: DataTypes.TEXT,
+    lastProcessedAt: DataTypes.DATE,
+    instanceId: DataTypes.STRING
+  }, {
+    sequelize,
+    modelName: 'Campaign',
+    tableName: 'Campaigns'
   });
-
-  Campaign.prototype.getFullCsvUrl = async function() {
-    if (!this.csvFileUrl) return null;
-    const bucketName = process.env.MINIO_BUCKET || 'campaigns';
-    return await minioClient.presignedGetObject(bucketName, this.csvFileUrl, 24*60*60);
-  };
 
   return Campaign;
 };

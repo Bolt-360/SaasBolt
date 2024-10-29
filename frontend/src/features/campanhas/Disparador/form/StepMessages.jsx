@@ -95,6 +95,23 @@ export default function StepMessages({ formData, handleInputChange }) {
     }
   };
 
+  const formatContent = (content) => {
+    if (!content) return '';
+    
+    return content
+      .replace(/<p><\/p>/g, '<br>')
+      .replace(/<p>\s*<\/p>/g, '<br>')
+      .replace(/(<br\s*\/?>\s*){2,}/g, '<br>')
+      .trim();
+  };
+
+  // Use ao enviar o conteúdo
+  const messages = formData.mensagens.map(msg => ({
+    type: "TEXT",
+    content: formatContent(msg.principal),
+    variations: msg.alternativas.filter(alt => alt.trim() !== '').map(formatContent)
+  }));
+
   return (
     <TooltipProvider>
       <div className="space-y-4">

@@ -59,6 +59,18 @@ io.on("connection", (socket) => {
     console.log(`Cliente ${socket.id} entrou na sala da campanha: ${room}`);
     socket.emit('joinedCampaignRoom', room);
   });
+
+  socket.on('joinWorkspaceRoom', (workspaceId) => {
+    const room = `workspace_${workspaceId}`;
+    socket.join(room);
+    console.log(`Cliente ${socket.id} entrou na sala do workspace: ${room}`);
+  });
+
+  socket.on('leaveWorkspaceRoom', (workspaceId) => {
+    const room = `workspace_${workspaceId}`;
+    socket.leave(room);
+    console.log(`Cliente ${socket.id} saiu da sala do workspace: ${room}`);
+  });
 });
 
 export { app, server, io };
