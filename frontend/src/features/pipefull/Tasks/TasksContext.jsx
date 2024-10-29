@@ -4,9 +4,9 @@ import React, { createContext, useState, useContext } from 'react';
 // dados que serão utilizados na tabela
 let id = 1;
 const dataTable = [
-    { id: id++, task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Building" },
-    { id: id++, task: 'Layout', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Building" },
-    { id: id++, task: 'Teste', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Building" },
+    { id: id++, task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Backlog" },
+    { id: id++, task: 'Layout', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Em andamento" },
+    { id: id++, task: 'Teste', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Concluído" },
     { id: id++, task: 'Estudos', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "A fazer" }
 ]
 
