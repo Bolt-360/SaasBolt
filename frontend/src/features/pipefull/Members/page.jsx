@@ -1,18 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MoreVertical } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { usePage } from "../Tasks/TasksContext";
+import { TasksProvider } from '../Tasks/TasksContext';
+import DropMenu from "../components/DropMenu";
 
-const members = [
-    {name: "Matheus", mail: "matheus@bolt360.com.br"},
-    {name: "Lucas", mail: "lucas@bolt360.com.br"},
-    {name: "Victor", mail: "victor@bolt360.com.br"},
-    {name: "Michael", mail: "michael@bolt360.com.br"}
-]
 
-export default function Members() {
+
+function Members() {
     const navigate = useNavigate();
+    const { members } = usePage();
 
     const handleBack = () => {
         navigate('/app/pipefull'); // '/' representa a rota da página principal
@@ -40,15 +38,23 @@ export default function Members() {
                         </Avatar>
                         <div className="flex flex-col justify-center">
                             <span>{member.name}</span>
-                            <p className="text-sm text-gray-400">{member.mail}</p>
+                            <p className="text-sm text-gray-400">{member.email}</p>
                         </div>
-                        <Button className="bg-white text-black ml-auto">
-                            <MoreVertical className="w-4 hover:text-white"/>
-                        </Button>
+                        <div className="ml-auto">
+                            <DropMenu />
+                        </div>
                     </div>
                 ))}
                 </CardContent>
             </Card>
         </div>
     )
+}
+
+export default function MyMembers() {
+    return (
+        <TasksProvider>
+            <Members />
+        </TasksProvider>
+    );
 }

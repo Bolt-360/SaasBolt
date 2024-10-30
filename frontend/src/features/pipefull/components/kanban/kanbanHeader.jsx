@@ -3,10 +3,10 @@ import { CircleCheckIcon, CircleDashedIcon, CircleDotDashedIcon, CircleDotIcon, 
 
 const statusIconMap = [
     {status: "Backlog", icon: <CircleDashedIcon className="size-[18px] text-pink-400"/>},
-    {status: "To Do", icon: <CircleIcon className="size-[18px] text-red-400"/>},
-    {status: "In Progress", icon: <CircleDotDashedIcon className="size-[18px] text-yellow-400"/>},
-    {status: "In Review", icon: <CircleDotIcon className="size-[18px] text-blue-400"/>},
-    {status: "Done", icon: <CircleCheckIcon className="size-[18px] text-emerald-400"/>}
+    {status: "A fazer", icon: <CircleIcon className="size-[18px] text-red-400"/>},
+    {status: "Em andamento", icon: <CircleDotDashedIcon className="size-[18px] text-yellow-400"/>},
+    {status: "Em revisão", icon: <CircleDotIcon className="size-[18px] text-blue-400"/>},
+    {status: "Concluído", icon: <CircleCheckIcon className="size-[18px] text-emerald-400"/>}
 ]
 
 export function KanbanHeader({status, taskCount}) {

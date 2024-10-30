@@ -1,17 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocation, NavLink } from 'react-router-dom'
-import { LayoutDashboard, PlusCircle, CircleCheckBig, Handshake, GitCompareArrows } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { LayoutDashboard, CircleCheckBig, Handshake, GitCompareArrows } from 'lucide-react'
 import { cn } from "@/lib/utils"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
 import useLogout from '@/hooks/useLogout'
-import CreateInstanceModal from '@/components/CreateInstanceModal'
 
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/app/pipefull', end: true },
@@ -22,12 +15,6 @@ const menuItems = [
 
 export default function Sidebar() {
     const { logout } = useLogout()
-    const [isCreateInstanceModalOpen, setIsCreateInstanceModalOpen] = useState(false)
-
-    const handleOpenCreateInstanceModal = (e) => {
-        e.preventDefault()
-        setIsCreateInstanceModalOpen(true)
-    }
 
     return (
         <aside className="bg-primary text-primary-foreground w-64 min-h-screen p-4">
@@ -49,30 +36,9 @@ export default function Sidebar() {
                     <item.icon className="mr-2 h-4 w-4" />
                     {item.label}
                     </NavLink>
-                    {item.label === 'Listar Instâncias' && (
-                    <TooltipProvider>
-                        <Tooltip>
-                        <TooltipTrigger asChild>
-                            <button
-                            onClick={handleOpenCreateInstanceModal}
-                            className="ml-2 p-2 rounded-full hover:bg-primary-foreground/10"
-                            >
-                            <PlusCircle className="h-4 w-4" />
-                            </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Criar Instância</p>
-                        </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    )}
                 </div>
                 ))}
             </nav>
-            <CreateInstanceModal
-                isOpen={isCreateInstanceModalOpen}
-                onClose={() => setIsCreateInstanceModalOpen(false)}
-            />
         </aside>
     )
     }

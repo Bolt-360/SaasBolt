@@ -1,6 +1,28 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MoreVerticalIcon } from "lucide-react";
+import { usePage } from "../Tasks/TasksContext";
+import DropMenu from "./DropMenu";
 
 export function TableTasks({ dataTable }) {
+    const { removeTask, updateTask } = usePage();
+
+    function getStatusClass(status) {
+        switch (status) {
+            case 'Backlog':
+                return 'bg-pink-400';
+            case "A fazer":
+                return 'bg-red-400';
+            case 'Em andamento':
+                return 'bg-yellow-400';
+            case 'Em revisão':
+                return 'bg-blue-400';
+            case 'Concluído':
+                return 'bg-emerald-400';
+            default:
+                return 'bg-gray-400';
+            }
+        }
+
     return (
         <>
             <Table>
@@ -23,7 +45,10 @@ export function TableTasks({ dataTable }) {
                                 {new Date(data.data).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                                <span className="bg-blue-400 rounded-lg p-1">{data.status}</span>
+                                <span className={`rounded-lg p-1 ${getStatusClass(data.status)}`}>{data.status}</span>
+                            </TableCell>
+                            <TableCell>
+                                <DropMenu update={updateTask} remove={() => removeTask(data.id)}/>
                             </TableCell>
                         </TableRow>
                     ))}

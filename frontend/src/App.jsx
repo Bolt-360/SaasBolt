@@ -18,8 +18,8 @@ import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
 import PipefullLayout from './features/pipefull/PipefullLayout'
 import DashboardPipefull from './features/pipefull/page.jsx'
 import MyTasks from './features/pipefull/Tasks/page.jsx'
-import Members from './features/pipefull/Members/page'
-import Calendar from './features/pipefull/components/calendario'
+import MyMembers from './features/pipefull/Members/page'
+
 
 function App() {
   const { authUser } = useAuthContext();
@@ -44,7 +44,7 @@ function App() {
           <Route path='pipefull' element={<PipefullLayout />}>
             <Route index element={<DashboardPipefull/>} />
             <Route path='my-tasks' element={<MyTasks />}/>
-            <Route path='members' element={<Members />} />
+            <Route path='members' element={<MyMembers />} />
           </Route>
           <Route path='campanhas' element={<CampanhasLayout />}>
             <Route index element={<Dashboard />} />

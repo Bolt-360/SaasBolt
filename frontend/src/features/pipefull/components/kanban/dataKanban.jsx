@@ -9,11 +9,9 @@ const loadTasksFromStorage = () => JSON.parse(localStorage.getItem('tasks')) || 
 const saveTasksToStorage = (tasks) => localStorage.setItem('tasks', JSON.stringify(tasks));
 
 export function DataKanban({ dataTable }) {
-    // Inicializa o estado das tarefas com os dados do localStorage ou do dataTable inicial
     const [tasks, setTasks] = useState(dataTable || loadTasksFromStorage);
     const { taskStatus } = usePage();
 
-    // Atualiza o localStorage sempre que o estado das tarefas muda
     useEffect(() => {
         saveTasksToStorage(tasks);
     }, [tasks]);
@@ -21,17 +19,15 @@ export function DataKanban({ dataTable }) {
     const onDragEnd = (result) => {
         const { source, destination } = result;
 
-        if (!destination) return; // Se não houver destino, retorna
+        if (!destination) return; 
 
         if (source.droppableId === destination.droppableId) {
-            // Se a tarefa foi movida dentro da mesma coluna, atualiza a ordem
             const updatedTasks = Array.from(tasks);
             const [movedTask] = updatedTasks.splice(source.index, 1);
             updatedTasks.splice(destination.index, 0, movedTask);
             setTasks(updatedTasks);
 
         } else {
-            // Se a tarefa foi movida para outra coluna, atualiza o status
             const updatedTasks = tasks.map((task) => {
                 if (task.id === Number(result.draggableId)) {
                     return { ...task, status: destination.droppableId };
@@ -88,4 +84,3 @@ export function DataKanban({ dataTable }) {
         </DragDropContext>
     );
 }
-    

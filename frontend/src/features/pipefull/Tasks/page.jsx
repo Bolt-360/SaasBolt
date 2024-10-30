@@ -1,14 +1,14 @@
 'use client'
 
 import React from 'react'
-import { useState } from 'react'
-import { Plus, ListChecks, CircleUserRound, Folder, Calendar, ListFilter } from 'lucide-react'
+import { ListChecks, CircleUserRound, Folder, Calendar, ListFilter } from 'lucide-react'
 import { usePage } from './TasksContext';
 import { TableTasks } from '../components/TableTasks';
 import { TasksProvider } from './TasksContext';
 import { DataKanban } from '../components/kanban/dataKanban';
 import Calendario from '../components/calendario';
 import ModalTasks from '../components/ModalTasks';
+import { Tabs } from '@/components/ui/tabs';
 
 function MyTasksContent() {
     const { pageState, activeButton, setTable, setKanban, setCalendar, tableData, addTask, removeTask, updateTask, updateTaskStatus  } = usePage();
@@ -25,26 +25,20 @@ function MyTasksContent() {
             {/* Estatísticas Gerais */}
             <div className='border rounded-md bg-white'>
                 <div className="flex items-center gap-6 mb-1  p-3 ">
-                    <button 
-                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'table' ? 'bg-gray-300' : 'bg-white'}`} 
-                    onClick={setTable}
-                    >
+                    <Tabs className={`border rounded-md px-2 py-1 hover:bg-blue-500 hover:text-white cursor-pointer ${activeButton === 'table' ? 'bg-blue-500 text-white' : 'bg-white'}`} 
+                    onClick={setTable}>
                         Tabela
-                    </button>
+                    </Tabs>
 
-                    <button 
-                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'kanban' ? 'bg-gray-300' : 'bg-white'}`}
-                    onClick={setKanban}
-                    >
-                        Kanban
-                    </button>
+                    <Tabs className={`border rounded-md px-2 py-1 hover:bg-blue-500 hover:text-white cursor-pointer ${activeButton === 'kanban' ? 'bg-blue-500 text-white' : 'bg-white'}`}
+                    onClick={setKanban}>
+                        Kandan
+                    </Tabs>
                     
-                    <button 
-                    className={`border rounded-md px-2 py-1 hover:bg-gray-300 cursor-pointer ${activeButton === 'calendar' ? 'bg-gray-300' : 'bg-white'}`}
-                    onClick={setCalendar}
-                    >
+                    <Tabs className={`border rounded-md px-2 py-1 hover:bg-blue-500 hover:text-white cursor-pointer ${activeButton === 'calendar' ? 'bg-blue-500 text-white' : 'bg-white'}`}
+                    onClick={setCalendar}>
                         Calendário
-                    </button>
+                    </Tabs>
 
                     <ModalTasks />
                 </div>

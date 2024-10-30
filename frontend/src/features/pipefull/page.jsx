@@ -17,29 +17,20 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DashboardProvider, useDashboard } from './DashboardContext'
+import { TasksProvider, usePage } from './Tasks/TasksContext'
 
 function DashboardContent() {
     const { projects, addProject, removeProject } = useDashboard();
     const [newProjectName, setNewProjectName] = useState('')
     const [isOpen, setIsOpen] = useState(false)
+    const { members, tableData } =  usePage()
 
     const stats = [
-        { title: "Todos os Projetos", value: projects.length, color: "text-primary" },
+        { title: "Todos os Projetos", value: tableData.length, color: "text-primary" },
         { title: "Todas as Tarefas", value: 0, color: "text-green-600" },
         { title: "Tarefas Atribuídas", value: 0, color: "text-yellow-600" },
         { title: "Tarefas Concluídas", value: 0, color: "text-purple-600" },
         { title: "Tarefas Atrasadas", value: 0, color: "text-destructive" },
-    ]
-
-    const tasks = [
-        { title: "Layout", project: "Disparador", days: 1 },
-        { title: "Layout", project: "KANBAN", days: 1 },
-        { title: "Só to fazendo o Design!", project: "Michael Etc Etc", days: 1 },
-    ]
-
-    const people = [
-        { name: "Michael", email: "michael@bolt360.com.br" },
-        { name: "Matheus", email: "matheus@bolt360.com.br" },
     ]
 
     const handleAddProject = () => {
@@ -73,13 +64,13 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Tarefas Atribuídas (3)</CardTitle>
+                            <CardTitle>Tarefas Atribuídas ({tableData.length})</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {tasks.map((task, index) => (
+                            {tableData.map((task, index) => (
                                 <div key={index} className="mb-4 p-4 bg-card rounded-lg shadow">
-                                    <h3 className="font-semibold">{task.title}</h3>
-                                    <p className="text-sm text-muted-foreground">{task.project} • {task.days} Dias</p>
+                                    <h3 className="font-semibold">{task.task}</h3>
+                                    <p className="text-sm text-muted-foreground">{task.projeto}</p>
                                 </div>
                             ))}
                             <Button variant="outline" className="w-full">Mostrar tudo</Button>
@@ -88,16 +79,16 @@ function DashboardContent() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Projetos ({projects.length})</CardTitle>
+                            <CardTitle>Projetos ({tableData.length})</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {projects.map((project, index) => (
+                            {tableData.map((project, index) => (
                                 <div key={index} className="flex items-center justify-between mb-4">
                                     <div className="flex items-center">
                                         <span className={`w-8 h-8 bg-primary rounded-md mr-3 flex items-center justify-center text-primary-foreground font-bold`}>
-                                            {project.name[0]}
+                                            {project.projeto[0]}
                                         </span>
-                                        <span>{project.name}</span>
+                                        <span>{project.task}</span>
                                     </div>
                                     <Button
                                         variant="ghost"
@@ -145,10 +136,10 @@ function DashboardContent() {
 
                 <Card className="mt-6">
                     <CardHeader>
-                        <CardTitle>Pessoas (2)</CardTitle>
+                        <CardTitle>Pessoas ({members.length})</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-wrap gap-4">
-                        {people.map((person, index) => (
+                        {members.map((person, index) => (
                             <div key={index} className="flex flex-col items-center">
                                 <Avatar className="w-16 h-16">
                                     <AvatarFallback>{person.name[0]}</AvatarFallback>
@@ -167,7 +158,9 @@ function DashboardContent() {
 export default function DashboardPipefull() {
     return (
         <DashboardProvider>
-            <DashboardContent />
+            <TasksProvider>
+                <DashboardContent />
+            </TasksProvider>
         </DashboardProvider>
     )
 }
