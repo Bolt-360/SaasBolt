@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
  * @param {SignInCardProps} props
  * @returns {JSX.Element}
  */
-export const SignInCard = ({setState}) => {
+export const SignInCard = ({ setState }) => {
   const { toast } = useToast();
   const navigate = useNavigate()
 
@@ -28,42 +28,11 @@ export const SignInCard = ({setState}) => {
 
   const onPasswordSignIn = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    console.log('Login attempt:', { email, password });
-    
-    //ADIÇÃO DA API DE LOGIN NO BOTÃO DE ENTRAR
-    //const response = await signincall.login(email, password);
-    try {
-      const response = await signincall.login(email, password) // Exemplo de requisição à API
-    
-      if (response && response.data.token) {
-        toast({
-          title: "Login bem-sucedido",
-          description: response.data.token, // Corrigi para response.data.token
-          variant: "default",
-        });
-        navigate('/');
-      } else {
-        toast({
-          title: "Erro no login",
-          description: response.data.message || "Erro desconhecido", // Prevenção de erro caso message não exista
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro no login",
-        description: error.response?.data?.message || "Erro inesperado. Tente novamente.", // Tratamento de erro com fallback
-        variant: "destructive",
-      });
-    }
-    
 
-    setIsLoading(false);
-
+    await login(email, password);
   };
 
-  return(
+  return (
     <>
       <div className="bg-card rounded-2xl shadow-lg ring-1 ring-border">
         <CardTitle className="text-center text-1xl font-bold text-primary pt-4">Faça login para continuar</CardTitle>
@@ -71,7 +40,7 @@ export const SignInCard = ({setState}) => {
           <form className="space-y-6" onSubmit={onPasswordSignIn}>
             <div>
               <Label htmlFor="email" className="block text-sm font-medium text-muted-foreground">
-                Email 
+                Email
               </Label>
               <div className="mt-1">
                 <Input
