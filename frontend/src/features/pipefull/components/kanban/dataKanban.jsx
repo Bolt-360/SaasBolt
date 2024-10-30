@@ -4,75 +4,92 @@ import { KanbanHeader } from "./kanbanHeader";
 import { KanbanCard } from "./kanbanCard";
 import { usePage } from "../../Tasks/TasksContext";
 
-// Função para carregar e salvar tarefas no localStorage
-const loadTasksFromStorage = () => JSON.parse(localStorage.getItem('tasks')) || [];
-const saveTasksToStorage = (tasks) => localStorage.setItem('tasks', JSON.stringify(tasks));
-
 export function DataKanban({ dataTable }) {
-    const [tasks, setTasks] = useState(dataTable || loadTasksFromStorage);
+    const [tasks, setTasks] = useState([]);
     const { taskStatus } = usePage();
 
+    // Efeito para sincronizar com dataTable
     useEffect(() => {
-        saveTasksToStorage(tasks);
-    }, [tasks]);
+        if (dataTable) {
+            // Garante que não há duplicatas usando um Map com o ID como chave
+            const uniqueTasks = new Map();
+            dataTable.forEach(task => {
+                uniqueTasks.set(task.id, task);
+            });
+            setTasks(Array.from(uniqueTasks.values()));
+        }
+    }, [dataTable]);
 
     const onDragEnd = (result) => {
         const { source, destination } = result;
 
-        if (!destination) return; 
+        if (!destination) return;
+
+        const updatedTasks = Array.from(tasks);
 
         if (source.droppableId === destination.droppableId) {
-            const updatedTasks = Array.from(tasks);
+            // Reordenação na mesma coluna
             const [movedTask] = updatedTasks.splice(source.index, 1);
             updatedTasks.splice(destination.index, 0, movedTask);
-            setTasks(updatedTasks);
-
         } else {
-            const updatedTasks = tasks.map((task) => {
-                if (task.id === Number(result.draggableId)) {
-                    return { ...task, status: destination.droppableId };
-                }
-                return task;
-            });
-            setTasks(updatedTasks);
+            // Movendo entre colunas
+            const taskIndex = updatedTasks.findIndex(
+                task => String(task.id) === result.draggableId
+            );
+            if (taskIndex !== -1) {
+                updatedTasks[taskIndex] = {
+                    ...updatedTasks[taskIndex],
+                    status: destination.droppableId
+                };
+            }
         }
+
+        setTasks(updatedTasks);
+    };
+
+    // Memoize as tarefas filtradas para cada status
+    const getTasksByStatus = (status) => {
+        return tasks.filter(task => task.status === status);
     };
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex overflow-x-auto">
+            <div className="flex overflow-x-auto gap-4 p-4">
                 {taskStatus.map((status) => {
-                    const taskCount = tasks.filter(task => task.status === status).length;
-                    console.log("Tasks for status:", status, tasks.filter(task => task.status === status)); 
+                    const statusTasks = getTasksByStatus(status);
                     return (
-                        <div key={status} className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-[200px] mb-2">
-                            <KanbanHeader status={status} taskCount={taskCount} />
+                        <div 
+                            key={status} 
+                            className="flex-1 bg-muted p-4 rounded-lg min-w-[300px] max-w-[350px]"
+                        >
+                            <KanbanHeader 
+                                status={status} 
+                                taskCount={statusTasks.length} 
+                            />
                             <Droppable droppableId={status}>
                                 {(provided) => (
                                     <div
                                         {...provided.droppableProps}
                                         ref={provided.innerRef}
-                                        className="min-h-[200px] py-1.5"
+                                        className="min-h-[200px] mt-4 space-y-4"
                                     >
-                                        {tasks
-                                            .filter(task => task.status === status)
-                                            .map((task, index) => (
-                                                <Draggable 
-                                                    key={task.id} 
-                                                    draggableId={String(task.id)} 
-                                                    index={index}
-                                                >
-                                                    {(provided) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                        >
-                                                            <KanbanCard task={task} /> 
-                                                        </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
+                                        {statusTasks.map((task, index) => (
+                                            <Draggable 
+                                                key={task.id} 
+                                                draggableId={String(task.id)} 
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                    >
+                                                        <KanbanCard task={task} />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
                                         {provided.placeholder}
                                     </div>
                                 )}

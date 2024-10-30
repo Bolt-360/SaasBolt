@@ -1,9 +1,21 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-// dados que serão utilizados na tabela
-let id = 1;
-const dataTable = [
-    { id: id++, task: 'Prototipação', projeto: "AppBolt", responsavel: "Estagiários", data: new Date(), status: "Backlog", dueDate: new Date()},
+// Criei essa função para o ID ser gerado basicamente usando um timestamp, evitando assim a duplicação dos ID'S.
+const generateUniqueId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+// dados iniciais
+const initialTasks = [
+    { 
+        id: generateUniqueId(), 
+        task: 'Prototipação', 
+        projeto: "AppBolt", 
+        responsavel: "Estagiários", 
+        data: new Date(), 
+        status: "Backlog", 
+        dueDate: new Date()
+    },
 ];
 
 const taskStatus = ["Backlog", "A fazer", "Em andamento", "Em revisão", "Concluído"];
@@ -15,21 +27,36 @@ const members = [
     { name: 'Michael', email: 'michael@bolt360.com.br', funcao: 'Estagiário' }
 ];
 
-// Criação do contexto
 const TasksContext = createContext(undefined);
 
 export const TasksProvider = ({ children }) => {
-    // Estado para gerenciamento de páginas e botões ativos
-    const [pageState, setPageState] = useState("table"); 
+    const [pageState, setPageState] = useState("table");
     const [activeButton, setActiveButton] = useState("table");
     
     const [tableData, setTableData] = useState(() => {
-        const savedTasks = localStorage.getItem("tasks");
-        return savedTasks ? JSON.parse(savedTasks) : dataTable;
+        try {
+            const savedTasks = localStorage.getItem("tasks");
+            if (savedTasks) {
+                const parsed = JSON.parse(savedTasks);
+                // Espero que isso garanta que todas as tasks tem um ID único );
+                return parsed.map(task => ({
+                    ...task,
+                    id: task.id || generateUniqueId()
+                }));
+            }
+            return initialTasks;
+        } catch (error) {
+            console.error('Erro ao carregar tasks:', error);
+            return initialTasks;
+        }
     });
     
     useEffect(() => {
-        localStorage.setItem('tasks', JSON.stringify(tableData));
+        try {
+            localStorage.setItem('tasks', JSON.stringify(tableData));
+        } catch (error) {
+            console.error('Erro ao salvar tasks:', error);
+        }
     }, [tableData]);
 
     const setTable = () => {
@@ -48,10 +75,13 @@ export const TasksProvider = ({ children }) => {
     };
 
     const addTask = (newTask) => {
-        newTask.id = id++;
+        const taskWithId = {
+            ...newTask,
+            id: generateUniqueId()
+        };
+        
         setTableData(prev => {
-            const updatedData = [...prev, newTask];
-            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
+            const updatedData = [...prev, taskWithId];
             return updatedData;
         });
     };
@@ -59,7 +89,6 @@ export const TasksProvider = ({ children }) => {
     const removeTask = (taskId) => {
         setTableData(prev => {
             const updatedData = prev.filter(task => task.id !== taskId);
-            localStorage.removeItem("tasks", JSON.stringify(updatedData)); 
             return updatedData;
         });
     };
@@ -69,7 +98,6 @@ export const TasksProvider = ({ children }) => {
             const updatedData = prev.map(task => 
                 task.id === taskId ? { ...task, ...updatedTask } : task
             );
-            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
             return updatedData;
         });
     };
@@ -79,7 +107,6 @@ export const TasksProvider = ({ children }) => {
             const updatedData = prev.map(task => 
                 task.id === taskId ? { ...task, status: newStatus } : task
             );
-            localStorage.setItem("tasks", JSON.stringify(updatedData)); 
             return updatedData;
         });
     };
@@ -104,7 +131,6 @@ export const TasksProvider = ({ children }) => {
     );
 };
 
-// Hook para acessar o contexto
 export const usePage = () => {
     const context = useContext(TasksContext);
     if (context === undefined) {
