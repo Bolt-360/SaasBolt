@@ -140,46 +140,88 @@ export const useFetchCampaign = () => {
     }
   };
 
+  const determineMessageType = (selectedType) => {
+    switch (selectedType) {
+      case 'mensagem_imagem':
+      case 'mensagem_documento':
+        return 'MEDIA';
+      case 'audio':
+        return 'AUDIO';
+      case 'mensagem':
+      default:
+        return 'TEXT';
+    }
+  };
+
   const createCampaign = async (formData) => {
+    setIsLoading(true);
+    
     try {
-      // Criar FormData
-      const form = new FormData();
+      const payload = new FormData();
       
-      // Adicionar campos básicos
-      form.append('name', formData.nome);
-      form.append('type', formData.tipo.toUpperCase());
-      form.append('startImmediately', formData.inicioImediato.toString());
-      form.append('messageInterval', formData.intervalo.toString());
+      // Log para debug
+      console.log('Tipo da campanha:', formData.tipo);
+      console.log('Arquivo:', formData.arquivo);
       
+      // Dados básicos
+      payload.append("name", formData.nome);
+      payload.append("messageInterval", formData.intervalo);
+      payload.append("startImmediately", formData.inicioImediato);
+      
+      // Data de agendamento
+      const scheduledDate = formData.inicioImediato 
+        ? new Date() 
+        : new Date(formData.dataInicio);
+      payload.append("scheduledTo", scheduledDate.toISOString());
+
+      // Define o tipo baseado na seleção do dropdown
+      const campaignType = determineMessageType(formData.tipo);
+      payload.append('type', campaignType);
+
+      // Adiciona o arquivo como 'media' se for tipo MEDIA
+      if (campaignType === 'MEDIA') {
+        if (!formData.arquivo) {
+          throw new Error('É necessário anexar um arquivo para campanhas do tipo MEDIA');
+        }
+        
+        // Anexa o arquivo sempre como 'media'
+        payload.append('media', formData.arquivo);
+        console.log('Arquivo anexado ao payload como media:', formData.arquivo.name);
+      }
+
       // Adicionar mensagens
       const messages = formData.mensagens.map(msg => ({
-        type: "TEXT",
+        type: campaignType,
         content: msg.principal,
         variations: msg.alternativas.filter(alt => alt.trim() !== '')
       }));
-      form.append('messages', JSON.stringify(messages));
       
-      // Adicionar instanceId
-      form.append('instanceIds', JSON.stringify([formData.instancia]));
+      payload.append('messages', JSON.stringify(messages));
+      payload.append('instanceIds', JSON.stringify([formData.instancia]));
       
-      // Adicionar arquivo CSV
+      // Arquivo CSV
       if (formData.csvFile) {
-        form.append('csv', formData.csvFile);
+        payload.append('csv', formData.csvFile);
+      }
+
+      // Log do payload final
+      for (let pair of payload.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
       }
 
       const response = await fetch(`/api/campaigns/${workspaceId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          // Não incluir Content-Type, o browser vai definir automaticamente
         },
-        body: form
+        body: payload
       });
 
       const data = await response.json();
+      console.log('Resposta do servidor:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro ao criar campanha');
+        throw new Error(data.message || data.error || 'Erro ao criar campanha');
       }
 
       setCampanhas(prev => [data.data, ...prev]);
@@ -192,13 +234,26 @@ export const useFetchCampaign = () => {
       return data.data;
 
     } catch (error) {
-      console.error('Erro ao criar campanha:', error);
+      console.error('Erro detalhado ao criar campanha:', error);
+      
+      let errorMessage = 'Ocorreu um erro ao criar a campanha';
+      
+      if (error.message.includes('arquivo')) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (typeof error.message === 'string') {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Erro",
-        description: error.message || "Falha ao criar campanha",
+        title: "Erro ao criar campanha",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 

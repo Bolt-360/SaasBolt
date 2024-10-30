@@ -1,18 +1,23 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { useFetchCampaign } from '@/hooks/useFetchCampaign'
 import { useCampaignSocket } from '@/hooks/useCampaignSocket'
-import { Loader2, Clock, Trash2 } from "lucide-react"
+import { Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useDeleteCampaign } from '@/hooks/useDeleteCampaign'
 import { CampaignDetailsDialog } from "@/components/ui/campaign-details-dialog"
+import { CountdownTimer } from './CountdownTimer'
+import { Toaster } from 'react-hot-toast';
+import { useSocketContext } from '@/context/SocketContext';
+import { useToast } from "@/hooks/use-toast"
+import Confetti from 'react-confetti';
+import { useNavigate } from 'react-router-dom';
+import { CelebrationModal } from '@/components/CelebrationModal';
 
-// Função para traduzir os status
 const getStatusLabel = (status) => {
     const statusMap = {
         'PENDING': 'Pendente',
@@ -26,17 +31,18 @@ const getStatusLabel = (status) => {
     return statusMap[status] || status;
 };
 
-const CampanhaCard = ({ campanha, onDelete, status }) => {
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-    const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+const CampanhaCard = ({ campanha, status }) => {
+    const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+    const [showDetailsDialog, setShowDetailsDialog] = React.useState(false)
     const { deleteCampaign, isLoading } = useDeleteCampaign()
     const isProcessing = campanha.status === 'PROCESSING'
 
     const handleDelete = async () => {
         try {
+            console.log('Deleting campaign with ID:', campanha.id);
+            console.log('Workspace ID:', campanha.workspaceId);
             await deleteCampaign(campanha.workspaceId, campanha.id)
             setShowDeleteDialog(false)
-            onDelete?.()
         } catch (error) {
             console.error('Erro ao excluir:', error)
         }
@@ -76,13 +82,13 @@ const CampanhaCard = ({ campanha, onDelete, status }) => {
                                 <div className="text-sm space-y-1">
                                     <div className="flex justify-between">
                                         <span>Progresso:</span>
-                                        <span>{status?.progress || 0}%</span>
+                                        <span>{Math.round(status?.progress || 0)}%</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Mensagens:</span>
                                         <span>
-                                            {status?.currentMessage || 0}/
-                                            {status?.totalMessages || campanha.totalMessages || 0}
+                                            {status?.stats?.sent || 0}/
+                                            {campanha.totalMessages || 0}
                                         </span>
                                     </div>
                                     <div className="flex justify-between text-green-600">
@@ -93,6 +99,7 @@ const CampanhaCard = ({ campanha, onDelete, status }) => {
                                         <span>Falhas:</span>
                                         <span>{status?.stats?.failed || 0}</span>
                                     </div>
+                                    <CountdownTimer countdown={status?.countdown} />
                                 </div>
                             </div>
                         )}
@@ -104,11 +111,11 @@ const CampanhaCard = ({ campanha, onDelete, status }) => {
                                 </div>
                                 <div className="flex justify-between text-green-600">
                                     <span>Enviadas:</span>
-                                    <span>{campanha.successCount || 0}</span>
+                                    <span>{campanha.successCount || status?.stats?.sent || 0}</span>
                                 </div>
                                 <div className="flex justify-between text-red-600">
                                     <span>Falhas:</span>
-                                    <span>{campanha.failureCount || 0}</span>
+                                    <span>{campanha.failureCount || status?.stats?.failed || 0}</span>
                                 </div>
                             </div>
                         )}
@@ -152,54 +159,171 @@ const CampanhaCard = ({ campanha, onDelete, status }) => {
 }
 
 const ListarCampanhas = () => {
-    const { campaigns, campaignsStatus } = useCampaignSocket();
-    
-    const renderCampanhas = (filteredCampaigns) => (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredCampaigns.map(campanha => (
-                <CampanhaCard 
-                    key={campanha.id} 
-                    campanha={campanha}
-                    status={campaignsStatus[campanha.id]}
-                />
-            ))}
+    const { 
+        campaigns, 
+        campaignsStatus,
+        completedCampaign,
+        showCelebration,
+        handleCloseCelebration
+    } = useCampaignSocket();
+    const [activeTab, setActiveTab] = useState('em_andamento');
+    const navigate = useNavigate();
+
+    // Função para obter a mensagem de estado vazio
+    const getEmptyMessage = (tab) => {
+        const messages = {
+            em_andamento: 'Nenhuma campanha em andamento no momento',
+            agendadas: 'Nenhuma campanha agendada no momento',
+            completed: 'Nenhuma campanha concluída ainda',
+            failed: 'Nenhuma campanha com falhas',
+            todas: 'Nenhuma campanha criada ainda'
+        };
+        return messages[tab] || 'Nenhuma campanha encontrada';
+    };
+
+    const renderEmptyState = (tab) => (
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-gray-50 rounded-lg">
+            <p className="text-gray-500 text-lg">{getEmptyMessage(tab)}</p>
+            <Button 
+                onClick={() => navigate('/app/campanhas/disparador')}
+                className="flex items-center gap-2"
+            >
+                <Plus size={16} />
+                Criar Nova Campanha
+            </Button>
         </div>
     );
 
+    const renderCampanhas = (campanhas, currentTab) => {
+        if (!campanhas || campanhas.length === 0) {
+            return renderEmptyState(currentTab);
+        }
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {campanhas.map((campanha) => (
+                    <CampanhaCard 
+                        key={campanha.id} 
+                        campanha={campanha} 
+                        status={campaignsStatus[campanha.id]}
+                    />
+                ))}
+            </div>
+        );
+    };
+
     return (
-        <div className="h-screen overflow-hidden">
-            <main className="h-full overflow-y-auto">
-                <div className="p-4 pb-[30px] space-y-6">
-                    <Tabs defaultValue="em_andamento" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="em_andamento">Em Andamento</TabsTrigger>
-                            <TabsTrigger value="completed">Concluídas</TabsTrigger>
-                            <TabsTrigger value="failed">Falhas</TabsTrigger>
-                            <TabsTrigger value="todas">Todas</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="em_andamento" className="mt-4">
-                            {renderCampanhas(campaigns.filter(c => c.status === 'PROCESSING'))}
-                        </TabsContent>
+        <>
+            {/* Modal de Celebração */}
+            <CelebrationModal
+                isOpen={showCelebration}
+                onClose={handleCloseCelebration}
+                campaign={completedCampaign}
+                stats={completedCampaign?.stats}
+            />
 
-                        <TabsContent value="completed" className="mt-4">
-                            {renderCampanhas(campaigns.filter(c => c.status === 'COMPLETED'))}
-                        </TabsContent>
+            <div className="h-screen overflow-hidden">
+                <main className="h-full overflow-y-auto">
+                    <div className="max-w-[1600px] pb-[60px] mx-auto p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-2xl font-semibold">Campanhas</h1>
+                            <Button 
+                                onClick={() => navigate('/app/campanhas/disparador')}
+                                className="flex items-center gap-2"
+                            >
+                                <Plus size={16} />
+                                Nova Campanha
+                            </Button>
+                        </div>
 
-                        <TabsContent value="failed" className="mt-4">
-                            {renderCampanhas(campaigns.filter(c => 
-                                c.status === 'ERROR' || c.status === 'COMPLETED_WITH_ERRORS'
-                            ))}
-                        </TabsContent>
+                        <div className="bg-white rounded-lg shadow">
+                            <Tabs 
+                                value={activeTab} 
+                                onValueChange={setActiveTab} 
+                                className="w-full"
+                            >
+                                <div className="border-b">
+                                    <TabsList className="h-12 w-full justify-start gap-4 rounded-none bg-transparent p-0">
+                                        <TabsTrigger 
+                                            value="em_andamento"
+                                            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-4"
+                                        >
+                                            Em Andamento
+                                        </TabsTrigger>
+                                        <TabsTrigger 
+                                            value="agendadas"
+                                            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-4"
+                                        >
+                                            Agendadas
+                                        </TabsTrigger>
+                                        <TabsTrigger 
+                                            value="completed"
+                                            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-4"
+                                        >
+                                            Concluídas
+                                        </TabsTrigger>
+                                        <TabsTrigger 
+                                            value="failed"
+                                            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-4"
+                                        >
+                                            Falhas
+                                        </TabsTrigger>
+                                        <TabsTrigger 
+                                            value="todas"
+                                            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-4"
+                                        >
+                                            Todas
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </div>
 
-                        <TabsContent value="todas" className="mt-4">
-                            {renderCampanhas(campaigns)}
-                        </TabsContent>
-                    </Tabs>
-                </div>
-            </main>
-        </div>
+                                <div className="p-6">
+                                    <TabsContent value="em_andamento" className="mt-4">
+                                        {renderCampanhas(
+                                            campaigns.filter(c => 
+                                                c.status === 'PROCESSING' || 
+                                                c.status === 'Finalizada 🎯'
+                                            ),
+                                            'em_andamento'
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="agendadas" className="mt-4">
+                                        {renderCampanhas(
+                                            campaigns.filter(c => c.status === 'SCHEDULED'),
+                                            'agendadas'
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="completed" className="mt-4">
+                                        {renderCampanhas(
+                                            campaigns.filter(c => c.status === 'COMPLETED'),
+                                            'completed'
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="failed" className="mt-4">
+                                        {renderCampanhas(
+                                            campaigns.filter(c => 
+                                                c.status === 'ERROR' || 
+                                                c.status === 'FAILED' ||
+                                                c.status === 'COMPLETED_WITH_ERRORS'
+                                            ),
+                                            'failed'
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="todas" className="mt-4">
+                                        {renderCampanhas(campaigns, 'todas')}
+                                    </TabsContent>
+                                </div>
+                            </Tabs>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </>
     );
 };
 
-export default ListarCampanhas
+export default ListarCampanhas;

@@ -31,7 +31,6 @@ export default function StepBasicInfo({ formData, handleInputChange }) {
             <SelectItem value="mensagem">Mensagem</SelectItem>
             <SelectItem value="mensagem_imagem">Mensagem + Imagem</SelectItem>
             <SelectItem value="mensagem_documento">Mensagem + Documento</SelectItem>
-            <SelectItem value="audio">Áudio</SelectItem>
           </SelectContent>
         </Select>
       </div>

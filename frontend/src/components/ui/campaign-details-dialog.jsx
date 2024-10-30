@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
@@ -57,6 +58,8 @@ export function CampaignDetailsDialog({ open, onOpenChange, campaign, status }) 
     useEffect(() => {
         if (open && campaign) {
             fetchMessages(campaign.workspaceId, campaign.id);
+            console.log('Fetching messages for campaign:', campaign.id);
+            console.log('Workspace ID:', campaign.workspaceId);
         }
     }, [open, campaign]);
 
@@ -65,6 +68,9 @@ export function CampaignDetailsDialog({ open, onOpenChange, campaign, status }) 
             <DialogContent className="max-w-[800px] max-h-[80vh]">
                 <DialogHeader>
                     <DialogTitle>Detalhes da Campanha</DialogTitle>
+                    <DialogDescription>
+                        Histórico de mensagens e informações da campanha
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">

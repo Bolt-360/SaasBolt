@@ -1,5 +1,6 @@
 import models from '../models/index.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import { messageQueue } from '../utils/MessageQueue.js';
 
 const { Message, Conversation, User, UserWorkspace } = models;
 
@@ -50,65 +51,50 @@ export const getMessages = async (req, res) => {
     }
 };
 
-export const sendMessage = async (req, res) => {
+export const sendMessage = async (req, res, next) => {
     try {
-        const { workspaceId, conversationId } = req.params;
-        const { content } = req.body;
+        const { content, recipientId, workspaceId } = req.body;
         const senderId = req.user.id;
 
-        // Verificar se o usuário pertence ao workspace
-        const userWorkspace = await UserWorkspace.findOne({ 
-            where: { userId: senderId, workspaceId } 
-        });
-        if (!userWorkspace) {
-            return res.status(403).json({ message: "Você não tem acesso a este workspace" });
+        // Validações...
+        if (!content || !recipientId || !workspaceId) {
+            return next(errorHandler(400, "Dados incompletos para envio da mensagem"));
         }
 
-        // Verificar se o usuário pertence à conversa
-        const conversation = await Conversation.findOne({
-            where: { id: conversationId, workspaceId },
-            include: [{ 
-                model: User, 
-                as: 'participants', 
-                where: { id: senderId },
-                through: { attributes: [] }
-            }]
-        });
-        if (!conversation) {
-            return res.status(403).json({ message: "Você não tem acesso a esta conversa" });
-        }
+        // Função que realmente envia a mensagem
+        const sendMessageFunction = async (messageData) => {
+            const message = await Message.create({
+                content: messageData.content,
+                senderId: messageData.senderId,
+                recipientId: messageData.recipientId,
+                workspaceId: messageData.workspaceId
+            });
 
-        const message = await Message.create({
-            content,
-            senderId,
-            conversationId
-        });
-
-        const createdMessage = await Message.findByPk(message.id, {
-            include: [{ 
-                model: User, 
-                as: 'sender', 
-                attributes: ['id', 'username', 'profilePicture'] 
-            }]
-        });
-
-        // Emitir evento de nova mensagem via Socket.IO
-        const conversationWithParticipants = await Conversation.findByPk(conversationId, {
-            include: [{ model: User, as: 'participants' }]
-        });
-
-        conversationWithParticipants.participants.forEach(participant => {
-            if (participant.id !== senderId) {
-                const receiverSocketId = getReceiverSocketId(participant.id);
-                if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("newMessage", createdMessage);
-                }
+            // Emitir evento via socket
+            const io = req.app.get('io');
+            const receiverSocketId = getReceiverSocketId(recipientId);
+            
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newMessage", message);
             }
+
+            return message;
+        };
+
+        // Adicionar à fila de mensagens
+        await messageQueue.add(
+            { content, senderId, recipientId, workspaceId },
+            sendMessageFunction
+        );
+
+        res.status(202).json({ 
+            message: "Mensagem adicionada à fila de envio",
+            status: "queued"
         });
 
-        res.status(201).json(createdMessage);
     } catch (error) {
-        res.status(500).json({ message: "Erro ao enviar mensagem" });
+        console.error('Erro ao enviar mensagem:', error);
+        next(error);
     }
 };
 

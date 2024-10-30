@@ -5,58 +5,58 @@ import { getCsvContent } from '../utils/getCsvContent.js';
 import { sendWhatsAppMessage } from './sendWhatsAppMessage.js';
 import { checkImmediateCampaigns } from './checkImmediateCampaigns.js';
 import { processCsvContent } from '../controllers/processCsvContent.js';
+import { Op } from 'sequelize';
+
+// Função auxiliar para esperar
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Função para iniciar a campanha
 const startCampaign = async (campaignId) => {
-    let campaign;
-    let successCount = 0;
-    let failureCount = 0;
-    let startTime = Date.now();
-    let contacts = [];
-    let totalMessages = 0;
-
     try {
-        campaign = await Campaign.findByPk(campaignId);
+        // Busca a campanha
+        const campaign = await Campaign.findByPk(campaignId);
         if (!campaign) throw new Error('Campanha não encontrada');
 
-        // Atualizar status para PROCESSING e emitir evento
-        await campaign.update({ status: 'PROCESSING' });
-        console.log('\x1b[35m%s\x1b[0m', `[SOCKET EMIT] campaignStatusChanged:`, {
-            campaignId: campaign.id,
-            previousStatus: 'PENDING',
-            newStatus: 'PROCESSING'
-        });
-        io.to(`workspace_${campaign.workspaceId}`).emit('campaignStatusChanged', {
-            campaignId: campaign.id,
-            previousStatus: 'PENDING',
-            newStatus: 'PROCESSING',
-            timestamp: new Date()
-        });
-
-        // Log e emissão do início da campanha
-        console.log('\x1b[34m%s\x1b[0m', `[SOCKET EMIT] campaignStarted:`, {
-            campaignId: campaign.id,
-            name: campaign.name,
-            workspaceId: campaign.workspaceId
-        });
-        
-        // Buscar e processar o CSV
-        const csvContent = await getCsvContent(campaign.csvFileUrl);
-        contacts = await processCsvContent(csvContent);
-        
+        // Processa as mensagens primeiro
         const messages = Array.isArray(campaign.messages) 
             ? campaign.messages 
             : JSON.parse(campaign.messages);
 
-        totalMessages = contacts.length * messages.length;
+        // Busca e processa o CSV
+        const csvContent = await getCsvContent(campaign.csvFileUrl);
+        const contacts = await processCsvContent(csvContent);
+        
+        // Calcula o total de mensagens ANTES de emitir o evento
+        const totalMessages = contacts.length * messages.length;
 
+        console.log('\x1b[34m%s\x1b[0m', `[SOCKET EMIT] campaignStarted:`, {
+            campaignId: campaign.id,
+            name: campaign.name,
+            workspaceId: campaign.workspaceId,
+            totalMessages,
+            totalContacts: contacts.length,
+            messageCount: messages.length,
+            messageInterval: campaign.messageInterval
+        });
+        
+        // Emite o evento com o intervalo incluído
         io.to(`workspace_${campaign.workspaceId}`).emit('campaignStarted', {
             campaignId: campaign.id,
             name: campaign.name,
+            workspaceId: campaign.workspaceId,
             startTime: new Date(),
+            totalMessages,
             totalContacts: contacts.length,
-            totalMessages
+            messageCount: messages.length,
+            messageInterval: campaign.messageInterval
         });
+
+        // Atualiza status para PROCESSING
+        await campaign.update({ status: 'PROCESSING' });
+        
+        let successCount = 0;
+        let failureCount = 0;
+        let startTime = Date.now();
 
         // Durante o processamento
         for (const contact of contacts) {
@@ -104,6 +104,16 @@ const startCampaign = async (campaignId) => {
                         status: 'SENT'
                     });
 
+                    // Aguarda o intervalo configurado antes da próxima mensagem
+                    if (contacts.indexOf(contact) < contacts.length - 1 || messages.indexOf(messageObj) < messages.length - 1) {
+                        console.log(`\x1b[36m[Campanha ${campaign.id}]\x1b[0m Aguardando ${campaign.messageInterval} segundos antes da próxima mensagem...`);
+                        
+                        // Contagem regressiva
+                        for (let second = campaign.messageInterval; second > 0; second--) {
+                            process.stdout.write(`\r\x1b[33m[Campanha ${campaign.id}]\x1b[0m Tempo restante: ${second} segundos...`);
+                            await wait(1000);
+                        }
+                    }
                 } catch (error) {
                     // Registrar falha no envio
                     await MessageHistory.create({
@@ -185,11 +195,7 @@ const startCampaign = async (campaignId) => {
         });
 
     } catch (error) {
-        console.error('Erro detalhado na campanha:', {
-            campaignId,
-            error: error.message,
-            stack: error.stack
-        });
+        console.error('Erro ao iniciar campanha:', error);
         throw error;
     }
 };
@@ -230,13 +236,50 @@ const debouncedCheck = () => {
     timeoutId = setTimeout(checkImmediateCampaigns, 5000);
 };
 
-// Agendar verificação a cada 5 segundos
+// Função para verificar campanhas agendadas
+const checkScheduledCampaigns = async () => {
+    try {
+        const now = new Date();
+        
+        // Busca campanhas agendadas que já passaram do horário e ainda não foram iniciadas
+        const scheduledCampaigns = await Campaign.findAll({
+            where: {
+                status: 'PENDING',
+                startImmediately: false,
+                scheduledTo: {
+                    [Op.lte]: now // Menor ou igual ao horário atual
+                },
+                isActive: true
+            }
+        });
+
+        console.log(`\x1b[34m[Campanhas Agendadas]\x1b[0m Verificando... Encontradas: ${scheduledCampaigns.length}`);
+
+        for (const campaign of scheduledCampaigns) {
+            console.log(`\x1b[34m[Campanha ${campaign.id}]\x1b[0m Iniciando campanha agendada para ${campaign.scheduledTo}`);
+            startCampaign(campaign.id).catch(error => {
+                console.error(`\x1b[31m[Campanha ${campaign.id}]\x1b[0m Erro ao iniciar campanha agendada:`, error);
+            });
+        }
+    } catch (error) {
+        console.error('\x1b[31m[Campanhas Agendadas]\x1b[0m Erro ao verificar campanhas:', error);
+    }
+};
+
+// Verificação periódica de campanhas agendadas (a cada 1 minuto)
+setInterval(checkScheduledCampaigns, 60 * 1000);
+
+// Executa uma verificação inicial ao iniciar o servidor
+checkScheduledCampaigns();
+
+// Verificação de campanhas imediatas (já existente)
 setInterval(async () => {
     try {
         const hasPending = await Campaign.count({
             where: {
                 status: 'PENDING',
-                startImmediately: true
+                startImmediately: true,
+                isActive: true
             }
         });
 

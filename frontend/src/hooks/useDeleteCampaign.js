@@ -8,6 +8,7 @@ export const useDeleteCampaign = () => {
     const { authUser } = useAuthContext();
 
     const deleteCampaign = async (workspaceId, campaignId) => {
+
         try {
             setIsLoading(true);
             

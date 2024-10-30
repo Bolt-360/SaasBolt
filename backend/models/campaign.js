@@ -15,11 +15,17 @@ export default (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
     name: DataTypes.STRING,
     type: DataTypes.STRING,
     startImmediately: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      allowNull: false,
+      defaultValue: true
     },
     startDate: DataTypes.DATE,
     messageInterval: DataTypes.INTEGER,
@@ -29,7 +35,11 @@ export default (sequelize) => {
       defaultValue: []
     },
     csvFileUrl: DataTypes.STRING,
-    imageUrl: DataTypes.STRING,
+    imageUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'URL da imagem armazenada no MinIO'
+    },
     status: {
       type: DataTypes.STRING,
       defaultValue: 'PENDING'
@@ -44,7 +54,12 @@ export default (sequelize) => {
     },
     error: DataTypes.TEXT,
     lastProcessedAt: DataTypes.DATE,
-    instanceId: DataTypes.STRING
+    instanceId: DataTypes.STRING,
+    scheduledTo: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Data e hora agendada para início da campanha'
+    }
   }, {
     sequelize,
     modelName: 'Campaign',

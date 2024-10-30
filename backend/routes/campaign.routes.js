@@ -12,6 +12,6 @@ router.post('/:workspaceId',
 );
 router.get('/:workspaceId', campaignController.getCampaigns);
 router.put('/:id', campaignController.updateCampaign);
-router.delete('/:workspaceId/:id', campaignController.deleteCampaign);
+router.delete('/:workspaceId/:campaignId', campaignController.deleteCampaign);
 
 export default router;

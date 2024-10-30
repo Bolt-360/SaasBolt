@@ -100,12 +100,18 @@ app.use((err, req, res, next) => {
 io.on('connection', (socket) => {
     console.log('Novo cliente conectado');
 
-    socket.on('joinWorkspace', (workspaceId) => {
-        socket.join(`workspace_${workspaceId}`);
+    socket.on('joinWorkspace', (workspace) => {
+        socket.join(workspace);
+        console.log(`Cliente ${socket.id} entrou na sala: ${workspace}`);
+    });
+
+    socket.on('leaveWorkspace', (workspace) => {
+        socket.leave(workspace);
+        console.log(`Cliente ${socket.id} saiu da sala: ${workspace}`);
     });
 
     socket.on('disconnect', () => {
-        console.log('Cliente desconectado');
+        console.log(`Cliente ${socket.id} desconectado`);
     });
 
     // ... outros handlers de socket
