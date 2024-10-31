@@ -48,7 +48,7 @@ export function TableTasks({ dataTable }) {
                                 <span className={`rounded-lg p-1 text-white ${getStatusClass(data.status)}`}>{data.status}</span>
                             </TableCell>
                             <TableCell>
-                                <DropMenu update={updateTask} remove={() => removeTask(data.id)}/>
+                                <DropMenu data={data} update={updateTask} remove={() => removeTask(data.id)}/>
                             </TableCell>
                         </TableRow>
                     ))}
