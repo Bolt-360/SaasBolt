@@ -13,8 +13,7 @@ import CampaignModel from './Campaign.js';
 import MessageCampaignModel from './messageCampaign.js';
 import RecipientModel from './recipient.js';
 import MessageHistoryModel from './messageHistory.js';
-// Remova ou comente a linha abaixo se MessageLog não existir
-// import MessageLogModel from './messageLog.js';
+import PasswordResetTokenModel from './passwordResetToken.js';
 
 const models = {
   User: UserModel(sequelize),
@@ -29,8 +28,7 @@ const models = {
   MessageCampaign: MessageCampaignModel(sequelize),
   Recipient: RecipientModel(sequelize),
   MessageHistory: MessageHistoryModel(sequelize),
-  // Remova ou comente a linha abaixo se MessageLog não existir
-  // MessageLog: MessageLogModel(sequelize),
+  PasswordResetToken: PasswordResetTokenModel(sequelize)
 };
 
 Object.keys(models).forEach(modelName => {

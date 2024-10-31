@@ -9,6 +9,7 @@ import messageCampaignRoutes from './routes/messageCampaign.js';
 import recipientRoutes from './routes/recipient.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import messageHistoryRoutes from './routes/messageHistory.routes.js';
+import cors from 'cors';
 
 app.set('io', io);
 
@@ -81,6 +82,13 @@ app.use('/api/recipients', recipientRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/message-history', messageHistoryRoutes);
+
+app.use(cors({
+  origin: ['http://localhost:4173', 'http://localhost:5173', 'http://frontend:4173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Inicia o serviço de campanhas após iniciar o servidor
 server.listen(PORT, () => {

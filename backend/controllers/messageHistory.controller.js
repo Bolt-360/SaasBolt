@@ -81,6 +81,7 @@ export const getMessageHistory = async (req, res) => {
             offset: (parseInt(page) - 1) * parseInt(limit),
             include: [{
                 model: Campaign,
+                as: 'campaign',
                 attributes: ['name', 'workspaceId'],
                 where: { workspaceId: workspaceId }
             }]

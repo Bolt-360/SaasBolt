@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import ModalWorkspace from '@/features/workspaces/ModalWorkspace'
+import ModalWorkspace from '@/features/workspaces/modalWorkspace'
 import { LogIn, PlusCircle, LogOut } from 'lucide-react'
 import { useWorkspace } from '@/hooks/useWorkspace'
 import { useAuthContext } from '@/context/AuthContext'

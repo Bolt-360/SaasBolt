@@ -53,17 +53,30 @@ export const SignUpCard = ({ setState }) => {
     setPasswordStrengthValue(passwordStrength(password));
   }, [password]);
 
-  const onPasswordSignUp = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    await signup({
-      username: name,
-      email,
-      password,
-      confirmPassword,
-      cpf: cpf.replace(/\D/g, ''),
-      gender: gender === "M" ? "Masculino" : "Feminino"
-    });
+    
+    try {
+      const userData = await signup({
+        username: name,
+        email,
+        password,
+        confirmPassword,
+        cpf: cpf.replace(/\D/g, ''),
+        gender: gender === "M" ? "Masculino" : "Feminino"
+      });
+      
+      // Após o cadastro bem-sucedido, redireciona para a tela de login
+      setState('sign-in');
+      
+      // Limpa os campos do formulário
+      setEmail('');
+      setPassword('');
+      setName('');
+      
+    } catch (error) {
+      console.error("Erro no cadastro:", error);
+    }
   };
 
   /**
@@ -78,7 +91,7 @@ export const SignUpCard = ({ setState }) => {
       <div className="bg-card rounded-2xl shadow-lg ring-1 ring-border">
         <CardTitle className="text-center text-1xl font-bold text-primary pt-4">Crie sua conta aqui</CardTitle>
         <div className="px-6 py-8 sm:px-10">
-          <form className="space-y-6" onSubmit={onPasswordSignUp}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <Label htmlFor="cpf" className="block text-sm font-medium text-muted-foreground">
                 CPF

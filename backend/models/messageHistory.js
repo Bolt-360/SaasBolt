@@ -3,7 +3,10 @@ import { DataTypes, Model } from 'sequelize';
 export default (sequelize) => {
     class MessageHistory extends Model {
         static associate(models) {
-            MessageHistory.belongsTo(models.Campaign, { foreignKey: 'campaignId' });
+            MessageHistory.belongsTo(models.Campaign, { 
+                foreignKey: 'campaignId',
+                as: 'campaign'
+            });
         }
     }
 

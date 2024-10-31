@@ -1,17 +1,20 @@
 import express from 'express';
-import * as campaignController from '../controllers/campaign.controller.js';
-import { isAuthenticate } from '../middleware/verifyToken.js';
-import fileUpload from 'express-fileupload';
+import { 
+    createCampaign, 
+    getCampaigns, 
+    getCampaignById, 
+    updateCampaign, 
+    deleteCampaign,
+    getCampaignStats
+} from '../controllers/campaign.controller.js';
 
 const router = express.Router();
 
-router.post('/:workspaceId', 
-  isAuthenticate, 
-  fileUpload(), 
-  campaignController.createCampaign
-);
-router.get('/:workspaceId', campaignController.getCampaigns);
-router.put('/:id', campaignController.updateCampaign);
-router.delete('/:workspaceId/:campaignId', campaignController.deleteCampaign);
+router.get('/:workspaceId/stats', getCampaignStats);
+router.post('/:workspaceId', createCampaign);
+router.get('/:workspaceId', getCampaigns);
+router.get('/:workspaceId/:id', getCampaignById);
+router.put('/:workspaceId/:id', updateCampaign);
+router.delete('/:workspaceId/:campaignId', deleteCampaign);
 
 export default router;

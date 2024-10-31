@@ -61,9 +61,12 @@ export const SignInCard = ({setState}) => {
                   Senha
                 </Label>
                 <div className="text-sm">
-                  <Link to="#" className="font-medium text-primary hover:text-primary/90">
-                    Esqueceu sua senha?
-                  </Link>
+                  <span
+                    onClick={() => setState('forgot-password')}
+                    className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
+                  >
+                    Esqueceu a senha?
+                  </span>
                 </div>
               </div>
               <div className="mt-1">

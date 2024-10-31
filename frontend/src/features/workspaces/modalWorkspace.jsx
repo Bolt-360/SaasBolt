@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, LogIn } from 'lucide-react';
+import { PlusCircle, LogIn, Loader2 } from 'lucide-react';
+import { useWorkspace } from '@/hooks/useWorkspace';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ export default function ModalWorkspace({ isOpen, onClose, initialView }) {
   const [workspaceName, setWorkspaceName] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [error, setError] = useState('');
+  const { createWorkspace, joinWorkspace, isLoading } = useWorkspace();
 
   useEffect(() => {
     setView(initialView);
@@ -32,24 +34,38 @@ export default function ModalWorkspace({ isOpen, onClose, initialView }) {
     }
   };
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     const fullCode = code.join('');
     if (fullCode.length === 5) {
-      console.log('Verifying code:', fullCode);
       setError('');
+      try {
+        await joinWorkspace(fullCode);
+        onClose();
+      } catch (err) {
+        setError(err.message);
+      }
     } else {
       setError('Por favor, insira um código válido de 5 dígitos.');
     }
   };
 
-  const handleCreateWorkspace = () => {
-    if (workspaceName && cnpj) {
-      console.log('Creating workspace:', { workspaceName, cnpj });
-      setError('');
-    } else {
+  const handleCreateWorkspace = async () => {
+    if (!workspaceName || !cnpj) {
       setError('Por favor, preencha todos os campos.');
+      return;
+    }
+
+
+    setError('');
+    try {
+      await createWorkspace(workspaceName, cnpj);
+      onClose();
+    } catch (err) {
+      setError(err.message);
     }
   };
+
+
 
   const renderContent = () => {
     switch (view) {
@@ -66,11 +82,25 @@ export default function ModalWorkspace({ isOpen, onClose, initialView }) {
                   className="w-12 h-12 text-center text-2xl"
                   value={digit}
                   onChange={(e) => handleCodeChange(index, e.target.value)}
+                  disabled={isLoading}
                 />
               ))}
             </div>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <Button className="w-full mb-2" onClick={handleVerifyCode}>Verificar</Button>
+            <Button 
+              className="w-full mb-2" 
+              onClick={handleVerifyCode}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                'Verificar'
+              )}
+            </Button>
           </>
         );
       case 'create':
@@ -84,20 +114,36 @@ export default function ModalWorkspace({ isOpen, onClose, initialView }) {
                   placeholder="Digite o nome do workspace"
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div>
                 <Label htmlFor="cnpj">CNPJ</Label>
                 <Input
                   id="cnpj"
-                  placeholder="Digite o CNPJ"
+                  placeholder="Digite apenas os números do CNPJ"
                   value={cnpj}
-                  onChange={(e) => setCnpj(e.target.value)}
+                  onChange={(e) => setCnpj((e.target.value))}
+                  maxLength={18}
+                  disabled={isLoading}
                 />
               </div>
             </div>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <Button className="w-full mb-2" onClick={handleCreateWorkspace}>Criar Workspace</Button>
+            <Button 
+              className="w-full mb-2" 
+              onClick={handleCreateWorkspace}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Criando Workspace...
+                </>
+              ) : (
+                'Criar Workspace'
+              )}
+            </Button>
           </>
         );
     }

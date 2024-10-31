@@ -7,6 +7,12 @@ export default (sequelize) => {
         foreignKey: 'workspaceId',
         as: 'workspace'
       });
+      
+      // Adiciona a associação com MessageHistory
+      Campaign.hasMany(models.MessageHistory, {
+        foreignKey: 'campaignId',
+        as: 'MessageHistories'
+      });
     }
   }
 

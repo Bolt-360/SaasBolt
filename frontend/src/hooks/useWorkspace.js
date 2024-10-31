@@ -24,12 +24,29 @@ export function useWorkspace() {
       const data = await response.json();
 
       if (response.ok) {
-        setAuthUser({ ...authUser, workspaceId: data.id });
+        const updatedUser = {
+          ...authUser,
+          workspaces: [...(authUser.workspaces || []), data],
+          activeWorkspaceId: data.id
+        };
+        
+        setAuthUser(updatedUser);
+
         toast({
           title: "Workspace criado com sucesso!",
           description: `Bem-vindo ao ${workspaceName}!`,
           variant: "default",
         });
+
+        await fetch(`/api/workspaces/active`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authUser.token}`
+          },
+          body: JSON.stringify({ workspaceId: data.id })
+        });
+
         navigate('/app');
       } else {
         throw new Error(data.message || 'Erro ao criar workspace');
@@ -60,12 +77,29 @@ export function useWorkspace() {
       const data = await response.json();
 
       if (response.ok) {
-        setAuthUser({ ...authUser, workspaceId: data.workspaceId });
+        const updatedUser = {
+          ...authUser,
+          workspaces: [...(authUser.workspaces || []), data.workspace],
+          activeWorkspaceId: data.workspace.id
+        };
+        
+        setAuthUser(updatedUser);
+
         toast({
           title: "Entrou no workspace com sucesso!",
-          description: `Bem-vindo ao workspace!`,
+          description: `Bem-vindo ao ${data.workspace.name}!`,
           variant: "default",
         });
+
+        await fetch(`/api/workspaces/active`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authUser.token}`
+          },
+          body: JSON.stringify({ workspaceId: data.workspace.id })
+        });
+
         navigate('/app');
       } else {
         throw new Error(data.message || 'Erro ao entrar no workspace');

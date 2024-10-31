@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { LayoutDashboardIcon, AppWindowIcon, FileIcon, SettingsIcon, BellIcon, BuildingIcon, UserIcon, LogOutIcon, PowerIcon, ChevronDownIcon, FileWarningIcon, MessageCircle } from "lucide-react";
+import { LayoutDashboardIcon, AppWindowIcon, BuildingIcon, Send, LogOutIcon, ChevronDownIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -20,9 +20,7 @@ export default function Header() {
     const activeWorkspace = authUser?.workspaces?.find(w => w.id === authUser.activeWorkspaceId);
 
     const handleChangeWorkspace = async (workspaceId) => {
-        if (workspaceId === authUser.activeWorkspaceId) {
-            return; // Não faz nada se tentar trocar para a mesma empresa
-        }
+        if (workspaceId === authUser.activeWorkspaceId) return;
 
         try {
             await changeActiveWorkspace(authUser.token, workspaceId);
@@ -53,7 +51,6 @@ export default function Header() {
             .slice(0, 2);
     };
 
-    // Filtra as workspaces para excluir a atual
     const otherWorkspaces = authUser?.workspaces?.filter(w => w.id !== authUser.activeWorkspaceId) || [];
 
     return (
@@ -77,63 +74,17 @@ export default function Header() {
                             </li>
                             <li>
                                 <Link
-                                    to="/app/chat"
+                                    to="/app/campanhas"
                                     className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
                                 >
-                                    <MessageCircle className="mr-2 h-4 w-4" />
-                                    Chat
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/app/settings"
-                                    className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
-                                >
-                                    <SettingsIcon className="mr-2 h-4 w-4" />
-                                    Configurações
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Campanhas
                                 </Link>
                             </li>
                         </ul>
                     </nav>
                 </div>
                 <div className="flex flex-1 items-center justify-end gap-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <BellIcon className="h-5 w-5" />
-                                <span className="sr-only">Open notifications</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                                <DropdownMenuItem>
-                                    <FileIcon className="mr-2 h-4 w-4" />
-                                    <span>New file uploaded</span>
-                                    <span className="ml-auto font-normal">2h ago</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <UserIcon className="mr-2 h-4 w-4" />
-                                    <span>New user registered</span>
-                                    <span className="ml-auto font-normal">6h ago</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                                <DropdownMenuItem>
-                                    <PowerIcon className="mr-2 h-4 w-4" />
-                                    <span>System update available</span>
-                                    <span className="ml-auto font-normal">12h ago</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <FileWarningIcon className="mr-2 h-4 w-4" />
-                                    <span>Backup failed</span>
-                                    <span className="ml-auto font-normal">14h ago</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
@@ -171,15 +122,6 @@ export default function Header() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>{authUser?.username}</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                                <UserIcon className="mr-2 h-4 w-4" />
-                                <span>Profile</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <SettingsIcon className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={logout}>
                                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOutIcon className="mr-2 h-4 w-4" />}

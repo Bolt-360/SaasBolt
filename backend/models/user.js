@@ -8,6 +8,12 @@ export default (sequelize) => {
                 as: 'sentMessages'
             });
 
+            User.hasMany(models.PasswordResetToken, {
+                foreignKey: 'userId',
+                as: 'passwordResetTokens',
+                onDelete: 'CASCADE'
+            });
+
             User.hasMany(models.Message, {
                 foreignKey: 'recipientId',
                 as: 'receivedMessages'

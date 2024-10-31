@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import Message from "../Message";
+import Message from "../message";
 import ChatInput from "./chatInput";
 import ChatHeader from "./chatHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
