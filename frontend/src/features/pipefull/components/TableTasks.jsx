@@ -45,7 +45,7 @@ export function TableTasks({ dataTable }) {
                                 {new Date(data.data).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                                <span className={`rounded-lg p-1 ${getStatusClass(data.status)}`}>{data.status}</span>
+                                <span className={`rounded-lg p-1 text-white ${getStatusClass(data.status)}`}>{data.status}</span>
                             </TableCell>
                             <TableCell>
                                 <DropMenu update={updateTask} remove={() => removeTask(data.id)}/>

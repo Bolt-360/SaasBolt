@@ -4,6 +4,10 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { useState } from "react";
 import "react-big-calendar/lib/css/react-big-calendar.css"; 
 import ptBR from 'date-fns/locale/pt-BR';
+import "./calendario.css"
+import { CardCalendario } from "./cardCalendario";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 const locales = {
     "pt-BR": ptBR
@@ -36,33 +40,53 @@ const formats = {
         localizer.format(date, "EEEE", culture).slice(1),
     weekdayFormat: (date, culture, localizer) =>
         localizer.format(date, "EEEEEE", culture).charAt(0).toUpperCase() +
-        localizer.format(date, "EEEE", culture).slice(1),
+        localizer.format(date, "EEE", culture).slice(1),
     monthHeaderFormat: (date, culture, localizer) =>
         localizer.format(date, "MMMM yyyy", culture).replace(/\b\w/g, (l) => l.toUpperCase()),
 };
 
+
 export default function Calendario({ dataTable }) {
     const [value, setValue] = useState(new Date());
-
-    // // Função auxiliar para ajustar o fuso horário
-    // const adjustTimezone = (dateString) => {
-    //     const date = new Date(dateString);
-    //     return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-    // };
+    
+    const CustomToolbar = ( {date, onNavigate} ) => {
+        return(
+            <div className="flex mb-4 gap-x-2 items-center w-full lg:w-auto justify-center lg:justify-start">
+                <Button 
+                onClick={() => onNavigate("PREV")}
+                size="icon"
+                className="flex items-center bg-white text-black hover:bg-gray-100"
+                >
+                    <ChevronLeftIcon className="size-4" />
+                </Button>
+                <div className="flex items-center border border-input rounded-md px-3 py-2 h-8 justify-center w-full lg:w-auto">
+                    <CalendarIcon className="size-4 mr-2"/>
+                    <p className="text-sm">{format(date, "MMMM yyyy")}</p>
+                </div>
+                <Button 
+                onClick={() => onNavigate("NEXT")}
+                size="icon"
+                className="flex items-center bg-white text-black hover:bg-gray-100"
+                >
+                    <ChevronRightIcon className="size-4" />
+                </Button>
+            </div>
+        )
+    }
 
     // Mapeando os eventos com datas corrigidas
-    const events = dataTable.map((task) => {
-        const dueTime = new TZDate(task.dueDate)
+    const events = dataTable.map((event) => {
+        const dueTime = new TZDate(event.dueDate)
         const dueDate = dueTime.withTimeZone("America/Sao_Paulo")
         const dueDateWithAddedHours = addHours(dueDate, 24);
         return {
-            start: new Date(task.data),
+            start: new Date(event.data),
             end: new Date(dueDateWithAddedHours.toString()),
-            title: task.task,
-            project: task.projeto,
-            assignee: task.responsavel,
-            status: task.status,
-            id: task.id,
+            title: event.task,
+            project: event.projeto,
+            assignee: event.responsavel,
+            status: event.status,
+            id: event.id,
         };
     });
 
@@ -91,6 +115,24 @@ export default function Calendario({ dataTable }) {
             formats={formats} 
             culture="pt-BR" 
             views={["month", "week", "day"]}
+            className="px-3"
+            components={{
+                eventWrapper: ({ event }) => (
+                    <CardCalendario
+                    id={event.id}
+                    title={event.title}
+                    project={event.project}
+                    assignee={event.assignee}
+                    status={event.status}
+                    />
+                ),
+                toolbar: () => (
+                    <CustomToolbar 
+                    date={value}
+                    onNavigate={handleNavigate}
+                    />
+                )
+            }}
         />
     );
 }
