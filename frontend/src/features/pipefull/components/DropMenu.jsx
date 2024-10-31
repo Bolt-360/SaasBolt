@@ -14,9 +14,9 @@ export default function DropMenu( {update, remove} ) {
                 <MoreVerticalIcon className="size-4"/>
             </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                    <DropdownMenuItem onClick={update}>Editar Task</DropdownMenuItem>
+                    <DropdownMenuItem onclick={update}>Editar Task</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={remove}>Deletar Task</DropdownMenuItem>
+                    <DropdownMenuItem onclick={remove}>Deletar Task</DropdownMenuItem>
                 </DropdownMenuContent>
         </DropdownMenu>
     )

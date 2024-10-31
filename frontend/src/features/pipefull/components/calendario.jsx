@@ -172,6 +172,8 @@ export default function Calendario({ dataTable }) {
         };
     });
 
+    console.log(events);
+
     const handleNavigate = (action) => {
         if (action === "PREV") {
             setValue(subMonths(value, 1));
@@ -186,7 +188,7 @@ export default function Calendario({ dataTable }) {
         <Calendar
             localizer={localizer}
             events={events}
-            startAccessor="start"
+            startAccessor="end"
             endAccessor="end"
             style={{ height: 500 }}
             date={value}
