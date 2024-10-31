@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/home'
 import AuthPage from './pages/auth'
+<<<<<<< HEAD
 import WebAppPage from './pages/webApp'
 import ChatPage from './pages/chat'
 import AppLayout from './layouts/AppLayout'
@@ -20,6 +21,9 @@ import DashboardPipefull from './features/pipefull/page.jsx'
 import MyTasks from './features/pipefull/Tasks/page.jsx'
 import MyMembers from './features/pipefull/Members/page'
 
+=======
+import { SignInCard } from './features/auth/components/sign-in-card'
+>>>>>>> 19cf451cee8aad1c7797ed0b540fa0d2ded16209
 
 function App() {
   const { authUser } = useAuthContext();
@@ -28,6 +32,7 @@ function App() {
     <ProtectedRoute>
       <Routes>
         <Route path='/' element={<HomePage />} />
+<<<<<<< HEAD
         <Route 
           path='/auth' 
           element={authUser ? <Navigate to="/app" /> : <AuthPage />} 
@@ -56,6 +61,10 @@ function App() {
           </Route>
         </Route>
         <Route path='*' element={<NotFoundPage />} />
+=======
+        <Route path='/auth' element={<AuthPage />} />
+        <Route path='/sign-in' element={<SignInCard />} />
+>>>>>>> 19cf451cee8aad1c7797ed0b540fa0d2ded16209
       </Routes>
     </ProtectedRoute>
   )
