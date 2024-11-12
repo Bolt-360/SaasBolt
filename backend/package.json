@@ -9,7 +9,8 @@
     "db-init": "node db/init.js",
     "clear": "node db/clear.js",
     "db-att": "node db/atualize.js",
-    "test:minio": "node --experimental-json-modules scripts/test-minio.mjs"
+    "test:minio": "node --experimental-json-modules scripts/test-minio.mjs",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
