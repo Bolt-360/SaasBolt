@@ -5,9 +5,9 @@ services:
     image: postgres:16
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: campanhas360
+      POSTGRES_USER: bolt360ti
+      POSTGRES_PASSWORD: "kasdjasidaau1n213mmaaasdncksk"
     ports:
       - '4001:5432'
     volumes:
@@ -15,101 +15,30 @@ services:
     networks:
       - saas-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U bolt360ti -d campanhas360"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-    ports:
-      - '4002:80'
-    depends_on:
-      - postgres
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    networks:
-      - saas-network
-
-  evolution-api:
-    container_name: evolution_api
-    image: atendai/evolution-api:v2.2.0
-    restart: always
-    ports:
-      - "4003:8080"
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-      - minio
-      - redis
-    volumes:
-      - evolution_instances:/evolution/instances
-    networks:
-      - saas-network
 
   minio:
     image: minio/minio
     container_name: minio
     restart: always
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: "Bolt36023@"
     ports:
-      - "4004:9000"
-      - "4005:9001"
+      - "9000:9000"
+      - "9001:9001"
     command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data
     networks:
       - saas-network
 
-  redis:
-    image: redis:latest
-    restart: always
-    ports:
-      - "4006:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - saas-network
-
-  backend:
-    image: lucaszerino1/backend:1.0.0
-    container_name: saas_backend
-    restart: always
-    ports:
-      - "4007:2345"
-    environment:
-      - NODE_ENV=development
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - .:/app
-      - /app/node_modules
-    networks:
-      - saas-network
-
 volumes:
   postgres-data:
-  pgadmin-data:
-  evolution_instances:
   minio-data:
-  redis-data:
 
 networks:
   saas-network:

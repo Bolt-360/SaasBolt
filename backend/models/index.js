@@ -6,7 +6,7 @@ import MessageModel from './message.js';
 import ConversationModel from './conversation.js';
 import ConversationParticipantsModel from './conversationParticipants.js';
 import WorkspaceModel from './workspace.js';
-import UserWorkspaceModel from './userWorkspace.js';
+import UserWorkspaceModel from './userworkspace.js';
 import WorkspaceModuleModel from './workspaceModule.js';
 import InstanceModel from './instance.js';
 import CampaignModel from './Campaign.js';

@@ -15,6 +15,8 @@ import Disparador from './features/campanhas/Disparador/page'
 import Configuracoes from './features/campanhas/Configuracoes/page'
 import CriarInstancia from './features/campanhas/CriarInstancia/page'
 import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
+import BoltRotasLayout from './features/boltRotas/brotasLayout'
+import DashboardRotas from './features/boltRotas/page'
 
 function App() {
   const { authUser } = useAuthContext();
@@ -43,6 +45,9 @@ function App() {
             <Route path='configuracoes' element={<Configuracoes />} />
             <Route path='criar-instancia' element={<CriarInstancia />} />
             <Route path='listar-campanhas' element={<ListarCampanhas />} />
+          </Route>
+          <Route path='bolt-rotas' element={<BoltRotasLayout />}>
+            <Route index element={<DashboardRotas />} />
           </Route>
         </Route>
         <Route path='*' element={<NotFoundPage />} />

@@ -12,7 +12,7 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: env.BACKEND_URL || 'http://localhost:2345',
+          target: env.BACKEND_URL || 'https://saas.bchat.com.br',
           changeOrigin: true,
           secure: false,
           // rewrite: (path) => path.replace(/^\/api/, '')
@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: env.BACKEND_URL || 'http://localhost:2345',
+          target: env.BACKEND_URL || 'https://saas.bchat.com.br',
           changeOrigin: true,
           secure: false,
         },

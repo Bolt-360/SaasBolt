@@ -11,7 +11,7 @@ const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
 
 // Função para configurar o webhook após a criação da instância
 const configureWebhook = async (instanceName, workspaceId) => {
-    const webhookUrl = `${process.env.BASE_URL}/webhook/instance-events`;
+    const webhookUrl = `https://saas.bchat.com.br/webhook/instance-events`;
 
     return axios.post(`${EVOLUTION_API_URL}/webhook/set/${workspaceId}-${instanceName}`, {
         webhook: {

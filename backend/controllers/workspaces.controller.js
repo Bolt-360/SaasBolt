@@ -3,11 +3,19 @@ import { errorHandler } from '../utils/error.js';
 import { UniqueConstraintError } from 'sequelize';
 import { Op } from 'sequelize';
 import { validateCNPJ } from '../utils/cnpjValidator.js';
+import jwt from 'jsonwebtoken';
 const { User, Workspace, UserWorkspace, WorkspaceModule } = models;
 
 // Função auxiliar para formatar o CNPJ
 const formatCNPJ = (cnpj) => {
-    return cnpj.replace(/[^\d]/g, '');
+    // Verifica se o CNPJ existe antes de tentar formatá-lo
+    if (!cnpj) return null;
+    
+    return cnpj.replace(/\D/g, '')
+        .replace(/^(\d{2})(\d)/, '$1.$2')
+        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
 };
 
 // Função para gerar um código de convite único
@@ -58,24 +66,129 @@ export const getUserWorkspaces = async (req, res, next) => {
 export const getUserActiveWorkspaces = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        if (!userId) {
-            return next(errorHandler(400, "ID do usuário não fornecido"));
+        const { workspaceId } = req.body;
+
+        console.log('Ativando workspace:', {
+            userId,
+            workspaceId,
+            requestBody: req.body,
+            currentUser: req.user
+        });
+
+        // Primeiro, verifica se o usuário existe
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return next(errorHandler(404, "Usuário não encontrado"));
         }
 
-        const userActiveWorkspaces = await UserWorkspace.findAll({
-            where: { userId: userId, isActive: true },
+        // Se workspaceId for null, vamos limpar o workspace ativo
+        if (!workspaceId) {
+            await User.update(
+                { activeWorkspaceId: null },
+                { where: { id: userId } }
+            );
+
+            const token = jwt.sign(
+                {
+                    id: user.id,
+                    email: user.email,
+                    username: user.username,
+                    activeWorkspaceId: null,
+                    profilePicture: user.profilePicture
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: 'Workspace ativo removido com sucesso',
+                data: {
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        username: user.username,
+                        activeWorkspaceId: null,
+                        profilePicture: user.profilePicture,
+                        activeWorkspace: null
+                    },
+                    token
+                }
+            });
+        }
+
+        // Verifica se o usuário tem acesso ao workspace
+        const userWorkspace = await UserWorkspace.findOne({
+            where: { 
+                userId, 
+                workspaceId,
+                isActive: true 
+            },
             include: [{
                 model: Workspace,
-                as: 'workspace'
+                as: 'workspace',
+                required: true // Garante que o workspace existe
             }]
         });
 
-        if (!userActiveWorkspaces || userActiveWorkspaces.length === 0) {
-            return next(errorHandler(404, "O usuário não tem Workspace ativo"));
+        if (!userWorkspace || !userWorkspace.workspace) {
+            return next(errorHandler(403, "Você não tem acesso a este workspace"));
         }
 
-        res.status(200).json(userActiveWorkspaces);
+        // Atualiza o workspace ativo do usuário
+        await User.update(
+            { activeWorkspaceId: workspaceId },
+            { where: { id: userId } }
+        );
+
+        // Atualiza lastAccessed
+        await UserWorkspace.update(
+            { lastAccessed: new Date() },
+            { where: { userId, workspaceId } }
+        );
+
+        // Busca usuário atualizado com workspace
+        const updatedUser = await User.findOne({
+            where: { id: userId },
+            include: [{
+                model: Workspace,
+                as: 'activeWorkspace',
+                attributes: ['id', 'name', 'description', 'cnpj']
+            }]
+        });
+
+        // Gera novo token com workspace ativo
+        const token = jwt.sign(
+            {
+                id: updatedUser.id,
+                email: updatedUser.email,
+                username: updatedUser.username,
+                activeWorkspaceId: updatedUser.activeWorkspaceId || null, // Garante que não será undefined
+                profilePicture: updatedUser.profilePicture
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Workspace ativo atualizado com sucesso',
+            data: {
+                user: {
+                    id: updatedUser.id,
+                    email: updatedUser.email,
+                    username: updatedUser.username,
+                    activeWorkspaceId: updatedUser.activeWorkspaceId || null,
+                    profilePicture: updatedUser.profilePicture,
+                    activeWorkspace: updatedUser.activeWorkspace || null
+                },
+                token,
+                workspace: userWorkspace.workspace
+            }
+        });
+
     } catch (error) {
+        console.error('Erro ao atualizar workspace ativo:', error);
         next(error);
     }
 };

@@ -27,7 +27,7 @@ export function SocketContextProvider({ children }) {
         }
 
         // Configura novo socket
-        socketInstance = io(import.meta.env.VITE_WS_URL || 'http://localhost:2345', {
+        socketInstance = io(import.meta.env.VITE_WS_URL || 'https://saas.bchat.com.br', {
           reconnection: true,
           reconnectionDelay: 1000,
           reconnectionDelayMax: 5000,

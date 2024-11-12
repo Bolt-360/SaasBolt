@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import useLogout from '@/hooks/useLogout'
 import { ListBulletIcon } from '@radix-ui/react-icons'
-import { FaCarCrash, FaWhatsapp } from 'react-icons/fa'
+import { FaWhatsapp } from 'react-icons/fa'
 import CreateInstanceModal from '@/components/CreateInstanceModal'
 
 const menuItems = [

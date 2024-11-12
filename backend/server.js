@@ -1,6 +1,5 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import pkg from 'pg'
 import cookieParse from 'cookie-parser'
 import { server, app, io } from './socket/socket.js';
 import instanceRoutes from './routes/instance.routes.js';
@@ -10,50 +9,42 @@ import recipientRoutes from './routes/recipient.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import messageHistoryRoutes from './routes/messageHistory.routes.js';
 import cors from 'cors';
-
-app.set('io', io);
+import sequelize, { testConnection } from './config/database.js';
 
 dotenv.config()
 
-const { Pool } = pkg
-
 const PORT = process.env.PORT || 3000
-// Conexão do Postgres
-const pool = new Pool({
-    user: process.env.POSTGRES_USER,
-    host: process.env.POSTGRES_HOST,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-    port: process.env.POSTGRES_PORT || 5432,
-})
 
-// Teste de conexão ao PostgreSQL
-pool.connect()
-    .then(client => {
-        console.log('Conectado ao PostgreSQL com sucesso!')
-        client.release()
-    })
-    .catch(err => {
-        console.error('Erro ao conectar ao PostgreSQL:', err)
-    })
+// Teste de conexão ao iniciar
+testConnection().catch(err => {
+    console.error('Erro fatal ao conectar ao banco:', err);
+    process.exit(1);
+});
 
- //const app = express()
+app.set('io', io);
+
+// Rota de teste
 app.get("/", async (req, res) => {
-    let client;
-
     try {
-        client = await pool.connect()
-        const result = await client.query("SELECT NOW()")
-        res.status(200).send('Servidor está rodando e o PostgreSQL retornou: ' + result.rows[0].now)
+        const [result] = await sequelize.query("SELECT NOW()");
+        res.status(200).send('Servidor rodando e PostgreSQL retornou: ' + result[0].now);
     } catch (err) {
-        console.error(err)
-        res.status(500).send('Erro ao conectar ao PostgreSQL: ' + err)
-    } finally {
-        if (client) {
-            client.release()
-        }
+        console.error(err);
+        res.status(500).send('Erro ao conectar ao PostgreSQL: ' + err);
     }
-})
+});
+
+// Configuração do CORS
+const corsOptions = {
+    origin: ["https://disparador.bchat.lat", "https://saas.bchat.com.br"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(cookieParse());
 
 //importação de rotas
 import authRouters from "./routes/auth.routes.js"
@@ -64,11 +55,6 @@ import conversationsRouters from "./routes/conversations.routes.js"
 import contactRoutes from './routes/contact.routes.js'
 import whatsappRoutes from './routes/whatsapp.routes.js';
 
-//JSON para enviar os dados para o frontend
-app.use(express.json())
-
-//cookie para autenticar o usuario
-app.use(cookieParse())
 app.use("/api/auth", authRouters)
 app.use("/api/messages", messageRouters)
 app.use("/api/users", userRouters)
@@ -83,30 +69,34 @@ app.use('/webhook', webhookRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/message-history', messageHistoryRoutes);
 
-app.use(cors({
-  origin: ['http://localhost:4173', 'http://localhost:5173', 'http://frontend:4173'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Inicia o serviço de campanhas após iniciar o servidor
-server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// Configuração do Socket.IO
+io.engine.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'https://disparador.bchat.lat, https://api2.bchat.com.br/');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    next();
 });
 
-//Error Handler
+// Error Handler
 app.use((err, req, res, next) => {
-    const statusCode = err.statusCode || 500
-    const message = err.message || "Internal Server Error"
+    console.error('Erro na aplicação:', err);
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
     return res.status(statusCode).json({
         success: false,
         message,
-    })
-})
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
 
+// Socket.IO handlers
 io.on('connection', (socket) => {
     console.log('Novo cliente conectado');
+
+    // Adicione tratamento de erro para o socket
+    socket.on('error', (error) => {
+        console.error('Erro no socket:', error);
+    });
 
     socket.on('joinWorkspace', (workspace) => {
         socket.join(workspace);
@@ -123,6 +113,14 @@ io.on('connection', (socket) => {
     });
 
     // ... outros handlers de socket
+});
+
+// Inicia o servidor
+server.listen(PORT, async () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    
+    // Testa a conexão novamente após o servidor iniciar
+    await testConnection();
 });
 
 export default server;

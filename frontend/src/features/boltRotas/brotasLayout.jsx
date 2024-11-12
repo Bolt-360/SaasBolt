@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar/Sidebar';
 
-const brotasLayout = () => {
+const BoltRotasLayout  = () => {
   return (
     <div className="flex h-screen bg-white">
       <Sidebar />
@@ -13,4 +13,4 @@ const brotasLayout = () => {
   );
 };
 
-export default brotasLayout;
+export default BoltRotasLayout ;

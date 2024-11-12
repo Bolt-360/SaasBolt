@@ -6,9 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
-    methods: ["GET", "POST"],
+    origin: ["https://disparador.bchat.lat", "https://api2.bchat.com.br"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    transports: ['websocket', 'polling']
   },
+  allowEIO3: true
 });
 
 export const getReceiverSocketId = (receiverId) => {

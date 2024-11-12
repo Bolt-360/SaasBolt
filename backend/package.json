@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "db-init": "node db/init.js",
     "clear": "node db/clear.js",
-    "db-att": "node db/atualize.js"
+    "db-att": "node db/atualize.js",
+    "test:minio": "node --experimental-json-modules scripts/test-minio.mjs"
   },
   "keywords": [],
   "author": "",

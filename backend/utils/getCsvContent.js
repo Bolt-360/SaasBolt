@@ -1,4 +1,4 @@
-import minioClient from '../config/minio.js';
+import minioClient from '../config/minio.mjs';
 
 export const getCsvContent = async (csvFileUrl) => {
     try {

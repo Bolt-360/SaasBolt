@@ -7,11 +7,12 @@ import {
     deleteCampaign,
     getCampaignStats
 } from '../controllers/campaign.controller.js';
+import { checkMinioConnection } from '../middlewares/minioCheck.js';
 
 const router = express.Router();
 
 router.get('/:workspaceId/stats', getCampaignStats);
-router.post('/:workspaceId', createCampaign);
+router.post('/:workspaceId', checkMinioConnection, createCampaign);
 router.get('/:workspaceId', getCampaigns);
 router.get('/:workspaceId/:id', getCampaignById);
 router.put('/:workspaceId/:id', updateCampaign);

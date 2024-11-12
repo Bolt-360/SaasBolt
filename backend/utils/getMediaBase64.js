@@ -1,27 +1,23 @@
-import minioClient from '../config/minio.js';
+import minioClient, { safeMinioOperation } from '../config/minio.mjs';
 
-export const getMediaBase64 = async (bucketName, objectName) => {
+export const getMediaBase64 = async (bucketName, fileName) => {
     try {
-        const dataStream = await minioClient.getObject(bucketName, objectName);
-        const chunks = [];
-        
+        const data = await safeMinioOperation(async () => {
+            return minioClient.getObject(bucketName, fileName);
+        });
+
         return new Promise((resolve, reject) => {
-            dataStream.on('data', (chunk) => chunks.push(chunk));
-            dataStream.on('end', () => {
+            const chunks = [];
+            data.on('data', chunk => chunks.push(chunk));
+            data.on('end', () => {
                 const buffer = Buffer.concat(chunks);
-                const base64String = buffer.toString('base64');
-                
-                // Se por algum motivo ainda vier com o prefixo, vamos removê-lo
-                if (base64String.includes('base64,')) {
-                    resolve(base64String.split('base64,')[1]);
-                } else {
-                    resolve(base64String);
-                }
+                const base64 = buffer.toString('base64');
+                resolve(base64);
             });
-            dataStream.on('error', reject);
+            data.on('error', reject);
         });
     } catch (error) {
-        console.error('Erro ao converter mídia para base64:', error);
-        throw new Error('Erro ao converter mídia para base64');
+        console.error('Erro ao converter arquivo para base64:', error);
+        throw error;
     }
 }; 
