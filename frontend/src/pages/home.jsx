@@ -1,13 +1,20 @@
 import { Button } from "@/components/ui/button"
-import { MountainIcon } from "@/icons"
+import { MountainIcon } from "lucide-react"
 import { Link } from "react-router-dom";
  const HomePage = () => {
     return (
-        <div>
+        <div className="flex flex-col items-center justify-center h-screen">
             <Link to="/auth">
                 <Button>
                     <MountainIcon />
-                    <span>No momento só temos a opção de login</span>
+                    <span>Login</span>
+                </Button>
+            </Link>
+            <br/>
+            <Link to="/app">
+                <Button>
+                    <MountainIcon />
+                    <span>Aplicativo</span>
                 </Button>
             </Link>
         </div>

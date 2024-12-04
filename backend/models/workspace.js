@@ -4,7 +4,7 @@ export default (sequelize) => {
     class Workspace extends Model {
         static associate(models) {
             Workspace.belongsToMany(models.User, {
-                through: 'UserWorkspaces',
+                through: models.UserWorkspace,
                 foreignKey: 'workspaceId',
                 otherKey: 'userId'
             });
@@ -13,6 +13,14 @@ export default (sequelize) => {
                 foreignKey: 'workspaceId',
                 as: 'conversations'
             });
+
+            // Certifique-se de que o modelo WorkspaceModule existe
+            if (models.WorkspaceModule) {
+                Workspace.hasMany(models.WorkspaceModule, {
+                    foreignKey: 'workspaceId',
+                    as: 'modules'
+                });
+            }
         }
     }
 
@@ -30,6 +38,16 @@ export default (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
+        },
+        activeModules: {
+            type: DataTypes.ARRAY(DataTypes.STRING),
+            defaultValue: ['chat', 'kanban'],
+            allowNull: false
+        },
+        inviteCode: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
         }
         // Outros campos relevantes para o Workspace
     }, {

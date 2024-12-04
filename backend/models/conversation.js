@@ -3,47 +3,51 @@ import { DataTypes, Model } from 'sequelize';
 export default (sequelize) => {
     class Conversation extends Model {
         static associate(models) {
-            Conversation.hasMany(models.Message, {
-                foreignKey: 'conversationId',
-                as: 'messages'
-            });
-
-            Conversation.belongsToMany(models.User, {
+            Conversation.belongsTo(models.Workspace, { foreignKey: 'workspaceId' });
+            Conversation.belongsToMany(models.User, { 
                 through: models.ConversationParticipants,
                 foreignKey: 'conversationId',
                 otherKey: 'userId',
-                as: 'participantUsers'
+                as: 'participants'
             });
-
-            Conversation.belongsTo(models.Workspace, {
-                through: models.UserWorkspace,
-                foreignKey: 'conversationId',
-                otherKey: 'workspaceId',
-                as: 'participatedWorkspaces'
-            });
+            Conversation.hasMany(models.Message, { as: 'messages', foreignKey: 'conversationId' });
         }
     }
 
     Conversation.init({
-        id: {
+        workspaceId: {
             type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
-        participants: {
-            type: DataTypes.ARRAY(DataTypes.INTEGER),
             allowNull: false,
+            references: {
+                model: 'Workspaces',
+                key: 'id'
+            }
         },
-        messageIds: {
-            type: DataTypes.ARRAY(DataTypes.INTEGER),
-            defaultValue: [],
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        isGroup: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        lastMessageAt: {
+            type: DataTypes.DATE
+        },
+        groupProfilePhoto: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        type: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
     }, {
         sequelize,
         modelName: 'Conversation',
-        tableName: 'Conversations',
-        timestamps: true,
+        tableName: 'Conversations'
     });
 
     return Conversation;
 };
+
