@@ -1,15 +1,15 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import cookieParse from 'cookie-parser'
-import { server, app, io } from './socket/socket.js';
-import instanceRoutes from './routes/instance.routes.js';
+import cookieParse from 'cookie-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import express from 'express';
+import sequelize, { testConnection } from './config/database.js';
 import campaignRoutes from './routes/campaign.routes.js';
+import instanceRoutes from './routes/instance.routes.js';
 import messageCampaignRoutes from './routes/messageCampaign.js';
+import messageHistoryRoutes from './routes/messageHistory.routes.js';
 import recipientRoutes from './routes/recipient.js';
 import webhookRoutes from './routes/webhook.routes.js';
-import messageHistoryRoutes from './routes/messageHistory.routes.js';
-import cors from 'cors';
-import sequelize, { testConnection } from './config/database.js';
+import { app, io, server } from './socket/socket.js';
 
 dotenv.config()
 
@@ -55,13 +55,14 @@ app.use(express.json());
 app.use(cookieParse());
 
 //importação de rotas
-import authRouters from "./routes/auth.routes.js"
-import messageRouters from "./routes/message.routes.js"
-import userRouters from "./routes/user.routes.js"
-import workspacesRouters from "./routes/workspaces.routes.js"
-import conversationsRouters from "./routes/conversations.routes.js"
-import contactRoutes from './routes/contact.routes.js'
+import authRouters from "./routes/auth.routes.js";
+import contactRoutes from './routes/contact.routes.js';
+import conversationsRouters from "./routes/conversations.routes.js";
+import messageRouters from "./routes/message.routes.js";
+import sgaRoutes from './routes/sga.routes.js';
+import userRouters from "./routes/user.routes.js";
 import whatsappRoutes from './routes/whatsapp.routes.js';
+import workspacesRouters from "./routes/workspaces.routes.js";
 
 app.use("/api/auth", authRouters)
 app.use("/api/messages", messageRouters)
@@ -76,6 +77,7 @@ app.use('/api/recipients', recipientRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/message-history', messageHistoryRoutes);
+app.use('/api/sga', sgaRoutes);
 
 // Configuração do Socket.IO
 io.engine.use((req, res, next) => {
