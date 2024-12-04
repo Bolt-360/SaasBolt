@@ -3,7 +3,7 @@ import { DataTypes, Model } from 'sequelize';
 export default (sequelize) => {
     class ConversationParticipants extends Model {
         static associate(models) {
-            // Não são necessárias associações aqui, pois esta é uma tabela de junção
+            // Associações, se necessário
         }
     }
 
@@ -11,7 +11,6 @@ export default (sequelize) => {
         conversationId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true,
             references: {
                 model: 'Conversations',
                 key: 'id'
@@ -20,7 +19,6 @@ export default (sequelize) => {
         userId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true,
             references: {
                 model: 'Users',
                 key: 'id'
@@ -30,7 +28,7 @@ export default (sequelize) => {
         sequelize,
         modelName: 'ConversationParticipants',
         tableName: 'ConversationParticipants',
-        timestamps: true
+        timestamps: false
     });
 
     return ConversationParticipants;

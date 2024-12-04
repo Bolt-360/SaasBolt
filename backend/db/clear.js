@@ -8,7 +8,7 @@ const client = new Client({
   host: process.env.POSTGRES_HOST,
   database: process.env.POSTGRES_DB,
   password: process.env.POSTGRES_PASSWORD,
-  port: process.env.POSTGRES_PORT || 5432,  // Porta padrão do PostgreSQL
+  port: process.env.POSTGRES_PORT || 4001,  // Porta padrão do PostgreSQL
 });
 
 // Função para excluir todas as tabelas

@@ -6,29 +6,37 @@ import MessageModel from './message.js';
 import ConversationModel from './conversation.js';
 import ConversationParticipantsModel from './conversationParticipants.js';
 import WorkspaceModel from './workspace.js';
-import UserWorkspaceModel from './UserWorkspace.js';
-
-    
-const User = UserModel(sequelize, Sequelize.DataTypes);
-const Message = MessageModel(sequelize, Sequelize.DataTypes);
-const Conversation = ConversationModel(sequelize, Sequelize.DataTypes);
-const ConversationParticipants = ConversationParticipantsModel(sequelize, Sequelize.DataTypes);
-const Workspace = WorkspaceModel(sequelize, Sequelize.DataTypes);
-const UserWorkspace = UserWorkspaceModel(sequelize, Sequelize.DataTypes);
+import UserWorkspaceModel from './UserWorkspace2.js';
+import WorkspaceModuleModel from './workspaceModule.js';
+import InstanceModel from './instance.js';
+import CampaignModel from './campaign.js';
+import MessageCampaignModel from './messageCampaign.js';
+import RecipientModel from './recipient.js';
+import MessageHistoryModel from './messageHistory.js';
+import PasswordResetTokenModel from './passwordResetToken.js';
+import SgaCredentialsModel from './sgaCredentials.js';
 
 const models = {
-    User,
-    Message,
-    Conversation,
-    ConversationParticipants,
-    Workspace,
-    UserWorkspace
+  User: UserModel(sequelize),
+  Message: MessageModel(sequelize),
+  Conversation: ConversationModel(sequelize),
+  ConversationParticipants: ConversationParticipantsModel(sequelize),
+  Workspace: WorkspaceModel(sequelize),
+  UserWorkspace: UserWorkspaceModel(sequelize),
+  WorkspaceModule: WorkspaceModuleModel(sequelize),
+  Instance: InstanceModel(sequelize),
+  Campaign: CampaignModel(sequelize),
+  MessageCampaign: MessageCampaignModel(sequelize),
+  Recipient: RecipientModel(sequelize),
+  MessageHistory: MessageHistoryModel(sequelize),
+  PasswordResetToken: PasswordResetTokenModel(sequelize),
+  SgaCredentials: SgaCredentialsModel(sequelize)
 };
 
 Object.keys(models).forEach(modelName => {
-    if (models[modelName].associate) {
-        models[modelName].associate(models);
-    }
+  if (models[modelName].associate) {
+    models[modelName].associate(models);
+  }
 });
 
 export { sequelize };
