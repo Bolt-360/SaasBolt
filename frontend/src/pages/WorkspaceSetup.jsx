@@ -76,7 +76,7 @@ const WorkspaceSetup = () => {
           <DropdownMenuTrigger asChild>
             <Avatar className="cursor-pointer">
               <AvatarImage src={authUser?.avatarUrl} alt={authUser?.username} />
-              <AvatarFallback>{getInitials(authUser?.username || 'User')}</AvatarFallback>
+              <AvatarFallback className="bg-blue-600 text-white">{getInitials(authUser?.username || 'User')}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
