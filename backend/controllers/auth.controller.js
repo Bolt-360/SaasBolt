@@ -100,6 +100,14 @@ export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
+        // Validação dos campos
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email e senha são obrigatórios"
+            });
+        }
+
         const user = await User.findOne({
             where: { email },
             include: [
@@ -115,11 +123,15 @@ export const login = async (req, res, next) => {
                     required: false
                 }
             ],
-            attributes: ['id', 'email', 'username', 'password', 'profilePicture'] // Adicionando profilePicture
+            attributes: ['id', 'email', 'username', 'password', 'profilePicture']
         });
 
+        // Verifica se o usuário existe e a senha está correta
         if (!user || !await bcrypt.compare(password, user.password)) {
-            return res.status(401).json({ message: "Credenciais inválidas" });
+            return res.status(401).json({
+                success: false,
+                message: "Email ou senha incorretos"
+            });
         }
 
         const token = jwt.sign({
@@ -127,15 +139,16 @@ export const login = async (req, res, next) => {
             email: user.email,
             username: user.username,
             activeWorkspaceId: user.activeWorkspace ? user.activeWorkspace.id : null,
-            profilePicture: user.profilePicture // Adicionando profilePicture ao token
+            profilePicture: user.profilePicture
         }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        res.json({
+        res.status(200).json({
+            success: true,
             user: {
                 id: user.id,
                 email: user.email,
                 username: user.username,
-                profilePicture: user.profilePicture, // Adicionando profilePicture à resposta
+                profilePicture: user.profilePicture,
                 activeWorkspaceId: user.activeWorkspace ? user.activeWorkspace.id : null,
                 workspaces: user.participatedWorkspaces ? user.participatedWorkspaces.map(w => ({
                     id: w.id,
@@ -146,7 +159,12 @@ export const login = async (req, res, next) => {
             token
         });
     } catch (error) {
-        next(error);
+        console.error('Erro no login:', error);
+        res.status(500).json({
+            success: false,
+            message: "Erro interno do servidor",
+            error: error.message
+        });
     }
 };
 

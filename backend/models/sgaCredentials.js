@@ -30,6 +30,10 @@ export default (sequelize) => {
         token: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+        auth_token: {
+            type: DataTypes.STRING,
+            allowNull: false
         }
     }, {
         sequelize,
