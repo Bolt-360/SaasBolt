@@ -230,6 +230,14 @@ module.exports = {
         auth_token: {
           type: Sequelize.STRING,
           allowNull: false
+        },
+        vencimentos: {
+          type: Sequelize.ARRAY(Sequelize.STRING),
+          allowNull: false
+        },
+        firstDay: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false
         }
       });
 

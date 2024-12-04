@@ -159,12 +159,7 @@ export const login = async (req, res, next) => {
             token
         });
     } catch (error) {
-        console.error('Erro no login:', error);
-        res.status(500).json({
-            success: false,
-            message: "Erro interno do servidor",
-            error: error.message
-        });
+        next(error);
     }
 };
 

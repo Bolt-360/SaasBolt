@@ -34,6 +34,14 @@ export default (sequelize) => {
         auth_token: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+        vencimentos: {
+            type: DataTypes.ARRAY(DataTypes.STRING),
+            allowNull: false
+        },
+        firstDay: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false
         }
     }, {
         sequelize,
