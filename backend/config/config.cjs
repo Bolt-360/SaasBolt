@@ -1,28 +1,28 @@
 require('dotenv').config();
-
+// Lembrar de alterar o host para o ambiente de produção: utilizando Docker host deve ser o nome do container
 module.exports = {
   development: {
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DB,
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
+    username: 'bolt360ti',
+    password: 'kasdjasidaau1n213mmaaasdncksk',
+    database: 'campanhas360',
+    host: '20.213.21.109',
+    port: 4001,
     dialect: 'postgres'
   },
   test: {
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DB_TEST || 'nome_do_banco_test',
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
+    username: 'bolt360ti',
+    password: 'kasdjasidaau1n213mmaaasdncksk',
+    database: 'campanhas360',
+    host: '20.213.21.109',
+    port: 4001,
     dialect: 'postgres'
   },
   production: {
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DB_PRODUCTION || 'nome_do_banco_production',
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
+    username: 'bolt360ti',
+    password: 'kasdjasidaau1n213mmaaasdncksk',
+    database: 'campanhas360',
+    host: '20.213.21.109',
+    port: 4001,
     dialect: 'postgres'
   }
 };
