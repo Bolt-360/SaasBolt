@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 
 # Instala o cliente PostgreSQL e outras ferramentas necessárias
-RUN apk add --no-cache postgresql-client
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
 # Torna o script executável
 RUN chmod +x wait-and-start.sh

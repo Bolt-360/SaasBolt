@@ -10,7 +10,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const minioConfig = {
     // Use localhost em desenvolvimento, minio em produção
-    endPoint: isDevelopment ? 'localhost' : (process.env.MINIO_ENDPOINT || 'minio'),
+    endPoint: isDevelopment ? 'minio' : (process.env.MINIO_ENDPOINT || 'minio'),
     port: parseInt(process.env.MINIO_PORT) || 4004, // Porta mapeada no docker-compose
     useSSL: process.env.MINIO_USE_SSL === 'true',
     accessKey: process.env.MINIO_ROOT_USER || 'admin',

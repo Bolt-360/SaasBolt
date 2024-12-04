@@ -13,76 +13,87 @@ import emailConfig from '../config/emailConfig.js';
 dotenv.config();
 const { User, Workspace, UserWorkspace, PwdReset, PasswordResetToken } = models;
 //Cadastro
-export const cadastro = async(req, res, next) => {
-    const { username, email, password, confirmPassword, cpf, gender } = req.body
-    //Verificar se todos os campos foram preenchidos
-    if (!username || !email || !password || !confirmPassword || !cpf || !gender) {
-        return next(errorHandler(400, 'Por favor, preencha todos os campos'));
-    }
-    //Limpar os CPF
-    const cleanedCPF = cpf.replace(/\D/g, '');
-    //Validações Iniciais
-    if(!username || !email || !password || !confirmPassword || !cleanedCPF || !gender){
-        return next(errorHandler(400, 'Este CPF ja existe'))
-    }
-    if(!validateCPF(cleanedCPF)){
-        return res.status(400).json({
-            sucess: false,
-            message: 'CPF inválido',
-        })
-    }
-    //Verifica se o email já está em uso
-    let validUser = await User.findOne({ where: { email } });
-    if(validUser){
-        return next(errorHandler(400, 'Este email ja existe'))
-    }
-    //Verifica se o CPF já está em uso
-    let validUserCPF = await User.findOne({ where: { cpf: cleanedCPF } });
-    if(validUserCPF){
-        return next(errorHandler(400, 'Este CPF ja existe'))
-    }
-    //Verificar se as senhas conferem
-    if(password !== confirmPassword){
-        return next(errorHandler(400, 'As senhas não conferem'))
-    }
-    //Criptografar a senha
-    const hashedPassword = bcryptjs.hashSync(password, 10)
-    //Define a imagem de perfil com base no genero
-    const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`
-    const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`
-    //Criar o usuário
-    const newUser = new User({
-        username,
-        email,
-        password: hashedPassword,
-        cpf: cleanedCPF,
-        gender,
-        profilePicture: gender === 'Masculino' ? boyProfilePic : girlProfilePic
-    })
-    try{
-        //Gerar Token JWT
+export const cadastro = async (req, res, next) => {
+    try {
+        console.log('Dados recebidos para cadastro:', req.body);
+        const { username, email, password, confirmPassword, cpf, gender } = req.body;
+
+        // Verificar se todos os campos foram preenchidos
+        if (!username || !email || !password || !confirmPassword || !cpf || !gender) {
+            return next(errorHandler(400, 'Por favor, preencha todos os campos'));
+        }
+
+        // Limpar os CPF
+        const cleanedCPF = cpf.replace(/\D/g, '');
+
+        // Validações Iniciais
+        if (!validateCPF(cleanedCPF)) {
+            return res.status(400).json({
+                success: false,
+                message: 'CPF inválido',
+            });
+        }
+
+        // Verifica se o email já está em uso
+        let validUser = await User.findOne({ where: { email } });
+        if (validUser) {
+            return next(errorHandler(400, 'Este email já existe'));
+        }
+
+        // Verifica se o CPF já está em uso
+        let validUserCPF = await User.findOne({ where: { cpf: cleanedCPF } });
+        if (validUserCPF) {
+            return next(errorHandler(400, 'Este CPF já existe'));
+        }
+
+        // Verificar se as senhas conferem
+        if (password !== confirmPassword) {
+            return next(errorHandler(400, 'As senhas não conferem'));
+        }
+
+        // Criptografar a senha
+        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`
+        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`
+
+        const hashedPassword = bcryptjs.hashSync(password, 10);
+
+        // Criar o usuário
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPassword,
+            cpf: cleanedCPF,
+            gender,
+            profilePicture: gender === 'Masculino' ? boyProfilePic : girlProfilePic
+        });
+
+        // Salvar o usuário no banco de dados
+        await newUser.save();
+        console.log('Usuário criado com sucesso:', newUser);
+
+        // Gerar Token JWT
         const token = jwt.sign({
-            id: newUser._id,
+            id: newUser.id, // Use 'id' em vez de '_id' se o modelo User usa 'id'
             email: newUser.email,
             username: newUser.username,
         }, process.env.JWT_SECRET, {
             expiresIn: '7d',
-        })
-        // Salvar o usuário no banco de dados
-        await newUser.save()
+        });
+
         res.status(201).json({
             user: {
-                id: newUser._id,
+                id: newUser.id,
                 username: newUser.username,
                 email: newUser.email,
                 profilePicture: newUser.profilePicture,
             },
             token
         });
-    }catch(error){
+    } catch (error) {
+        console.error('Erro ao cadastrar usuário:', error);
         return next(errorHandler(500, 'Erro interno do servidor'));
     }
-}
+};
 
 //Login
 export const login = async (req, res, next) => {
@@ -592,3 +603,4 @@ export const verPwdToken = async (req, res, next) => {
         });
     }
 };
+

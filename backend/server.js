@@ -13,7 +13,7 @@ import sequelize, { testConnection } from './config/database.js';
 
 dotenv.config()
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 2345
 
 // Teste de conexão ao iniciar
 testConnection().catch(err => {
