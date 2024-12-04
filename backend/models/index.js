@@ -14,6 +14,7 @@ import MessageCampaignModel from './messageCampaign.js';
 import RecipientModel from './recipient.js';
 import MessageHistoryModel from './messageHistory.js';
 import PasswordResetTokenModel from './passwordResetToken.js';
+import SgaCredentialsModel from './sgaCredentials.js';
 
 const models = {
   User: UserModel(sequelize),
@@ -28,7 +29,8 @@ const models = {
   MessageCampaign: MessageCampaignModel(sequelize),
   Recipient: RecipientModel(sequelize),
   MessageHistory: MessageHistoryModel(sequelize),
-  PasswordResetToken: PasswordResetTokenModel(sequelize)
+  PasswordResetToken: PasswordResetTokenModel(sequelize),
+  SgaCredentials: SgaCredentialsModel(sequelize)
 };
 
 Object.keys(models).forEach(modelName => {

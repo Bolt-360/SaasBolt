@@ -5,16 +5,25 @@ dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const sequelize = new Sequelize(process.env.DATABASE_CONNECTION_URI || 'postgresql://postgres:bolt360BchatDB2024@postgres:5432/campanhas360?schema=public', {
+// Configuração explícita para garantir o uso de localhost
+const config = {
     dialect: 'postgres',
-    logging: false,
+    host: 'localhost',
+    port: 4001,
+    username: 'bolt360ti',
+    password: 'kasdjasidaau1n213mmaaasdncksk',
+    database: 'campanhas360',
+    logging: false, // Desabilitando todos os logs do Sequelize
     pool: {
         max: 5,
         min: 0,
         acquire: 30000,
         idle: 10000
     }
-});
+};
+
+// Criar instância do Sequelize com a configuração explícita
+const sequelize = new Sequelize(config);
 
 export const testConnection = async () => {
     try {
@@ -27,4 +36,4 @@ export const testConnection = async () => {
     }
 };
 
-export default sequelize; 
+export default sequelize;

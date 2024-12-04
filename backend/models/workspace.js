@@ -14,6 +14,12 @@ export default (sequelize) => {
                 as: 'conversations'
             });
 
+            // Adicionando a nova relação com SgaCredentials
+            Workspace.hasOne(models.SgaCredentials, {
+                foreignKey: 'workspaceId',
+                as: 'sgaCredentials'
+            });
+
             // Certifique-se de que o modelo WorkspaceModule existe
             if (models.WorkspaceModule) {
                 Workspace.hasMany(models.WorkspaceModule, {

@@ -4,9 +4,18 @@ import express from "express";
 
 const app = express();
 const server = http.createServer(app);
+
+const allowedOrigins = ["https://disparador.bchat.lat", "https://api2.bchat.com.br", "http://localhost:5173"];
+
 const io = new Server(server, {
   cors: {
-    origin: ["https://disparador.bchat.lat", "https://api2.bchat.com.br"],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, origin);
+      } else {
+        callback(new Error('Origem não permitida pelo CORS'));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],

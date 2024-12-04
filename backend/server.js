@@ -35,8 +35,16 @@ app.get("/", async (req, res) => {
 });
 
 // Configuração do CORS
+const allowedOrigins = ["https://disparador.bchat.lat", "https://api2.bchat.com.br", "http://localhost:5173"];
+
 const corsOptions = {
-    origin: ["https://disparador.bchat.lat", "https://saas.bchat.com.br"],
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, origin);
+        } else {
+            callback(new Error('Origem não permitida pelo CORS'));
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -71,9 +79,14 @@ app.use('/api/message-history', messageHistoryRoutes);
 
 // Configuração do Socket.IO
 io.engine.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'https://disparador.bchat.lat, https://api2.bchat.com.br/');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    const origin = req.headers.origin;
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+    
     next();
 });
 
