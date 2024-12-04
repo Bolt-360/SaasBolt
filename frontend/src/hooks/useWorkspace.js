@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export function useWorkspace() {
@@ -38,7 +38,7 @@ export function useWorkspace() {
           variant: "default",
         });
 
-        await fetch(`/api/workspaces/active`, {
+        await fetch(`/api/users/active-workspace`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export function useWorkspace() {
           variant: "default",
         });
 
-        await fetch(`/api/workspaces/active`, {
+        await fetch(`/api/users/active-workspace`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

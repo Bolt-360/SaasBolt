@@ -1,17 +1,17 @@
 import express from "express";
-import { isAuthenticate } from "../middleware/verifyToken.js"
-import { 
-    getUserWorkspaces, 
-    getUserActiveWorkspaces, 
-    createWorkspace, 
-    updateWorkspace, 
-    deleteWorkspace,
-    getWorkspaceModules,
+import {
     addWorkspaceModule,
-    updateWorkspaceModule,
+    createWorkspace,
+    deleteWorkspace,
     deleteWorkspaceModule,
-    joinWorkspaceByInviteCode
-} from "../controllers/workspaces.controller.js"
+    getUserActiveWorkspaces,
+    getUserWorkspaces,
+    getWorkspaceModules,
+    joinWorkspaceByInviteCode,
+    updateWorkspace,
+    updateWorkspaceModule
+} from "../controllers/workspaces.controller.js";
+import { isAuthenticate } from "../middleware/verifyToken.js";
 
 const router = express.Router();
 

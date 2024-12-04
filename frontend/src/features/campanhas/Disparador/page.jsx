@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Send, PlayCircle, ArrowLeft, ArrowRight, Info } from 'lucide-react'
+import { useToast } from "@/hooks/use-toast"
+import { useFetchCampaign } from '@/hooks/useFetchCampaign'
 import { cn } from "@/lib/utils"
+import { ArrowLeft, ArrowRight, Info, PlayCircle, Send } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import StepBasicInfo from './form/StepBasicInfo'
 import StepContacts from './form/StepContacts'
 import StepMessages from './form/StepMessages'
-import StepScheduling from './form/StepScheduling'
 import StepReview from './form/StepReview'
+import StepScheduling from './form/StepScheduling'
 import { steps } from './form/constants'
-import { useToast } from "@/hooks/use-toast"
-import { useFetchCampaign } from '@/hooks/useFetchCampaign';
-import { useNavigate } from 'react-router-dom';
 
 export default function Disparador() {
   const navigate = useNavigate();
