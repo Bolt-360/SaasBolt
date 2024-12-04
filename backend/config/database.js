@@ -6,6 +6,7 @@ dotenv.config();
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Configuração explícita para garantir o uso de localhost
+// Lembrar de alterar o host para o ambiente de produção: utilizando Docker host deve ser o nome do container
 const config = {
     dialect: 'postgres',
     host: 'localhost',

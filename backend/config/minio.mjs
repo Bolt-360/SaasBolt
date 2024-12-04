@@ -10,6 +10,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const minioConfig = {
     // Use localhost em desenvolvimento, minio em produção
+    // Lembrar de alterar o host para o ambiente de produção: utilizando Docker host deve ser o nome do container
     endPoint: isDevelopment ? 'localhost' : (process.env.MINIO_ENDPOINT || 'localhost'),
     port: parseInt(process.env.MINIO_PORT) || 4004, // Porta mapeada no docker-compose
     useSSL: process.env.MINIO_USE_SSL === 'true',
