@@ -1,15 +1,15 @@
 import express from "express";
-import { isAuthenticate } from "../middleware/verifyToken.js"
-import { 
-    getUsers, 
-    getUserForSidebar, 
-    createUser, 
-    updateUser, 
-    setActiveWorkspace, 
-    getUserWorkspaces, 
-    getActiveWorkspace, 
-    getUserDetails
-} from "../controllers/user.controller.js"
+import {
+    createUser,
+    getActiveWorkspace,
+    getUserDetails,
+    getUserForSidebar,
+    getUsers,
+    getUserWorkspaces,
+    setActiveWorkspace,
+    updateUser
+} from "../controllers/user.controller.js";
+import { isAuthenticate } from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
@@ -22,4 +22,4 @@ router.get("/workspaces", isAuthenticate, getUserWorkspaces);
 router.get("/active-workspace", isAuthenticate, getActiveWorkspace);
 router.get("/me", isAuthenticate, getUserDetails);
 
-export default router;
+export default router;  

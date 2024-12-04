@@ -1,9 +1,8 @@
-import models from '../models/index.js';
-import { errorHandler } from '../utils/error.js';
-import { UniqueConstraintError } from 'sequelize';
-import { Op } from 'sequelize';
-import { validateCNPJ } from '../utils/cnpjValidator.js';
 import jwt from 'jsonwebtoken';
+import { Op, UniqueConstraintError } from 'sequelize';
+import models from '../models/index.js';
+import { validateCNPJ } from '../utils/cnpjValidator.js';
+import { errorHandler } from '../utils/error.js';
 const { User, Workspace, UserWorkspace, WorkspaceModule } = models;
 
 // Função auxiliar para formatar o CNPJ
@@ -407,9 +406,14 @@ export const deleteWorkspaceModule = async (req, res, next) => {
 };
 
 export const joinWorkspaceByInviteCode = async (req, res, next) => {
+    const transaction = await sequelize.transaction();
     try {
         const { inviteCode } = req.body;
         const userId = req.user.id;
+
+        if (!inviteCode) {
+            return next(errorHandler(400, "Código de convite não fornecido"));
+        }
 
         const workspace = await Workspace.findOne({ where: { inviteCode } });
 
@@ -428,11 +432,53 @@ export const joinWorkspaceByInviteCode = async (req, res, next) => {
         await UserWorkspace.create({
             userId,
             workspaceId: workspace.id,
-            role: 'member' // ou qualquer outra role padrão que você queira atribuir
+            role: 'member',
+            isActive: true,
+            lastAccessed: new Date()
+        }, { transaction });
+
+        await User.update(
+            { activeWorkspaceId: workspace.id },
+            { where: { id: userId }, transaction }
+        );
+
+        const updatedUser = await User.findByPk(userId, {
+            attributes: ['id', 'email', 'username', 'activeWorkspaceId', 'profilePicture'],
+            include: [{
+                model: Workspace,
+                as: 'activeWorkspace',
+                attributes: ['id', 'name', 'description', 'cnpj']
+            }],
+            transaction
         });
 
-        res.status(200).json({ message: "Você foi adicionado ao workspace com sucesso", workspace });
+        const token = jwt.sign(
+            {
+                id: updatedUser.id,
+                email: updatedUser.email,
+                username: updatedUser.username,
+                activeWorkspaceId: updatedUser.activeWorkspaceId,
+                profilePicture: updatedUser.profilePicture
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        await transaction.commit();
+
+        res.status(200).json({
+            message: "Você foi adicionado ao workspace com sucesso",
+            user: updatedUser,
+            token,
+            workspace: {
+                id: workspace.id,
+                name: workspace.name,
+                description: workspace.description,
+                cnpj: workspace.cnpj
+            }
+        });
     } catch (error) {
+        await transaction.rollback();
         console.error('Erro ao juntar-se ao workspace:', error);
         next(error);
     }
