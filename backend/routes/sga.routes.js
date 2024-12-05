@@ -1,5 +1,5 @@
 import express from 'express';
-import { createSgaUser, syncSgaCredentials } from '../controllers/sgaController.js';
+import { createSgaUser, syncSgaCredentials } from '../controllers/sga.controller.js';
 import { isAuthenticate } from "../middleware/verifyToken.js";
 
 const router = express.Router();
