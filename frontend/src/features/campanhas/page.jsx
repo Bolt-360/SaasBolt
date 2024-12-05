@@ -205,9 +205,9 @@ export default function Dashboard() {
                             'bg-gray-100 text-gray-800'
                           }`}>
                             {campaign.status === 'COMPLETED' ? 'Concluída' :
-                             campaign.status === 'ERROR' ? 'Erro' :
-                             campaign.status === 'PROCESSING' ? 'Em Andamento' :
-                             campaign.status}
+                              campaign.status === 'ERROR' ? 'Erro' :
+                              campaign.status === 'PROCESSING' ? 'Em Andamento' :
+                              campaign.status}
                           </span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">

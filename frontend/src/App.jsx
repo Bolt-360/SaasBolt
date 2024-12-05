@@ -18,8 +18,9 @@ import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
 import BoltRotasLayout from './features/boltRotas/brotasLayout'
 import DashboardRotas from './features/boltRotas/page'
 import Boletos from './features/campanhas/Boletos/page'
+import CriarDisparo from './features/campanhas/Boletos/CriarDisparo/page'
 
-function App() {
+export default function App() {
   const { authUser } = useAuthContext();
   
   return (
@@ -47,6 +48,7 @@ function App() {
             <Route path='criar-instancia' element={<CriarInstancia />} />
             <Route path='listar-campanhas' element={<ListarCampanhas />} />
             <Route path='boletos' element={<Boletos />} />
+            <Route path='criar-disparo' element={<CriarDisparo />} />
           </Route>
           <Route path='bolt-rotas' element={<BoltRotasLayout />}>
             <Route index element={<DashboardRotas />} />
@@ -57,5 +59,3 @@ function App() {
     </ProtectedRoute>
   )
 }
-
-export default App
