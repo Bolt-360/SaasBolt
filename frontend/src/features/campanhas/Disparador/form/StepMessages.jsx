@@ -110,7 +110,7 @@ export default function StepMessages({ formData, handleInputChange }) {
 
   return (
     <TooltipProvider>
-      <div className="max-h-[calc(100vh-200px)] overflow-y-auto p-4"> // Adição do scroll!
+      <div className="max-h-[calc(100vh-200px)] overflow-y-auto p-4"> 
         <div className="space-y-4">
           {availableVariables.length > 0 && (
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
