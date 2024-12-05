@@ -11,8 +11,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import useLogout from '@/hooks/useLogout'
-import { FaWhatsapp, FaFileInvoiceDollar } from 'react-icons/fa'
+import { FaWhatsapp, FaFileInvoiceDollar, FaUserPlus } from 'react-icons/fa'
 import CreateInstanceModal from '@/components/CreateInstanceModal'
+import InviteUserModal from '@/components/InviteUserModal'
+import { useAuthContext } from '@/context/AuthContext'
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/app/campanhas', end: true },
@@ -24,12 +26,18 @@ const menuItems = [
 
 export default function Sidebar() {
   const { logout } = useLogout()
+  const { authUser } = useAuthContext()
   const [isCreateInstanceModalOpen, setIsCreateInstanceModalOpen] = useState(false)
+  const [isInviteUserModalOpen, setIsInviteUserModalOpen] = useState(false)
   const [isConnected, setIsConnected] = useState(true)
 
   const handleOpenCreateInstanceModal = (e) => {
     e.preventDefault()
     setIsCreateInstanceModalOpen(true)
+  }
+
+  const handleOpenInviteUserModal = () => {
+    setIsInviteUserModalOpen(true)
   }
 
   return (
@@ -73,6 +81,17 @@ export default function Sidebar() {
             </div>
           ))}
         </nav>
+      </div>
+      <div className='flex justify-center pr-4 pl-4'>
+      {authUser && authUser.workspaces && authUser.workspaces.some(workspace => workspace.inviteLink) && (
+          <button
+            onClick={handleOpenInviteUserModal}
+            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium rounded-md border border-blue-500 bg-white text-blue-500 hover:bg-blue-500 hover:text-white transition duration-200 mb-4 mt-4"
+          >
+            <FaUserPlus className="mr-2 h-4 w-4" />
+            Convidar Usuário
+          </button>
+        )}
       </div>
 
       <div className="border-t border-primary-foreground/20 p-4 space-y-2">
@@ -120,6 +139,12 @@ export default function Sidebar() {
       <CreateInstanceModal
         isOpen={isCreateInstanceModalOpen}
         onClose={() => setIsCreateInstanceModalOpen(false)}
+      />
+
+      <InviteUserModal
+        isOpen={isInviteUserModalOpen}
+        onClose={() => setIsInviteUserModalOpen(false)}
+        user={authUser}
       />
     </aside>
   )

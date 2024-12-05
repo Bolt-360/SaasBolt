@@ -3,6 +3,7 @@ import { Op, UniqueConstraintError } from 'sequelize';
 import models from '../models/index.js';
 import { validateCNPJ } from '../utils/cnpjValidator.js';
 import { errorHandler } from '../utils/error.js';
+import { sequelize } from '../models/index.js';
 const { User, Workspace, UserWorkspace, WorkspaceModule } = models;
 
 // Função auxiliar para formatar o CNPJ
@@ -152,7 +153,7 @@ export const getUserActiveWorkspaces = async (req, res, next) => {
             include: [{
                 model: Workspace,
                 as: 'activeWorkspace',
-                attributes: ['id', 'name', 'description', 'cnpj']
+                attributes: ['id', 'name', 'inviteCode', 'cnpj']
             }]
         });
 
@@ -415,12 +416,14 @@ export const joinWorkspaceByInviteCode = async (req, res, next) => {
             return next(errorHandler(400, "Código de convite não fornecido"));
         }
 
+        // Busca o workspace pelo código de convite
         const workspace = await Workspace.findOne({ where: { inviteCode } });
 
         if (!workspace) {
             return next(errorHandler(404, "Workspace não encontrado com este código de convite"));
         }
 
+        // Verifica se o usuário já é membro do workspace
         const existingUserWorkspace = await UserWorkspace.findOne({
             where: { userId, workspaceId: workspace.id }
         });
@@ -429,25 +432,27 @@ export const joinWorkspaceByInviteCode = async (req, res, next) => {
             return next(errorHandler(400, "Você já é membro deste workspace"));
         }
 
+        // Adiciona o usuário ao workspace
         await UserWorkspace.create({
             userId,
             workspaceId: workspace.id,
-            role: 'member',
+            role: 'member', // ou outro papel que você queira atribuir
             isActive: true,
             lastAccessed: new Date()
         }, { transaction });
 
+        // Atualiza o activeWorkspaceId do usuário
         await User.update(
             { activeWorkspaceId: workspace.id },
             { where: { id: userId }, transaction }
         );
 
+        // Busca o usuário atualizado com o workspace
         const updatedUser = await User.findByPk(userId, {
-            attributes: ['id', 'email', 'username', 'activeWorkspaceId', 'profilePicture'],
             include: [{
                 model: Workspace,
                 as: 'activeWorkspace',
-                attributes: ['id', 'name', 'description', 'cnpj']
+                attributes: ['id', 'name', 'cnpj']
             }],
             transaction
         });
@@ -473,7 +478,6 @@ export const joinWorkspaceByInviteCode = async (req, res, next) => {
             workspace: {
                 id: workspace.id,
                 name: workspace.name,
-                description: workspace.description,
                 cnpj: workspace.cnpj
             }
         });

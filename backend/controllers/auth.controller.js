@@ -153,6 +153,7 @@ export const login = async (req, res, next) => {
                 workspaces: user.participatedWorkspaces ? user.participatedWorkspaces.map(w => ({
                     id: w.id,
                     name: w.name,
+                    inviteLink: w.UserWorkspace && w.UserWorkspace.role === 'owner' ? w.inviteCode : null, // Retorna o inviteCode apenas se a role for 'owner'
                     role: w.UserWorkspace ? w.UserWorkspace.role : null
                 })) : []
             },
