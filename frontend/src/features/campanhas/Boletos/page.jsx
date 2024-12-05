@@ -1,117 +1,231 @@
-'use client'
+import { useState } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Link } from 'react-router-dom';
+import { FilePenIcon, PowerIcon, TrashIcon } from 'lucide-react';
+import FormSteps from "@/features/campanhas/Boletos/form/FormSteps";
+import Modal from "./form/Modal";
+import { Switch } from "@/components/ui/switch";
 
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { FaFileInvoiceDollar } from 'react-icons/fa'
+export default function Campaigns() {
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: '',
+    tipo: '',
+    instancia: '',
+    csvFile: null,
+    csvData: [],
+    formattedNumbers: [],
+    verifiedNumbers: [],
+    mensagens: [{ principal: '' }],
+    inicioImediato: false,
+    dataInicio: '',
+    intervalo: '',
+    envioFinaisSemana: true,
+    envioFeriados: true,
+    limitarHorarioEnvio: true,
+  });
 
-const Boletos = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [horarios, setHorarios] = useState({
+    segunda: { inicio: '', fim: '' },
+    terca: { inicio: '', fim: '' },
+    quarta: { inicio: '', fim: '' },
+    quinta: { inicio: '', fim: '' },
+    sexta: { inicio: '', fim: '' },
+    sabado: { inicio: '', fim: '' },
+    domingo: { inicio: '', fim: '' },
+  });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setIsLoading(true)
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
-    const formData = new FormData(event.currentTarget)
-    const titulo = formData.get('titulo')
-    const valor = formData.get('valor')
-    const vencimento = formData.get('vencimento')
+  const handleHorarioChange = (dia, tipo, valor) => {
+    setHorarios(prev => ({
+      ...prev,
+      [dia]: {
+        ...prev[dia],
+        [tipo]: valor,
+      },
+    }));
+  };
 
-    try {
-      // Simular uma requisição
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      console.log('Criando campanha de boletos:', { titulo, valor, vencimento })
-      
-      toast({
-        title: "Campanha criada com sucesso",
-        description: "Sua campanha de boletos foi criada e está pronta para ser enviada.",
-      })
-    } catch (error) {
-      console.error('Erro ao criar campanha:', error)
-      toast({
-        title: "Erro ao criar campanha",
-        description: "Ocorreu um erro ao criar a campanha. Por favor, tente novamente.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const replicarHorario = (inicio, fim) => {
+    const novoHorario = {
+      segunda: { inicio, fim },
+      terca: { inicio, fim },
+      quarta: { inicio, fim },
+      quinta: { inicio, fim },
+      sexta: { inicio, fim },
+      sabado: { inicio, fim },
+      domingo: { inicio, fim },
+    };
+    setHorarios(novoHorario);
+  };
+
+  const handleSaveSettings = () => {
+    // Lógica para salvar as configurações
+    console.log("Configurações salvas:", formData, horarios);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100/40 dark:bg-gray-800/40">
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <Card className="w-full max-w-4xl">
-            <CardHeader>
+    <div className="flex flex-col w-full h-full">
+      <Tabs defaultValue="campaigns" className="border-b">
+        <TabsList className="flex">
+          <TabsTrigger value="campaigns">Disparos Recorrentes</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
+        </TabsList>
+        <TabsContent value="campaigns" className="p-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Disparo de Boletos</h2>
+              <Button onClick={() => setIsCreatingCampaign(true)}>Nova Campanha de Boletos</Button>
+            </div>
+            <Modal isOpen={isCreatingCampaign} onClose={() => setIsCreatingCampaign(false)}>
+              <FormSteps formData={formData} handleInputChange={handleInputChange} onClose={() => setIsCreatingCampaign(false)} />
+            </Modal>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Último Envio</TableHead>
+                  <TableHead>Próximo Envio</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <Link to="#" className="font-medium">
+                      Campanha de Natal
+                    </Link>
+                  </TableCell>
+                  <TableCell>12/12/2023</TableCell>
+                  <TableCell>25/12/2023</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">Ativa</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button size="icon" variant="ghost">
+                        <FilePenIcon className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost">
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost">
+                        <PowerIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Link to="#" className="font-medium">
+                      Campanha de Aniversário
+                    </Link>
+                  </TableCell>
+                  <TableCell>01/05/2023</TableCell>
+                  <TableCell>01/05/2024</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">Inativa</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button size="icon" variant="ghost">
+                        <FilePenIcon className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost">
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost">
+                        <PowerIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        <TabsContent value="settings" className="p-6">
+          <div className="space-y-4 max-w-lg mx-auto">
+            <div className="flex justify-between space-x-4">
               <div className="flex items-center space-x-2">
-                <FaFileInvoiceDollar className="w-6 h-6" />
-                <div>
-                  <CardTitle>Nova Campanha de Boletos</CardTitle>
-                  <CardDescription>Crie uma nova campanha para envio de boletos em massa.</CardDescription>
+                <Switch
+                  id="envio-finais-semana"
+                  checked={formData.envioFinaisSemana}
+                  onCheckedChange={(checked) => handleInputChange('envioFinaisSemana', checked)}
+                />
+                <Label htmlFor="envio-finais-semana">Envio em Finais de Semana</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="envio-feriados"
+                  checked={formData.envioFeriados}
+                  onCheckedChange={(checked) => handleInputChange('envioFeriados', checked)}
+                />
+                <Label htmlFor="envio-feriados">Envio em Feriados</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="limitar-horario-envio"
+                  checked={formData.limitarHorarioEnvio}
+                  onCheckedChange={(checked) => handleInputChange('limitarHorarioEnvio', checked)}
+                />
+                <Label htmlFor="limitar-horario-envio">Limitar Horário de Envio</Label>
+              </div>
+            </div>
+            {formData.limitarHorarioEnvio && (
+              <div className="space-y-2">
+                {Object.keys(horarios).map(dia => (
+                  <div key={dia} className="flex items-center space-x-2">
+                    <Label className="w-24 capitalize">{dia}</Label>
+                    <Input
+                      type="time"
+                      value={horarios[dia].inicio}
+                      onChange={(e) => handleHorarioChange(dia, 'inicio', e.target.value)}
+                      className="w-28"
+                    />
+                    <span>até</span>
+                    <Input
+                      type="time"
+                      value={horarios[dia].fim}
+                      onChange={(e) => handleHorarioChange(dia, 'fim', e.target.value)}
+                      className="w-28"
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-center space-x-4 mt-4">
+                  <Button
+                    onClick={() => replicarHorario(horarios.segunda.inicio, horarios.segunda.fim)}
+                    className="px-4 py-2 text-base font-medium border border-gray-300 rounded-md shadow-sm hover:bg-gray-100"
+                  >
+                    Replicar Horário
+                  </Button>
+                  <Button
+                    onClick={handleSaveSettings}
+                    className="px-4 py-2 text-base font-medium text-white bg-blue-500 rounded-md shadow-sm hover:bg-blue-600"
+                  >
+                    Salvar Configurações
+                  </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="titulo">Título da Campanha</Label>
-                    <Input
-                      id="titulo"
-                      name="titulo"
-                      placeholder="Ex: Cobrança Mensal Abril/2024"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="valor">Valor Padrão (R$)</Label>
-                    <Input
-                      id="valor"
-                      name="valor"
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="vencimento">Data de Vencimento</Label>
-                    <Input
-                      id="vencimento"
-                      name="vencimento"
-                      type="date"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="mensagem">Mensagem Personalizada</Label>
-                    <Input
-                      id="mensagem"
-                      name="mensagem"
-                      placeholder="Mensagem que será enviada junto com o boleto"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Criando Campanha...' : 'Criar Campanha de Boletos'}
-                </Button>
-              </form>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Após criar a campanha, você poderá importar sua lista de contatos e personalizar os valores individualmente.
-              </div>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+            )}
+            <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+              <p>Caso o envio seja interrompido, ele continuará no próximo dia útil.</p>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
-  )
+  );
 }
-
-export default Boletos 
