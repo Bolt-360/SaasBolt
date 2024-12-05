@@ -17,6 +17,7 @@ import CriarInstancia from './features/campanhas/CriarInstancia/page'
 import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
 import BoltRotasLayout from './features/boltRotas/brotasLayout'
 import DashboardRotas from './features/boltRotas/page'
+import Boletos from './features/campanhas/Boletos/page'
 
 function App() {
   const { authUser } = useAuthContext();
@@ -45,6 +46,7 @@ function App() {
             <Route path='configuracoes' element={<Configuracoes />} />
             <Route path='criar-instancia' element={<CriarInstancia />} />
             <Route path='listar-campanhas' element={<ListarCampanhas />} />
+            <Route path='boletos' element={<Boletos />} />
           </Route>
           <Route path='bolt-rotas' element={<BoltRotasLayout />}>
             <Route index element={<DashboardRotas />} />
