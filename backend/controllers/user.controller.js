@@ -1,7 +1,7 @@
-import models from '../models/index.js';
-import { Op } from 'sequelize';
-import { errorHandler } from '../utils/error.js';
 import bcrypt from 'bcryptjs';
+import { Op } from 'sequelize';
+import models from '../models/index.js';
+import { errorHandler } from '../utils/error.js';
 
 const { User, Workspace, UserWorkspace, WorkspaceModule } = models;
 
@@ -195,3 +195,6 @@ export const getUserDetails = async (req, res, next) => {
         next(error);
     }
 };
+
+
+

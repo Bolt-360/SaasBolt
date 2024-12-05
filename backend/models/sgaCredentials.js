@@ -1,3 +1,4 @@
+// models/SgaCredentials.js
 import { DataTypes, Model } from 'sequelize';
 
 export default (sequelize) => {
@@ -31,7 +32,7 @@ export default (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false
         },
-        auth_token: {
+        auth_Token: {
             type: DataTypes.STRING,
             allowNull: false
         },
