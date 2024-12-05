@@ -225,6 +225,10 @@ module.exports = {
         },
         updatedAt: {
           type: Sequelize.DATE,
+          allowNull: false,
+        },
+        auth_token: {
+          type: Sequelize.STRING,
           allowNull: false
         }
       });
