@@ -18,10 +18,7 @@ import { useAuthContext } from '@/context/AuthContext'
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/app/disparos', end: true },
-  { icon: List, label: 'Listar Instâncias', href: '/app/disparos/listar-instancias' },
-  { icon: Send, label: 'Disparador', href: '/app/disparos/disparador' },
   { icon: FaWhatsapp, label: 'Campanhas', href: '/app/disparos/listar-campanhas' },
-  { icon: FaFileInvoiceDollar, label: 'Campanhas de Boletos', href: '/app/disparos/boletos' },
 ]
 
 export default function Sidebar() {
@@ -61,37 +58,9 @@ export default function Sidebar() {
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.label}
               </NavLink>
-              {item.label === 'Listar Instâncias' && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={handleOpenCreateInstanceModal}
-                        className="ml-2 p-2 rounded-full hover:bg-primary-foreground/10"
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Criar Instância</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
             </div>
           ))}
         </nav>
-      </div>
-      <div className='flex justify-center pr-4 pl-4'>
-      {authUser && authUser.workspaces && authUser.workspaces.some(workspace => workspace.inviteLink) && (
-          <button
-            onClick={handleOpenInviteUserModal}
-            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium rounded-md border border-blue-500 bg-white text-blue-500 hover:bg-blue-500 hover:text-white transition duration-200 mb-4 mt-4"
-          >
-            <FaUserPlus className="mr-2 h-4 w-4" />
-            Convidar Usuário
-          </button>
-        )}
       </div>
 
       <div className="border-t border-primary-foreground/20 p-4 space-y-2">
@@ -135,17 +104,6 @@ export default function Sidebar() {
           Sair
         </button>
       </div>
-
-      <CreateInstanceModal
-        isOpen={isCreateInstanceModalOpen}
-        onClose={() => setIsCreateInstanceModalOpen(false)}
-      />
-
-      <InviteUserModal
-        isOpen={isInviteUserModalOpen}
-        onClose={() => setIsInviteUserModalOpen(false)}
-        user={authUser}
-      />
     </aside>
   )
 }

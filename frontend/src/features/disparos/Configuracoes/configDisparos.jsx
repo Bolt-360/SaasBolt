@@ -9,9 +9,11 @@ import { Switch } from "@/components/ui/switch"
 
 export default function ConfigDisparos() {
   const [isLoading, setIsLoading] = useState(false)
-  const [generatedToken, setGeneratedToken] = useState('')
   const [vencimentos, setVencimentos] = useState([''])
+  const [horarioInicial, setHorarioInicial] = useState("")
+  const [horarioFinal, setHorarioFinal] = useState("")
   const [firstDay, setFirstDay] = useState(false)
+  const [registerSGA, setRegisterSGA] = useState(false)
   const { toast } = useToast()
 
   const handleSubmit = async (event) => {
@@ -75,14 +77,24 @@ export default function ConfigDisparos() {
     setVencimentos(newVencimentos)
   }
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedToken)
-    toast({
-      title: "Token copiado",
-      description: "O token foi copiado para a área de transferência.",
-    })
-  }
+  const handleHorarioInicialChange = (value) => {
+    const numericValue = value.replace(/\D/g, ''); // Permitir apenas números
+    const formattedValue = numericValue
+      .slice(0, 4) // Garantir no máximo 4 dígitos
+      .replace(/(\d{2})(\d{1,2})?/, (match, p1, p2) => (p2 ? `${p1}:${p2}` : p1)); // Formatar com ":"
+  
+    setHorarioInicial(formattedValue);
+  };
 
+  const handleHorarioFinalChange = (value) => {
+    const numericValue = value.replace(/\D/g, ''); // Permitir apenas números
+    const formattedValue = numericValue
+      .slice(0, 4) // Garantir no máximo 4 dígitos
+      .replace(/(\d{2})(\d{1,2})?/, (match, p1, p2) => (p2 ? `${p1}:${p2}` : p1)); // Formatar com ":"
+  
+    setHorarioFinal(formattedValue);
+  };
+  
   return (
     <div className="flex items-start justify-center mb-10">
       <Card className="w-full max-w-4xl">
@@ -127,12 +139,41 @@ export default function ConfigDisparos() {
                 ))}
               </div>
             </div>
+            <div className="space-y-4 md:col-span-2">
+              <div className="flex items-center justify-between sticky top-0 bg-white dark:bg-gray-950 py-2">
+                <Label>Horário Comercial</Label>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={horarioInicial}
+                    onChange={(e) => handleHorarioInicialChange(e.target.value)}
+                    placeholder="Horário de início"
+                    className=""
+                  />
+                  <Input
+                    value={horarioFinal}
+                    onChange={(e) => handleHorarioFinalChange(e.target.value)}
+                    placeholder="Horário de término"
+                    className=""
+                  />
+                </div>
+              </div>
+            </div>
             <div className="md:col-span-2 flex items-center justify-between space-x-2 sticky bottom-0 bg-white dark:bg-gray-950 py-2">
               <Label htmlFor="first-day">Enviar todos os boletos no primeiro dia útil do mês</Label>
               <Switch
                 id="first-day"
                 checked={firstDay}
                 onCheckedChange={setFirstDay}
+              />
+            </div>
+            <div className="md:col-span-2 flex items-center justify-between space-x-2 sticky bottom-0 bg-white dark:bg-gray-950 py-2">
+              <Label htmlFor="register-sga">Registrar envio no SGA</Label>
+              <Switch
+                id="register-sga"
+                checked={registerSGA}
+                onCheckedChange={setRegisterSGA}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
