@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { LayoutDashboardIcon, AppWindowIcon, BuildingIcon, Send, LogOutIcon, ChevronDownIcon } from "lucide-react";
+import { LayoutDashboardIcon, AppWindowIcon, BuildingIcon, Send, LogOutIcon, ChevronDownIcon, ScrollText } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -79,6 +79,15 @@ export default function Header() {
                                 >
                                     <Send className="mr-2 h-4 w-4" />
                                     Campanhas
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/app/disparos"
+                                    className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
+                                >
+                                    <ScrollText className="mr-2 h-4 w-4" />
+                                    Disparos
                                 </Link>
                             </li>
                         </ul>

@@ -9,7 +9,9 @@ import { useAuthContext } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import WorkspaceSetup from './pages/WorkspaceSetup'
 import CampanhasLayout from './features/campanhas/CampanhasLayout'
+import DisparosLayout from './features/disparos/DisparosLayout'
 import Dashboard from './features/campanhas/page'
+import DisparoDashboard from './features/disparos/page'
 import ListarInstancias from './features/campanhas/ListarInstancias/page'
 import Disparador from './features/campanhas/Disparador/page'
 import Configuracoes from './features/campanhas/Configuracoes/page'
@@ -38,6 +40,9 @@ function App() {
           element={<AppLayout />}
         > 
           <Route index element={<WebAppPage />} />
+          <Route path='disparos' element={<DisparosLayout />}>
+            <Route index element={<DisparoDashboard />} />
+          </Route>
           <Route path='chat' element={<ChatPage />} />
           <Route path='campanhas' element={<CampanhasLayout />}>
             <Route index element={<Dashboard />} />

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FaCarCrash, FaWhatsapp } from "react-icons/fa";
+import { FaRegPaperPlane, FaWhatsapp } from "react-icons/fa";
 
 
 export default function Main() {
@@ -15,6 +15,15 @@ export default function Main() {
               <FaWhatsapp className="h-12 w-12" />
             </div>
             <span className="mt-4 text-sm font-semibold">Campanhas</span>
+          </Link>
+          <Link
+            to="/app/disparos"
+            className="group relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-muted p-8 hover:bg-accent hover:text-accent-foreground shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105"
+          >
+            <div className="flex items-center justify-center">
+              <FaRegPaperPlane className="h-10 w-10" />
+            </div>
+            <span className="mt-4 text-sm font-semibold">Disparos</span>
           </Link>
         </div>
       </div>
