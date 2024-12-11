@@ -15,8 +15,10 @@ import DisparoDashboard from './features/disparos/page'
 import ListarInstancias from './features/campanhas/ListarInstancias/page'
 import Disparador from './features/campanhas/Disparador/page'
 import Configuracoes from './features/campanhas/Configuracoes/page'
+import DisparosConfiguracoes from './features/disparos/Configuracoes/page'
 import CriarInstancia from './features/campanhas/CriarInstancia/page'
 import ListarCampanhas from './features/campanhas/ListarCampanhas/page'
+import ListarCampanhasDisparos from './features/disparos/ListarCampanhas/page'
 import BoltRotasLayout from './features/boltRotas/brotasLayout'
 import DashboardRotas from './features/boltRotas/page'
 import Boletos from './features/campanhas/Boletos/page'
@@ -42,6 +44,8 @@ function App() {
           <Route index element={<WebAppPage />} />
           <Route path='disparos' element={<DisparosLayout />}>
             <Route index element={<DisparoDashboard />} />
+            <Route path='listar-campanhas' element={<ListarCampanhasDisparos />} />
+            <Route path='configuracoes' element={<DisparosConfiguracoes />} />
           </Route>
           <Route path='chat' element={<ChatPage />} />
           <Route path='campanhas' element={<CampanhasLayout />}>

@@ -17,11 +17,11 @@ import InviteUserModal from '@/components/InviteUserModal'
 import { useAuthContext } from '@/context/AuthContext'
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/app/campanhas', end: true },
-  { icon: List, label: 'Listar Instâncias', href: '/app/campanhas/listar-instancias' },
-  { icon: Send, label: 'Disparador', href: '/app/campanhas/disparador' },
-  { icon: FaWhatsapp, label: 'Campanhas', href: '/app/campanhas/listar-campanhas' },
-  { icon: FaFileInvoiceDollar, label: 'Campanhas de Boletos', href: '/app/campanhas/boletos' },
+  { icon: LayoutDashboard, label: 'Dashboard', href: '/app/disparos', end: true },
+  { icon: List, label: 'Listar Instâncias', href: '/app/disparos/listar-instancias' },
+  { icon: Send, label: 'Disparador', href: '/app/disparos/disparador' },
+  { icon: FaWhatsapp, label: 'Campanhas', href: '/app/disparos/listar-campanhas' },
+  { icon: FaFileInvoiceDollar, label: 'Campanhas de Boletos', href: '/app/disparos/boletos' },
 ]
 
 export default function Sidebar() {
@@ -96,7 +96,7 @@ export default function Sidebar() {
 
       <div className="border-t border-primary-foreground/20 p-4 space-y-2">
         <NavLink
-          to="/app/campanhas/configuracoes"
+          to="/app/disparos/configuracoes"
           className={({ isActive }) =>
             cn(
               "flex items-center justify-between w-full px-2 py-2 text-sm font-medium rounded-md",
